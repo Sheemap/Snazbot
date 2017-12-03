@@ -1,10 +1,12 @@
 'use strict'
-const glob = require('glob')
+const glob = require('glob');
 const path = require('path');
-const Discord = require('discord.js')
+const Discord = require('discord.js');
+const sleep = require('sleep-promise');
 
-const logger = require('./logger.js')
-const app = require('../app.js')
+const logger = require('./logger.js');
+const app = require('../app.js');
+const common = require('./common.js');
 
 var comms = {};
 
@@ -38,7 +40,7 @@ exports.parse = function(msg){
 		help(msg,args);
 	}
 	if(!found){
-		msg.channel.send('Command not found! Try again.')
+		common.sendMsg(msg,'Command not found! Try again.',false,30)
 	}
 }
 
@@ -56,7 +58,7 @@ function help(msg,args){
 			}
 			rich.addField(app.prefix+command,`*${desc}*`,true);
 		}
-		msg.channel.send(rich)
+		common.sendMsg(msg,rich,false,30);
 	}else{
 		let found = false;
 		let rich = new Discord.RichEmbed();
@@ -66,11 +68,11 @@ function help(msg,args){
 				found = true;
 				rich.setTitle(`Usage info for ${com}`);
 				rich.setDescription(comms[com].usage);
-				msg.channel.send(rich);
+				common.sendMsg(msg,rich,false,30);
 			}
 		}
 		if(!found){
-			msg.channel.send('Could not find a command that matches that! Please try again.')
+			common.sendMsg(msg,'Could not find a command that matches that! Please try again.',false,30)
 		}
 	}
 }
