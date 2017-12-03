@@ -1,6 +1,7 @@
 'use strict'
 const common = require('../common.js');
 const app = require('../../app.js');
+const logger = require('../logger.js');
 
 exports.description = "Cleans bot commands and responses.";
 
