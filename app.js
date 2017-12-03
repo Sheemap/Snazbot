@@ -47,14 +47,14 @@ client.on('messageUpdate', (omsg,nmsg) => {
 client.on('guildMemberAdd', member => {
     if(member.guild.id == '384946871103258626'){
         let rollid = member.guild.roles.get('384948011106697216');
-        member.addRole(rollid).catch(console.error);
+        member.addRole(rollid).catch(logger.log('error',`Failed to Jim ${member.user.username}!`));
         member.setNickname('Jim');
         logger.log('info',`Successfully Jimmed ${member.user.username}`);
     }
 });
 
 client.on('voiceStateUpdate', (oldMember, newMember) => {
-    if(newMember.voiceChannelID == "104986047867318272"){
+    if(newMember.voiceChannelID == "359575807297060875"){
         newMember.addRole('360186010728005652')
         logger.log('info',`Entered ${newMember.user.username} into the spankbank`)
     }else{
