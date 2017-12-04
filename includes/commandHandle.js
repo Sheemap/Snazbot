@@ -66,9 +66,13 @@ function help(msg,args){
 			let com = args[0].replace(app.prefix,'');
 			if(com == command){
 				found = true;
-				rich.setTitle(`Usage info for ${com}`);
-				rich.setDescription(comms[com].usage);
-				common.sendMsg(msg,rich,false,30);
+				if(typeof(comms[com].usage) !== 'undefined'){
+					rich.setTitle(`Usage info for ${com}`);
+					rich.setDescription(comms[com].usage);
+					common.sendMsg(msg,rich,false,30);
+				}else{
+					common.sendMsg(msg,'No usage information supplied by this command.');
+				}
 			}
 		}
 		if(!found){
