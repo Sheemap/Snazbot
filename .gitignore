@@ -60,8 +60,5 @@ typings/
 # tmp dir
 tmp/
 
-# lock file
-package-lock.json
-
 #config
-*.ini
+config.ini

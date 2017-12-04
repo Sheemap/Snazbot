@@ -9,6 +9,7 @@ const config = ini.parse(fs.readFileSync('./config/config.ini', 'utf-8'))
 
 const token = config.general.token;
 exports.prefix = prefix = config.general.commandprefix;
+exports.autoclean = autoclean = config.general.autoclean;
 
 
 //Cusom Packages
@@ -17,6 +18,13 @@ const comm = require("./includes/commandHandle.js");
 const voting = require("./includes/commands/afk.js")
 
 const commEvents = comm.events;
+
+
+if(autoclean == 'yes'){
+    logger.log('info','Autocleaning messages is enabled.')
+}else{
+    logger.log('info','Autocleaning messages is disabled.')
+}
 
 
 client.on('ready', () => {
