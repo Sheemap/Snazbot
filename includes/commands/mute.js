@@ -2,6 +2,7 @@
 const logger = require('../logger.js');
 const common = require('../common.js');
 const app = require('../../app.js');
+const sleep = require('sleep-promise');
 
 const afk = require('./afk.js');
 
@@ -75,7 +76,7 @@ exports.main = function(msg,args){
 						logger.log('info',"Vote succeeded to mute "+truscrub.user.username+" for "+duration);
 						sleep(duration*1000).then(function(){
 							truscrub.setMute(false,"Timed unmute");
-							logger.log('info',truscrub.username+" has been unmuted");
+							logger.log('info',truscrub.user.username+" has been unmuted");
 						})
 					}else{
 						logger.log('info',"Vote failed to mute "+truscrub.user.username+" for "+duration);
