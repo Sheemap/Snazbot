@@ -3,6 +3,8 @@ const glob = require('glob');
 const path = require('path');
 const Discord = require('discord.js');
 const sleep = require('sleep-promise');
+const ini = require('ini');
+const fs = require('fs');
 
 const logger = require('./logger.js');
 const app = require('../app.js');
@@ -10,6 +12,19 @@ const common = require('./common.js');
 
 var comms = {};
 
+//Load blacklist
+const blacklist = ini.parse(fs.readFileSync('./config/blacklist.ini', 'utf-8'))
+
+console.log(blacklist)
+
+var blackcomms = blacklist.commands.split(',');
+var blackchan = blacklist.channels.split(',');
+var blackserv = blacklist.servers.split(',');
+var blackuser = blacklist.users.split(',');
+
+var blackall = blackuser.concat(blackchan.concat(blackserv.concat(blackcomms)));
+
+//Load commands
 var commcount = 0;
 glob.sync('./includes/commands/**/*.js').forEach(function(file) {
 	let name = file.replace('./includes/commands/','').replace('.js','');
@@ -21,13 +36,35 @@ logger.log('info',`Loaded ${commcount} commands.`);
 
 exports.parse = function(msg){
 	let content = msg.content;
-	let author = msg.author;
 	let found = false;
+
+	let authid = msg.author.id;
+	let chanid = msg.channel.id;
+	let servid = msg.guild.id;
 
 	let comm = content.split(' ')[0].replace(app.prefix,'');
 	let args = content.replace(app.prefix+comm+' ','').split(' ');
 
-	logger.log('info',`Command from ${author.username}: ${msg.content}`)
+
+	if(blackall.indexOf(authid) != -1){
+		logger.log('info','User is blacklisted, not replying.');
+		return;
+	}
+	if(blackall.indexOf(servid) != -1){
+		logger.log('info','Server is blacklisted, not replying.');
+		return;
+	}
+	if(blackall.indexOf(chanid) != -1){
+		logger.log('info','Channel is blacklisted, not replying.');
+		return;
+	}
+	if(blackall.indexOf(comm) != -1){
+		logger.log('info','Command is blacklisted, not replying.');
+		return;
+	}
+
+
+	logger.log('info',`Command from ${msg.author.username}: ${msg.content}`)
 
 	for(let command in comms){
 		if(comm == command){
