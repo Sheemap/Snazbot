@@ -92,9 +92,11 @@ exports.callVote = function(usercount,msgtxt,msg,cb){
 		voting = false;
 		if(votecount >= votesNeeded){
 			common.sendMsg(msg,"Vote succeeded! "+votecount+"/"+votesNeeded,false,15);
+			exports.scrubnames = scrubnames = [];
 			cb(true);
 		}else{
 			common.sendMsg(msg,"Vote failed! "+votecount+"/"+votesNeeded,false,15);
+			exports.scrubnames = scrubnames = [];
 			cb(false);
 		}
 	})
