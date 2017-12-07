@@ -10,6 +10,7 @@ const config = ini.parse(fs.readFileSync('./config/config.ini', 'utf-8'))
 const token = config.general.token;
 exports.prefix = prefix = config.general.commandprefix;
 exports.autoclean = autoclean = config.general.autoclean;
+exports.logdir = logdir = config.general.logdir;
 
 
 //Cusom Packages

@@ -62,3 +62,6 @@ tmp/
 
 #config
 config.ini
+
+# data dir
+data/
