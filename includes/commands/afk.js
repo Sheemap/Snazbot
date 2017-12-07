@@ -78,8 +78,8 @@ exports.main = function(msg,args) {
 exports.callVote = function(usercount,msgtxt,msg,cb){
 	let votesNeeded;
 	let duration = 15;
-	voters = ['placeholdernamethatnoonehas'];
-	votecount = 0;
+	voters = [msg.author.username];
+	votecount = 1;
 	voting = true;
 	if(usercount <= 4){
 		votesNeeded = 2;
