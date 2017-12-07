@@ -89,7 +89,7 @@ exports.callVote = function(usercount,msgtxt,msg,cb){
 	common.sendMsg(msg,msgtxt+"\n\nNeeded votes: "+votesNeeded+"\nTime to vote: "+duration+" seconds",false,30);
 	let slip = duration*1000;
 	sleep(slip).then(function(){
-		voting = false;
+		exports.voting = voting = false;
 		if(votecount >= votesNeeded){
 			common.sendMsg(msg,"Vote succeeded! "+votecount+"/"+votesNeeded,false,15);
 			exports.scrubnames = scrubnames = [];
