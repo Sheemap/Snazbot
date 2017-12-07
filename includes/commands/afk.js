@@ -80,7 +80,7 @@ exports.callVote = function(usercount,msgtxt,msg,cb){
 	let duration = 15;
 	voters = [msg.author.username];
 	votecount = 1;
-	voting = true;
+	exports.voting = voting = true;
 	if(usercount <= 4){
 		votesNeeded = 2;
 	}else{
