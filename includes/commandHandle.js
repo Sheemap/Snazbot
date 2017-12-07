@@ -15,8 +15,6 @@ var comms = {};
 //Load blacklist
 const blacklist = ini.parse(fs.readFileSync('./config/blacklist.ini', 'utf-8'))
 
-console.log(blacklist)
-
 var blackcomms = blacklist.commands.split(',');
 var blackchan = blacklist.channels.split(',');
 var blackserv = blacklist.servers.split(',');
