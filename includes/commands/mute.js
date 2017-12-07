@@ -38,6 +38,14 @@ exports.main = function(msg,args){
 				error = true;
 				logger.log('info',msg.author.username+" tried to call a mute with too long a duration");
 			}
+
+			if(args[1] >= 1){
+				duration = args[1];
+			}else{
+				common.sendMsg(msg,"Your duration is too short. There must be at least 1 second.",false,5);
+				error = true;
+				logger.log('info',msg.author.username+" tried to call a mute with too short a duration");
+			}
 		}
 		if(args.length > 1){
 			if(isNaN(args[1])){
