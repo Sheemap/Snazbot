@@ -16,7 +16,8 @@ exports.logdir = logdir = config.general.logdir;
 //Cusom Packages
 const logger = require("./includes/logger.js");
 const comm = require("./includes/commandHandle.js");
-const voting = require("./includes/commands/afk.js")
+const voting = require("./includes/commands/afk.js");
+const meme = require("./includes/commands/meme.js");
 
 const commEvents = comm.events;
 
@@ -36,6 +37,8 @@ client.on('ready', () => {
 client.on('message', msg => {
     if(msg.content.startsWith(prefix)){
         comm.parse(msg);
+    }else if(msg.channel.id == '301214003781173249'){
+        meme.scrape(msg);
     }
     if(!msg.content.toLowerCase().includes('jim') && msg.guild.id == '384946871103258626' && msg.author.id != '208310407201423371'){
         msg.delete();
