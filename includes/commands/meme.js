@@ -27,15 +27,12 @@ exports.main = function(msg,args) {
 
 		  		if(msgs[num].author.id != '208310407201423371'){
 			  		if(msgs[num].content.includes('http')){
-				  		console.log(msgs[num].content);
 				  		meme = true;
 				  		att = false;
 			  		}
 			  		if(msgs[num].attachments.array().length >= 1){
-			  			console.log(msgs[num].content);
 				  		meme = true;
 				  		att = true;
-				  		console.log(msgs[num].attachments)
 			  		}
 			  		if(i>=1000){
 			  			meme = true;
