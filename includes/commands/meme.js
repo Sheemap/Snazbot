@@ -8,7 +8,7 @@ exports.description = 'Rolls you a random meme';
 exports.usage = `Use ${app.prefix}meme to fetch a meme.`;
 
 exports.main = function(msg,args) {
-	if(msg.channel != msg.guild.channels.find('id','208713448043839500')){
+	if(msg.channel != msg.guild.channels.find('id','301214003781173249')){
 		common.sendMsg(msg,'This command only works in the #memes chat.',false,15);
 	}else{
 		msg.channel.fetchMessages({ limit: 100 })
