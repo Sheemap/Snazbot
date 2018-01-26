@@ -18,8 +18,16 @@ const logger = require("./includes/logger.js");
 const comm = require("./includes/commandHandle.js");
 const voting = require("./includes/commands/afk.js");
 const meme = require("./includes/commands/meme.js");
+const filter = require("./includes/commands/christianserver.js");
 
 const commEvents = comm.events;
+
+if(fs.existsSync('data/christ.txt')){
+    exports.christ = christ = true;
+}else{
+    exports.christ = christ = false;
+}
+
 
 
 if(autoclean == 'yes'){
@@ -35,6 +43,9 @@ client.on('ready', () => {
 
 
 client.on('message', msg => {
+    if(exports.christ && msg.guild.id == '104981147770990592' && msg.author.id != '208310407201423371'){
+        filter.filter(msg);
+    }
     if(msg.content.startsWith(prefix)){
         comm.parse(msg);
     }else if(msg.channel.id == '301214003781173249'){
