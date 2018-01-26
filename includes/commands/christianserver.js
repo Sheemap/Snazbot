@@ -44,10 +44,10 @@ exports.addBad = function(bad){
 }
 
 function purityCheck(message){
-	message = message.replace(/\s+/g, '');
+	message = message.replace(/\s+/g, '').toLowerCase();
 	for(let a=0;a<profanity.length;a++){
 		console.log(profanity[a])
-		if(message.includes(profanity[a].replace(/\s+/g, ''))){
+		if(message.includes(profanity[a].replace(/\s+/g, '').toLowerCase())){
 			
 			return [false,profanity[a]];
 		}
