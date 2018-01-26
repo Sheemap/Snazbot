@@ -43,7 +43,7 @@ client.on('ready', () => {
 
 
 client.on('message', msg => {
-    if(exports.christ && msg.guild.id == '104981147770990592' && msg.author.id != '208310407201423371' && msg.channel.id == '208713448043839500'){
+    if(exports.christ && msg.guild.id == '104981147770990592' && msg.author.id != '208310407201423371' && msg.channel.id == '406571477916319745'){
         filter.filter(msg);
     }
     if(msg.content.startsWith(prefix)){
