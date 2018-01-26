@@ -28,11 +28,14 @@ exports.main = function(msg,args){
 }
 
 exports.filter = function(msg){
-	console.log(profanity)
 	pure = purityCheck(msg.content);
 	if(!pure[0]){
 		msg.delete().catch(function(){logger.log('warn','Tried to delete a nonexistent message!')});
-		common.sendMsg(msg,`***! ! ! R E M I N D E R ! ! !*** This is a christan server and "${pure[1]}" is a horrible word! Please speak to your local pastor and repent.`,true,15);
+		if(msg.content.includes('@everyone')){
+			common.sendMsg(msg,`***! ! ! R E M I N D E R ! ! !*** This is a christian channel and "<REDACTED>" is a horrible word! Please speak to your local pastor and repent.`,true,15)
+		}else{
+			common.sendMsg(msg,`***! ! ! R E M I N D E R ! ! !*** This is a christian channel and "${pure[1]}" is a horrible word! Please speak to your local pastor and repent.`,true,15);
+		}
 	}
 }
 
@@ -46,7 +49,6 @@ exports.addBad = function(bad){
 function purityCheck(message){
 	message = message.replace(/\s+/g, '').toLowerCase();
 	for(let a=0;a<profanity.length;a++){
-		console.log(profanity[a])
 		if(message.includes(profanity[a].replace(/\s+/g, '').toLowerCase())){
 			
 			return [false,profanity[a]];
