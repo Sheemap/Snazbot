@@ -8,10 +8,10 @@ const logger = require('../logger.js');
 var pure,
 	profanity;
 
-fs.readFile('data/profanity.txt', function(err, f){
-	profanity = f.toString().split('\n');
-	profanity.pop();
-});
+
+if(fs.existsSync('data/christ.txt')){
+    init();
+}
 
 exports.description = "This is a christian server.";
 
@@ -21,6 +21,7 @@ exports.main = function(msg,args){
 		var christStream = fs.createWriteStream('data/christ.txt', {'flags': 'a'});
 		christStream.write('its alive');
 		christStream.end('\n');
+		init();
 		common.sendMsg(msg,`Christian mode has been activated! Bad words are now filtered.`)
 	}else{
 		common.sendMsg(msg,'Thou are not holy enough for this command.',false,15);
@@ -55,4 +56,11 @@ function purityCheck(message){
 		}
 	}
 	return [true];
+}
+
+function init(){
+	fs.readFile('data/profanity.txt', function(err, f){
+		profanity = f.toString().split('\n');
+		profanity.pop();
+	});
 }
