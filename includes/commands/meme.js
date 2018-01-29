@@ -6,7 +6,7 @@ const fs = require('fs');
 
 exports.description = 'Rolls you a random meme';
 
-exports.usage = `Use ${app.prefix}meme to fetch a meme.`;
+exports.usage = `Use "${app.prefix}meme" to fetch a meme.\n\nUse "${app.prefix}meme status" to count the memes available.`;
 
 exports.main = function(msg,args){
 	if(args.length >= 1 && args[0] == 'status'){
