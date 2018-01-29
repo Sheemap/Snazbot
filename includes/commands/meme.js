@@ -9,20 +9,30 @@ exports.description = 'Rolls you a random meme';
 exports.usage = `Use ${app.prefix}meme to fetch a meme.`;
 
 exports.main = function(msg,args){
-	if(msg.channel != msg.guild.channels.find('id','301214003781173249')){
-		common.sendMsg(msg,'This command only works in the #memes chat.',false,15);
-	}else{
+	if(args.length >= 1 && args[0] == 'status'){
 		fs.readFile('data/memes.txt', function(err, f){
-    		var memelist = f.toString().split('\n');
-			var meme = memelist[Math.floor(Math.random()*(memelist.length-1))];
+	    		var memelist = f.toString().split('\n');
+				var count = memelist.length-1;
 
-			if(meme.includes('cdn.discordapp.com')){
-				common.sendMsg(msg,{file:meme},false,15);
-			}else{
-				common.sendMsg(msg,meme,false,15);
-			}
+				common.sendMsg(msg,`There are currently **${count}** memes in stock.`,false,15);
 
-		});
+			});
+	}else{
+		if(msg.channel != msg.guild.channels.find('id','301214003781173249')){
+			common.sendMsg(msg,'This command only works in the #memes chat.',false,15);
+		}else{
+			fs.readFile('data/memes.txt', function(err, f){
+	    		var memelist = f.toString().split('\n');
+				var meme = memelist[Math.floor(Math.random()*(memelist.length-1))];
+
+				if(meme.includes('cdn.discordapp.com')){
+					common.sendMsg(msg,{file:meme},false,15);
+				}else{
+					common.sendMsg(msg,meme,false,15);
+				}
+
+			});
+		}
 	}
 }
 
