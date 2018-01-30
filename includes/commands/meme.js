@@ -20,7 +20,7 @@ exports.main = function(msg,args){
 
 			});
 	}else{
-		if(msg.channel == msg.guild.channels.find('id','301214003781173249')){
+		if(msg.channel != msg.guild.channels.find('id','301214003781173249')){
 			common.sendMsg(msg,'This command only works in the #memes chat.',false,15);
 		}else{
 			fs.readFile('data/memes.txt', function(err, f){
