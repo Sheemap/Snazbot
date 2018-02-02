@@ -21,7 +21,7 @@ exports.main = function(msg,args){
 
 			});
 	}else{
-		if(msg.channel == msg.guild.channels.find('id','301214003781173249')){
+		if(msg.channel != msg.guild.channels.find('id','301214003781173249')){
 			common.sendMsg(msg,'This command only works in the #memes chat.',false,15);
 		}else{
 			db.all('SELECT url,votes FROM memes', function(err, rows){
