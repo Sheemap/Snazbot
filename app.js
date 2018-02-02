@@ -15,25 +15,45 @@ exports.logdir = logdir = config.general.logdir;
 
 //Cusom Packages
 const logger = require("./includes/logger.js");
-const comm = require("./includes/commandHandle.js");
-const voting = require("./includes/commands/afk.js");
-const meme = require("./includes/commands/meme.js");
-const filter = require("./includes/commands/christianserver.js");
+var comm;
+var voting;
+var meme;
+var filter;
+//Import DB before most
+const DBNAME = "data";
+const db = require(`./includes/db.js`);
 
-const commEvents = comm.events;
-
-if(fs.existsSync('data/christ.txt')){
-    exports.christ = christ = true;
+if (fs.existsSync(`data/${DBNAME}.db`)) {
+    db.init(DBNAME,dbCallback);
 }else{
-    exports.christ = christ = false;
+    db.createNew(DBNAME,dbCallback);
 }
 
+function dbCallback(){
+    console.log('aaaayyyy')
+    comm = require("./includes/commandHandle.js");
+    voting = require("./includes/commands/afk.js");
+    meme = require("./includes/commands/meme.js");
+    filter = require("./includes/commands/christianserver.js");
+    commEvents = comm.events;
 
 
-if(autoclean == 'yes'){
-    logger.log('info','Autocleaning messages is enabled.')
-}else{
-    logger.log('info','Autocleaning messages is disabled.')
+    if(fs.existsSync('data/christ.txt')){
+        exports.christ = christ = true;
+    }else{
+        exports.christ = christ = false;
+    }
+
+
+
+    if(autoclean == 'yes'){
+        logger.log('info','Autocleaning messages is enabled.')
+    }else{
+        logger.log('info','Autocleaning messages is disabled.')
+    }
+
+
+    client.login(token);
 }
 
 
@@ -48,7 +68,7 @@ client.on('message', msg => {
     }
     if(msg.content.startsWith(prefix)){
         comm.parse(msg);
-    }else if(msg.channel.id == '301214003781173249'){
+    }else if(msg.channel.id == '301214003781173249' || msg.channel.id == '208298947997990912'){
         meme.scrape(msg);
     }
     if(!msg.content.toLowerCase().includes('jim') && msg.guild.id == '384946871103258626' && msg.author.id != '208310407201423371'){
@@ -86,4 +106,3 @@ client.on('voiceStateUpdate', (oldMember, newMember) => {
     }
 });
 
-client.login(token);
