@@ -19,13 +19,16 @@ var buffer = [];
 
 exports.main = function(msg,args){
 	if(args.length >= 1 && args[0] == 'status'){
-		fs.readFile('data/memes.txt', function(err, f){
-	    		var memelist = f.toString().split('\n');
-				var count = memelist.length-1;
+		db.all('SELECT * FROM memes', function(err, rows){
+			let memelist = [];
+			for(let w in rows){
+				memelist.push(rows[w].url);
+			}
+			var count = memelist.length;
 
-				common.sendMsg(msg,`There are currently **${count}** memes in stock.`,false,15);
+			common.sendMsg(msg,`There are currently **${count}** memes in stock.`,false,15);
 
-			});
+		});
 	}else{
 		if(msg.channel != msg.guild.channels.find('id','301214003781173249')){
 			common.sendMsg(msg,'This command only works in the #memes chat.',false,15);
