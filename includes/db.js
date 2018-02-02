@@ -46,7 +46,9 @@ exports.init = function(name,callback){
 exports.run = function(query,callback){
     db.run(query,callback2)
     function callback2(err,row){
-        console.log(err)
+        if(err){
+            logger.log('error',err);
+        }
         if(typeof callback != 'undefined'){
             callback(err,row)
         }

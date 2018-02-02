@@ -30,7 +30,6 @@ if (fs.existsSync(`data/${DBNAME}.db`)) {
 }
 
 function dbCallback(){
-    console.log('aaaayyyy')
     comm = require("./includes/commandHandle.js");
     voting = require("./includes/commands/afk.js");
     meme = require("./includes/commands/meme.js");
