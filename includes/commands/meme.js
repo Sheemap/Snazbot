@@ -78,7 +78,7 @@ exports.react = function(reaction,user,added){
 	let newvotes;
 	let urlmeme;
 
-	if(reaction.message.channel.id == '301214003781173249'){
+	if(reaction.message.channel.id == '301214003781173249' || reaction.message.channel.id == '208298947997990912'){
 		if(reaction.message.content.includes('http')){
 			meme = true;
 			urlmeme = reaction.message.content;
@@ -101,6 +101,8 @@ exports.react = function(reaction,user,added){
 			meme = true;
 			urlmeme = reaction.message.attachments.first().url;
 
+
+
 			if(reaction.emoji.identifier == '%F0%9F%91%8D'){
 				if(added){
 					val = 1;
@@ -118,14 +120,24 @@ exports.react = function(reaction,user,added){
 		}
 
 		if(meme){
-			db.get(`SELECT url,votes FROM memes WHERE url="${urlmeme}"`,function(err,row){
+			console.log('meme')
+			db.all(`SELECT url,votes FROM memes`,function(err,row){
+				let trurow = false;
 				if(err){
 					logger.log('error',err)
 				}else{
-					currentvotes = parseInt(row.votes)
-					newvotes = currentvotes + val;
-					db.run(`UPDATE memes SET votes="${newvotes}" WHERE url="${urlmeme}"`);
-					logger.log('debug','Counted a meme vote.');
+					for(let l in row){
+						let image = row[l].url.split('/')[6];
+						if(urlmeme.includes(image)){
+							trurow = row[l];
+							currentvotes = parseInt(row[l].votes)
+						}
+					}
+					if(trurow != false){
+						newvotes = currentvotes + val;
+						db.run(`UPDATE memes SET votes="${newvotes}" WHERE url="${trurow.url}"`);
+						logger.log('debug','Counted a meme vote.');
+					}
 				}
 				
 			})
@@ -137,36 +149,48 @@ exports.react = function(reaction,user,added){
 exports.scrape = function(msg) {
 	if(msg.author.id != '208310407201423371'){
 
-		db.all('SELECT url,votes FROM memes', function(err, rows){
-			let memes = [];
-			var seconds = new Date() / 1000;
+		if(msg.channel.id == '208298947997990912' || msg.channel.id == '301214003781173249'){
 
-			for(let u in rows){
-				memes.push(rows[u].url)
-			}
 
-	  		if(msg.content.includes('http')){
+			db.all('SELECT url,votes FROM memes', function(err, rows){
+				let memes = [];
+				let unique = true;
+				var seconds = new Date() / 1000;
 
-	  			if(!memes.includes(msg.content)){
-		  			logger.log('info',`Saving meme sent by ${msg.author.username}`);
-
-					db.run(`INSERT INTO memes VALUES ("${msg.author.username}","${msg.author.id}","${seconds}","${msg.content}","5")`);
-				}else{
-					logger.log('info','Not saving duplicate meme');
+				for(let u in rows){
+					memes.push(rows[u].url)
 				}
-	  		}
 
-	  		if(msg.attachments.array().length >= 1){
+		  		if(msg.content.includes('http')){
 
-	  			if(!memes.includes(msg.attachments.first().url)){
-		  			logger.log('info',`Saving meme sent by ${msg.author.username}`);
+		  			if(!memes.includes(msg.content)){
+			  			logger.log('info',`Saving meme sent by ${msg.author.username}`);
 
-			  		db.run(`INSERT INTO memes VALUES ("${msg.author.username}","${msg.author.id}","${seconds}","${msg.attachments.first().url}","5")`);
-			  	}else{
-			  		logger.log('info','Not saving duplicate meme');
-			  	}
-	  		}
-		})
+						db.run(`INSERT INTO memes VALUES ("${msg.author.username}","${msg.author.id}","${seconds}","${msg.content}","5")`);
+					}else{
+						logger.log('info','Not saving duplicate meme');
+					}
+		  		}
+
+		  		if(msg.attachments.array().length >= 1){
+
+		  			let memeimage = msg.attachments.first().url.split('/')[6];
+
+		  			for(let q in memes){
+		  				if(memes[q].includes(memeimage)){
+		  					unique = false;
+		  				}
+		  			}
+		  			if(unique){
+			  			logger.log('info',`Saving meme sent by ${msg.author.username}`);
+
+				  		db.run(`INSERT INTO memes VALUES ("${msg.author.username}","${msg.author.id}","${seconds}","${msg.attachments.first().url}","5")`);
+				  	}else{
+				  		logger.log('info','Not saving duplicate meme');
+				  	}
+		  		}
+			})
+		}
   		
   	}
 
