@@ -79,6 +79,13 @@ client.on('message', msg => {
     }
 });
 
+client.on('messageReactionAdd', (reaction,user) => {
+    comm.react(reaction,user,true);
+})
+client.on('messageReactionRemove', (reaction,user) => {
+    comm.react(reaction,user,false);
+})
+
 client.on('messageUpdate', (omsg,nmsg) => {
     if(!nmsg.content.toLowerCase().includes('jim') && nmsg.guild.id == '384946871103258626' && nmsg.author.id != '208310407201423371'){
         nmsg.delete();

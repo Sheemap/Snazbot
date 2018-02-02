@@ -79,6 +79,16 @@ exports.parse = function(msg){
 	}
 }
 
+exports.react = function(reaction,user,added){
+	for(let c in comms){
+		if(typeof(comms[c].reactions) !== 'undefined'){
+			if(comms[c].reactions.split(',').includes(reaction.emoji.identifier)){
+				comms[c].react(reaction,user,added)
+			}
+		}
+	}
+}
+
 function help(msg,args){
 	if(args[0] == '!help' || args[0] == 'help'){
 		let rich = new Discord.RichEmbed();
