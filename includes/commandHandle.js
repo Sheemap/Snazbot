@@ -80,6 +80,31 @@ exports.parse = function(msg){
 }
 
 exports.react = function(reaction,user,added){
+	let content = msg.content;
+	let found = false;
+
+	let authid = msg.author.id;
+	let chanid = msg.channel.id;
+	let servid = msg.guild.id;
+
+	let comm = content.split(' ')[0].replace(app.prefix,'');
+	let args = content.replace(app.prefix+comm+' ','').split(' ');
+
+
+	if(blackall.indexOf(authid) != -1){
+		logger.log('info','User is blacklisted, not replying.');
+		return;
+	}
+	if(blackall.indexOf(servid) != -1){
+		logger.log('info','Server is blacklisted, not replying.');
+		return;
+	}
+	if(blackall.indexOf(chanid) != -1){
+		logger.log('info','Channel is blacklisted, not replying.');
+		return;
+	}
+
+
 	for(let c in comms){
 		if(typeof(comms[c].reactions) !== 'undefined'){
 			if(comms[c].reactions.split(',').includes(reaction.emoji.identifier)){
