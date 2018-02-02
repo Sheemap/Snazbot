@@ -83,6 +83,7 @@ exports.react = function(reaction,user,added){
 		if(reaction.message.content.includes('http')){
 			meme = true;
 			urlmeme = reaction.message.content;
+			attach = false;
 
 			if(reaction.emoji.identifier == '%F0%9F%91%8D'){
 				if(added){
@@ -143,7 +144,7 @@ exports.react = function(reaction,user,added){
 								trurow = row[l];
 								currentvotes = parseInt(row[l].votes)
 							}
-							
+
 						}
 					}
 
@@ -155,7 +156,7 @@ exports.react = function(reaction,user,added){
 						}
 
 						db.run(`UPDATE memes SET votes="${newvotes}" WHERE url="${trurow.url}"`);
-						logger.log('debug','Counted a meme vote.');
+						logger.log('debug',`Counted a meme vote. ${val} to ${trurow.url}. New votes is ${newvotes}`);
 					}
 				}
 				
