@@ -82,89 +82,93 @@ exports.react = function(reaction,user,added){
 	let urlmeme;
 	let attach = false;
 
-	if(reaction.message.channel.id == '301214003781173249' || reaction.message.channel.id == '208298947997990912'){
-		if(reaction.message.content.includes('http')){
-			meme = true;
-			urlmeme = reaction.message.content;
-			attach = false;
+	if(user.id != reaction.message.author.id){
+		if(reaction.message.channel.id == '301214003781173249' || reaction.message.channel.id == '208298947997990912'){
+			if(reaction.message.content.includes('http')){
+				meme = true;
+				urlmeme = reaction.message.content;
+				attach = false;
 
-			if(reaction.emoji.identifier == '%F0%9F%91%8D'){
-				if(added){
-					val = 1;
-				}else{
-					val = -1;
-				}
-			}else if(reaction.emoji.identifier == '%F0%9F%91%8E'){
-				if(added){
-					val = -1;
-				}else{
-					val = 1;
-				}
-			}
-
-		}else if(reaction.message.attachments.array().length >= 1){
-			meme = true;
-			urlmeme = reaction.message.attachments.first().url;
-			attach = true;
-
-
-
-			if(reaction.emoji.identifier == '%F0%9F%91%8D'){
-				if(added){
-					val = 1;
-				}else{
-					val = -1;
-				}
-			}else if(reaction.emoji.identifier == '%F0%9F%91%8E'){
-				if(added){
-					val = -1;
-				}else{
-					val = 1;
-				}
-			}
-
-		}
-
-		if(meme){
-			db.all(`SELECT url,votes FROM memes`,function(err,row){
-				let trurow = false;
-				if(err){
-					logger.log('error',err)
-				}else{
-					if(attach){
-						for(let l in row){
-							let image = row[l].url.split('/')[6];
-
-							if(urlmeme.includes(image) && image != "" && image != " "){
-								trurow = row[l];
-								currentvotes = parseInt(row[l].votes)
-							}
-						}
+				if(reaction.emoji.identifier == '%F0%9F%91%8D'){
+					if(added){
+						val = 1;
 					}else{
-						for(let l in row){
-
-							if(urlmeme == row[l].url){
-								trurow = row[l];
-								currentvotes = parseInt(row[l].votes)
-							}
-
-						}
+						val = -1;
 					}
-
-					if(trurow != false){
-						newvotes = currentvotes + val;
-
-						if(newvotes >= 10){
-							newvotes = 10;
-						}
-
-						db.run(`UPDATE memes SET votes="${newvotes}" WHERE url="${trurow.url}"`);
-						logger.log('debug',`Counted a meme vote. ${val} to ${trurow.url}. New votes is ${newvotes}`);
+				}else if(reaction.emoji.identifier == '%F0%9F%91%8E'){
+					if(added){
+						val = -1;
+					}else{
+						val = 1;
 					}
 				}
-				
-			})
+
+			}else if(reaction.message.attachments.array().length >= 1){
+				meme = true;
+				urlmeme = reaction.message.attachments.first().url;
+				attach = true;
+
+
+
+				if(reaction.emoji.identifier == '%F0%9F%91%8D'){
+					if(added){
+						val = 1;
+					}else{
+						val = -1;
+					}
+				}else if(reaction.emoji.identifier == '%F0%9F%91%8E'){
+					if(added){
+						val = -1;
+					}else{
+						val = 1;
+					}
+				}
+
+			}
+
+			if(meme){
+				db.all(`SELECT url,votes FROM memes`,function(err,row){
+					let trurow = false;
+					if(err){
+						logger.log('error',err)
+					}else{
+						if(attach){
+							for(let l in row){
+								let image = row[l].url.split('/')[6];
+
+								if(urlmeme.includes(image) && image != "" && image != " "){
+									trurow = row[l];
+									currentvotes = parseInt(row[l].votes)
+								}
+							}
+						}else{
+							for(let l in row){
+
+								if(urlmeme == row[l].url){
+									trurow = row[l];
+									currentvotes = parseInt(row[l].votes)
+								}
+
+							}
+						}
+
+						if(trurow != false){
+							newvotes = currentvotes + val;
+
+							if(newvotes >= 10){
+								newvotes = 10;
+							}
+
+							db.run(`UPDATE memes SET votes="${newvotes}" WHERE url="${trurow.url}"`);
+							logger.log('debug',`Counted a meme vote. ${val} to ${trurow.url}. New votes is ${newvotes}`);
+						}
+					}
+					
+				})
+			}
 		}
+	}else{
+		logger.log('debug',`${user.username} tried to vote on their own meme`)
 	}
 
 }
