@@ -131,7 +131,8 @@ exports.react = function(reaction,user,added){
 					if(attach){
 						for(let l in row){
 							let image = row[l].url.split('/')[6];
-							if(urlmeme.includes(image)){
+
+							if(urlmeme.includes(image) && image != "" && image != " "){
 								trurow = row[l];
 								currentvotes = parseInt(row[l].votes)
 							}
@@ -140,7 +141,6 @@ exports.react = function(reaction,user,added){
 						for(let l in row){
 
 							if(urlmeme == row[l].url){
-								console.log(urlmeme, row[l].url)
 								trurow = row[l];
 								currentvotes = parseInt(row[l].votes)
 							}
