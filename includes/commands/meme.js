@@ -77,6 +77,7 @@ exports.react = function(reaction,user,added){
 	let currentvotes;
 	let newvotes;
 	let urlmeme;
+	let attach = false;
 
 	if(reaction.message.channel.id == '301214003781173249' || reaction.message.channel.id == '208298947997990912'){
 		if(reaction.message.content.includes('http')){
@@ -100,6 +101,7 @@ exports.react = function(reaction,user,added){
 		}else if(reaction.message.attachments.array().length >= 1){
 			meme = true;
 			urlmeme = reaction.message.attachments.first().url;
+			attach = true;
 
 
 
@@ -120,19 +122,31 @@ exports.react = function(reaction,user,added){
 		}
 
 		if(meme){
-			console.log('meme')
 			db.all(`SELECT url,votes FROM memes`,function(err,row){
 				let trurow = false;
 				if(err){
 					logger.log('error',err)
 				}else{
-					for(let l in row){
-						let image = row[l].url.split('/')[6];
-						if(urlmeme.includes(image)){
-							trurow = row[l];
-							currentvotes = parseInt(row[l].votes)
+
+					if(attach){
+						for(let l in row){
+							let image = row[l].url.split('/')[6];
+							if(urlmeme.includes(image)){
+								trurow = row[l];
+								currentvotes = parseInt(row[l].votes)
+							}
+						}
+					}else{
+						for(let l in row){
+
+							if(urlmeme = row[l].url){
+								trurow = row[l];
+								currentvotes = parseInt(row[l].votes)
+							}
+							
 						}
 					}
+
 					if(trurow != false){
 						newvotes = currentvotes + val;
 
