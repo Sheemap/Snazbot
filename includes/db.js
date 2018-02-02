@@ -1,5 +1,6 @@
 'use strict';
 const sqlite3 = require('sqlite3').verbose();
+const logger = require('./logger.js');
 const fs = require('fs');
 
 var db;
@@ -32,14 +33,14 @@ exports.createNew = function(name,callback){
         
     })
 
-    console.log('Database created!')
+    logger.log('info','Database created!')
     callback()
 }
 
 exports.init = function(name,callback){
     name += '.db';
     db = new sqlite3.Database('./data/'+name);
-    console.log('Database initialized!');
+    logger.log('info','Database initialized!');
     callback();
 }
 
