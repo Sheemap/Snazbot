@@ -3,6 +3,7 @@ const common = require('../common.js');
 const app = require('../../app.js');
 const logger = require('../logger.js');
 const fs = require('fs');
+const db = require('../db.js');
 
 exports.description = 'Rolls you a random meme';
 
@@ -20,20 +21,29 @@ exports.main = function(msg,args){
 
 			});
 	}else{
-		if(msg.channel != msg.guild.channels.find('id','301214003781173249')){
+		if(msg.channel == msg.guild.channels.find('id','301214003781173249')){
 			common.sendMsg(msg,'This command only works in the #memes chat.',false,15);
 		}else{
-			fs.readFile('data/memes.txt', function(err, f){
-	    		var memelist = f.toString().split('\n');
-	    		var meme;
+			db.all('SELECT url,votes FROM memes', function(err, rows){
+	    		var memelist = [];
+	    		var meme,
+	    			found = false;
 
-	    		for(let i=0;i<=500;i++){
+	    		for(let w in rows){
+
+	    			for(let x=0;x<=rows[w].votes;x++){
+	    				memelist.push(rows[w].url)
+	    			}
+
+	    		}
+
+	    		for(let i=0;i<=10000;i++){
 					meme = memelist[Math.floor(Math.random()*(memelist.length-1))];
 
 					if(!buffer.includes(meme)){
 						buffer.push(meme);
 
-						if(buffer.length >= 11){
+						if(buffer.length >= 50){
 							buffer.shift();
 						}
 
@@ -42,8 +52,12 @@ exports.main = function(msg,args){
 						}else{
 							common.sendMsg(msg,meme,false,15);
 						}
+						found = true;
 						break;
 					}
+				}
+				if(!found){
+					logger.log('warn','Failed to randomize a meme not in the buffer!');
 				}
 
 			});
@@ -52,50 +66,20 @@ exports.main = function(msg,args){
 }
 
 exports.scrape = function(msg) {
-	if (fs.existsSync('data/memes.txt')) {
+	if(msg.author.id != '208310407201423371'){
+		var seconds = new Date() / 1000;
+  		if(msg.content.includes('http')){
+  			logger.log('info',`Saving meme sent by ${msg.author.username}`);
 
-    	if(msg.author.id != '208310407201423371'){
-
-	  		if(msg.content.includes('http')){
-	  			logger.log('info',`Saving meme sent by ${msg.author.username}`);
-		  		var memeStream = fs.createWriteStream('data/memes.txt', {'flags': 'a'});
-				memeStream.write(msg.content);
-				memeStream.end('\n');
-	  		}
-
-	  		if(msg.attachments.array().length >= 1){
-	  			logger.log('info',`Saving meme sent by ${msg.author.username}`);
-	  			var memeStream = fs.createWriteStream('data/memes.txt', {'flags': 'a'});
-				memeStream.write(msg.attachments.first().url);
-				memeStream.end('\n');
-		  		
-	  		}
-	  		
-	  	}
-
-	}else{
-		logger.log('warn','Meme file doesnt exist! Now creating...')
-		msg.channel.fetchMessages({ limit: 100 })
-  		.then(messages => handlemsg(messages))
-  		.catch(console.error);
-  		let o = 0;
-
-  		function handlemsg(messages){
-  			let msgs = messages.array()
-  			var memeStream = fs.createWriteStream('data/memes.txt', {'flags': 'a'});
-  			for(o in msgs){
-	  			if(msgs[o].author.id != '208310407201423371'){
-			  		if(msgs[o].content.includes('http')){
-				  		memeStream.write(msgs[o].content+'\n');
-			  		}
-			  		if(msgs[o].attachments.array().length >= 1){
-				  		memeStream.write(msgs[o].attachments.first().url+'\n');
-			  		}
-				}
-		  	}
-
-		  	memeStream.end();
+			db.run(`INSERT INTO memes VALUES ("${msg.author.username}","${msg.author.id}","${seconds}","${msg.content}","5")`);
   		}
-	}
-	
+
+  		if(msg.attachments.array().length >= 1){
+  			logger.log('info',`Saving meme sent by ${msg.author.username}`);
+
+	  		db.run(`INSERT INTO memes VALUES ("${msg.author.username}","${msg.author.id}","${seconds}","${msg.attachments.first().url}","5")`);
+  		}
+  		
+  	}
+
 }
