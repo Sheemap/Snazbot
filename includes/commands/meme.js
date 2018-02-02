@@ -21,7 +21,7 @@ exports.main = function(msg,args){
 
 			});
 	}else{
-		if(msg.channel != msg.guild.channels.find('id','301214003781173249')){
+		if(msg.channel == msg.guild.channels.find('id','301214003781173249')){
 			common.sendMsg(msg,'This command only works in the #memes chat.',false,15);
 		}else{
 			db.all('SELECT url,votes FROM memes', function(err, rows){
@@ -67,18 +67,37 @@ exports.main = function(msg,args){
 
 exports.scrape = function(msg) {
 	if(msg.author.id != '208310407201423371'){
-		var seconds = new Date() / 1000;
-  		if(msg.content.includes('http')){
-  			logger.log('info',`Saving meme sent by ${msg.author.username}`);
 
-			db.run(`INSERT INTO memes VALUES ("${msg.author.username}","${msg.author.id}","${seconds}","${msg.content}","5")`);
-  		}
+		db.all('SELECT url,votes FROM memes', function(err, rows){
+			let memes = [];
+			var seconds = new Date() / 1000;
 
-  		if(msg.attachments.array().length >= 1){
-  			logger.log('info',`Saving meme sent by ${msg.author.username}`);
+			for(let u in rows){
+				memes.push(rows[u].url)
+			}
 
-	  		db.run(`INSERT INTO memes VALUES ("${msg.author.username}","${msg.author.id}","${seconds}","${msg.attachments.first().url}","5")`);
-  		}
+	  		if(msg.content.includes('http')){
+
+	  			if(!memes.includes(msg.content)){
+		  			logger.log('info',`Saving meme sent by ${msg.author.username}`);
+
+					db.run(`INSERT INTO memes VALUES ("${msg.author.username}","${msg.author.id}","${seconds}","${msg.content}","5")`);
+				}else{
+					logger.log('info','Not saving duplicate meme');
+				}
+	  		}
+
+	  		if(msg.attachments.array().length >= 1){
+
+	  			if(!memes.includes(msg.attachments.first().url)){
+		  			logger.log('info',`Saving meme sent by ${msg.author.username}`);
+
+			  		db.run(`INSERT INTO memes VALUES ("${msg.author.username}","${msg.author.id}","${seconds}","${msg.attachments.first().url}","5")`);
+			  	}else{
+			  		logger.log('info','Not saving duplicate meme');
+			  	}
+	  		}
+		})
   		
   	}
 
