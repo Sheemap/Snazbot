@@ -80,12 +80,12 @@ exports.parse = function(msg){
 }
 
 exports.react = function(reaction,user,added){
-	let content = msg.content;
+	let content = reaction.message.content;
 	let found = false;
 
-	let authid = msg.author.id;
-	let chanid = msg.channel.id;
-	let servid = msg.guild.id;
+	let authid = reaction.message.author.id;
+	let chanid = reaction.message.channel.id;
+	let servid = reaction.message.guild.id;
 
 	let comm = content.split(' ')[0].replace(app.prefix,'');
 	let args = content.replace(app.prefix+comm+' ','').split(' ');
