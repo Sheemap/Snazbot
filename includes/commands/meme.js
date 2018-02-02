@@ -135,6 +135,11 @@ exports.react = function(reaction,user,added){
 					}
 					if(trurow != false){
 						newvotes = currentvotes + val;
+
+						if(newvotes >= 10){
+							newvotes = 10;
+						}
+
 						db.run(`UPDATE memes SET votes="${newvotes}" WHERE url="${trurow.url}"`);
 						logger.log('debug','Counted a meme vote.');
 					}
