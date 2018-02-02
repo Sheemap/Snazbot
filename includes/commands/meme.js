@@ -9,6 +9,12 @@ exports.description = 'Rolls you a random meme';
 
 exports.usage = `Use "${app.prefix}meme" to fetch a meme.\n\nUse "${app.prefix}meme status" to count the memes available.`;
 
+exports.reactions = `%F0%9F%91%8D,%F0%9F%91%8E`;
+
+//%F0%9F%91%8D = thumbsup
+
+//%F0%9F%91%8E = thumbsdown
+
 var buffer = [];
 
 exports.main = function(msg,args){
@@ -63,6 +69,69 @@ exports.main = function(msg,args){
 			});
 		}
 	}
+}
+
+exports.react = function(reaction,user,added){
+	let val = 0;
+	let meme = false;
+	let currentvotes;
+	let newvotes;
+	let urlmeme;
+
+	if(reaction.message.channel.id == '301214003781173249'){
+		if(reaction.message.content.includes('http')){
+			meme = true;
+			urlmeme = reaction.message.content;
+
+			if(reaction.emoji.identifier == '%F0%9F%91%8D'){
+				if(added){
+					val = 1;
+				}else{
+					val = -1;
+				}
+			}else if(reaction.emoji.identifier == '%F0%9F%91%8E'){
+				if(added){
+					val = -1;
+				}else{
+					val = 1;
+				}
+			}
+
+		}else if(reaction.message.attachments.array().length >= 1){
+			meme = true;
+			urlmeme = reaction.message.attachments.first().url;
+
+			if(reaction.emoji.identifier == '%F0%9F%91%8D'){
+				if(added){
+					val = 1;
+				}else{
+					val = -1;
+				}
+			}else if(reaction.emoji.identifier == '%F0%9F%91%8E'){
+				if(added){
+					val = -1;
+				}else{
+					val = 1;
+				}
+			}
+
+		}
+
+		if(meme){
+			db.get(`SELECT url,votes FROM memes WHERE url="${urlmeme}"`,function(err,row){
+				if(err){
+					logger.log('error',err)
+				}else{
+					currentvotes = parseInt(row.votes)
+					newvotes = currentvotes + val;
+					db.run(`UPDATE memes SET votes="${newvotes}" WHERE url="${urlmeme}"`);
+					logger.log('debug','Counted a meme vote.');
+				}
+				
+			})
+		}
+	}
+
 }
 
 exports.scrape = function(msg) {
