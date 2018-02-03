@@ -10,7 +10,7 @@ exports.createNew = function(name,callback){
 
     var db = new sqlite3.Database('./data/'+name);
     db.serialize(function() {
-        db.run("CREATE TABLE johntime (disNAM TEXT, disID TEXT, timestamp NUMERIC, lateval NUMERIC)");
+        db.run("CREATE TABLE johntime (disNAM TEXT, disID TEXT, timestamp NUMERIC, claim NUMERIC, actual NUMERIC)");
         db.run("CREATE TABLE memes (disNAM TEXT, disID NUMERIC, timestamp NUMERIC, url TEXT, votes NUMERIC)");
 
 
