@@ -105,10 +105,10 @@ client.on('guildMemberAdd', member => {
 client.on('voiceStateUpdate', (oldMember, newMember) => {
     if(newMember.voiceChannelID == "359575807297060875"){
         newMember.addRole('360186010728005652')
-        logger.log('info',`Entered ${newMember.user.username} into the spankbank`)
+        logger.log('debug',`Entered ${newMember.user.username} into the spankbank`)
     }else{
         newMember.removeRole('360186010728005652')
-        logger.log('info',`Removed ${newMember.user.username} from the spankbank`)
+        logger.log('debug',`Removed ${newMember.user.username} from the spankbank`)
     }
 });
 
