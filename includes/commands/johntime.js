@@ -67,20 +67,29 @@ function report(msg,claim,actual){
 			let finalclaim = claim;
 			let finalactual = actual
 
-			common.sendMsg(msg,`Report recieved!\n\nClaimed: ${claim}\nActual: ${actual}\nConfirmations required: ${REQUIRED}\nTime to confirm: ${CONFIRMTIME} seconds`)
+			if(app.admins.includes(authorid)){
+				progress = false;
+				common.sendMsg(msg,`Confirmed report!\n\nClaimed: ${claim}\nActual: ${actual}`);
+				db.run(`INSERT INTO johntime VALUES ("${msg.author.username}","${msg.author.id}","${Date.now()/1000}","${finalclaim}","${finalactual}")`);
+				logger.log('info',`Confirmed a johntime. Claimed: ${finalclaim} Actual: ${finalactual}`);
+			}else{
+				common.sendMsg(msg,`Report recieved!\n\nClaimed: ${claim} minutes\nActual: ${actual} minutes\nConfirmations required: ${REQUIRED}\nTime to confirm: ${CONFIRMTIME} seconds`);
 
-			sleep(CONFIRMTIME*1000).then(function(){
-				if(confirms >= REQUIRED){
-					progress = false;
+				sleep(CONFIRMTIME*1000).then(function(){
+					if(confirms >= REQUIRED){
+						progress = false;
 
-					db.run(`INSERT INTO johntime VALUES ("${msg.author.username}","${msg.author.id}","${Date.now()/1000}","${finalclaim}","${finalactual}")`)
+						db.run(`INSERT INTO johntime VALUES ("${msg.author.username}","${msg.author.id}","${Date.now()/1000}","${finalclaim}","${finalactual}")`)
 
-					common.sendMsg(msg,`Passed with ${confirms}/${REQUIRED} confirmations. Added to database!`,false,15);
-				}else{
-					progress = false;
-					common.sendMsg(msg,`Failed with ${confirms}/${REQUIRED} confirmations.`);
-				}
-			});
+						common.sendMsg(msg,`Passed with ${confirms}/${REQUIRED} confirmations. Added to database!`,false,15);
+						logger.log('info',`Confirmed a johntime. Claimed: ${finalclaim} Actual: ${finalactual}`);
+					}else{
+						progress = false;
+						common.sendMsg(msg,`Failed with ${confirms}/${REQUIRED} confirmations.`);
+						logger.log('info','Vote failed to pass a johntime.')
+					}
+				});
+			}
 		}
 		
 	}

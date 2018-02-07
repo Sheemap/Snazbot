@@ -11,6 +11,7 @@ const token = config.general.token;
 exports.prefix = prefix = config.general.commandprefix;
 exports.autoclean = autoclean = config.general.autoclean;
 exports.logdir = logdir = config.general.logdir;
+exports.admins = admins = config.general.admins.split(',');
 
 
 //Cusom Packages
