@@ -15,6 +15,8 @@ exports.reactions = `%F0%9F%91%8D,%F0%9F%91%8E`;
 
 //%F0%9F%91%8E = thumbsdown
 
+const BUFFERSIZE = 150;
+
 var buffer = [];
 
 exports.main = function(msg,args){
@@ -52,7 +54,7 @@ exports.main = function(msg,args){
 					if(!buffer.includes(meme)){
 						buffer.push(meme);
 
-						if(buffer.length >= 50){
+						if(buffer.length >= BUFFERSIZE){
 							buffer.shift();
 						}
 
