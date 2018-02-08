@@ -100,25 +100,54 @@ function howLong(msg,args){
 		if(isNaN(args[0])){
 			common.sendMsg(msg,`Usage: \`\`\`${exports.usage}\`\`\``,false,15);
 		}else{
-			common.sendMsg(msg,`Johntime is disabled for now! Please submit as much data as you have so we can make it as great as possible. Use !help johntime`,false,15);
-			// if(rows == ""){
-			// 	common.sendMsg(msg,`No data collected on John's lateness.`,false,15);
-			// }else{
-			// 	let added = 0,
-			// 		count = 0,
-			// 		avg;
-			// 	for(let u in rows){
-			// 		count++;
-			// 		added += parseFloat(rows[u].lateval)
-			// 	}
-			// 	avg = +((added/count).toFixed(2));
+			if(rows == "" || rows.length <= 1){
+				common.sendMsg(msg,`Insufficient data collected on John's lateness. If you have something to report, please do so!\n\n!johntime report <claimed arrival> <actual arrival>`,false,15);
+			}else{
+				// X = sum of claimed
+				// Y = sum of actual
+				// XX = sum of claims squared
+				// YY = sum of actuals squared
+				// XY = sum of each claim * actual
+				// N = count of entries
 
-			// 	let newtime = avg+parseFloat(args[0])
+				let x = 0,
+					xx = 0,
+					y = 0,
+					yy = 0,
+					xy = 0,
+					n = 0,
+					claim,
+					actual,
+					a,
+					b,
+					estimate,
+					req = parseFloat(args[0]);
 
-			// 	common.sendMsg(msg,`John will actually be back in ~${newtime} minutes`,false,15);
+				for(let u in rows){
+					n++;
+
+					claim = parseFloat(rows[u].claim);
+					actual = parseFloat(rows[u].actual);
+
+					x += claim;
+					xx += Math.pow(claim,2);
+
+					y += actual;
+					yy += Math.pow(actual,2);
+
+					xy += claim * actual;
+				}
+				
+				a = ( ( y * xx ) - ( x * xy ) ) / ( ( n * xx ) - Math.pow(x,2) );
+
+				b = ( ( n * xy ) - ( x * y ) ) / ( ( n * xx ) - Math.pow(x,2) );
 
 
-			// }
+				estimate = (a + ( b * req )).toFixed(2);
+
+
+				common.sendMsg(msg,`John will actually be back in ~${estimate} minutes`,false,15);
+			}
 		}
 	})
 }
