@@ -45,19 +45,19 @@ exports.parse = function(msg){
 
 
 	if(blackall.indexOf(authid) != -1){
-		logger.log('info','User is blacklisted, not replying.');
+		logger.log('debug','User is blacklisted, not replying.');
 		return;
 	}
 	if(blackall.indexOf(servid) != -1){
-		logger.log('info','Server is blacklisted, not replying.');
+		logger.log('debug','Server is blacklisted, not replying.');
 		return;
 	}
 	if(blackall.indexOf(chanid) != -1){
-		logger.log('info','Channel is blacklisted, not replying.');
+		logger.log('debug','Channel is blacklisted, not replying.');
 		return;
 	}
 	if(blackall.indexOf(comm) != -1){
-		logger.log('info','Command is blacklisted, not replying.');
+		logger.log('debug','Command is blacklisted, not replying.');
 		return;
 	}
 
@@ -92,15 +92,15 @@ exports.react = function(reaction,user,added){
 
 
 	if(blackall.indexOf(authid) != -1){
-		logger.log('info','User is blacklisted, not replying.');
+		logger.log('debug','User is blacklisted, not replying.');
 		return;
 	}
 	if(blackall.indexOf(servid) != -1){
-		logger.log('info','Server is blacklisted, not replying.');
+		logger.log('debug','Server is blacklisted, not replying.');
 		return;
 	}
 	if(blackall.indexOf(chanid) != -1){
-		logger.log('info','Channel is blacklisted, not replying.');
+		logger.log('debug','Channel is blacklisted, not replying.');
 		return;
 	}
 
