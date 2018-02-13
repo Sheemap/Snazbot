@@ -33,6 +33,10 @@ exports.main = function(msg,args){
 			common.sendMsg(msg,`Usage: \`\`\`${exports.usage}\`\`\``,false,15);
 			break;
 
+		case 'data':
+			data(msg,args);
+			break;
+
 		default:
 			howLong(msg,args);
 			break;
@@ -93,6 +97,53 @@ function report(msg,claim,actual){
 		}
 		
 	}
+}
+
+function data(msg,args){
+	db.all(`SELECT * FROM johntime`, function(err,rows){
+		let x = 0,
+		xx = 0,
+		y = 0,
+		yy = 0,
+		xy = 0,
+		n = 0,
+		claim,
+		actual,
+		a,
+		b,
+		algo,
+		points = '',
+		req = parseFloat(args[0]);
+
+	for(let u in rows){
+		n++;
+
+		claim = parseFloat(rows[u].claim);
+		actual = parseFloat(rows[u].actual);
+
+		x += claim;
+		xx += Math.pow(claim,2);
+
+		y += actual;
+		yy += Math.pow(actual,2);
+
+		xy += claim * actual;
+
+		points += `(${claim},${actual}) : `;
+	}
+	
+	points += 'END';
+	points = points.replace(' : END','');
+
+	a = ( ( y * xx ) - ( x * xy ) ) / ( ( n * xx ) - Math.pow(x,2) );
+
+	b = ( ( n * xy ) - ( x * y ) ) / ( ( n * xx ) - Math.pow(x,2) );
+
+
+	algo = `y = ${a.toFixed(2)} + ( m * ${b.toFixed(2)} )\n\nm = time requested\ny = time estimated`
+
+	common.sendMsg(msg,`Currently using ${n} data points to calculate johntime.\n\nPoints: ${points}\n\nEquation derived from data: ${algo}`,false,15);
+	})
 }
 
 function howLong(msg,args){
