@@ -16,6 +16,7 @@ exports.reactions = `%F0%9F%91%8D,%F0%9F%91%8E`;
 //%F0%9F%91%8E = thumbsdown
 
 const BUFFERSIZE = 150;
+const MAXVOTE = 20;
 
 var buffer = [];
 
@@ -157,8 +158,8 @@ exports.react = function(reaction,user,added){
 						if(trurow != false){
 							newvotes = currentvotes + val;
 
-							if(newvotes >= 10){
-								newvotes = 10;
+							if(newvotes >= MAXVOTE){
+								newvotes = MAXVOTE;
 							}
 
 							db.run(`UPDATE memes SET votes="${newvotes}" WHERE url="${trurow.url}"`);
