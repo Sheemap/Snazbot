@@ -7,7 +7,7 @@ const db = require('../db.js');
 
 exports.description = 'Rolls you a random meme';
 
-exports.usage = `Use "${app.prefix}meme" to fetch a meme.\n\nUse "${app.prefix}meme status" to count the memes available.`;
+exports.usage = `Use "${app.prefix}meme" to fetch a meme.\n\nUse "${app.prefix}meme status" to count the memes available.\n\nUse "${app.prefix}meme points" to see how many points your memes have gathered.\n\nUse "${app.prefix}meme points <username>" to see how many points other peoples memes have gathered.`;
 
 exports.reactions = `%F0%9F%91%8D,%F0%9F%91%8E`;
 
@@ -32,6 +32,42 @@ exports.main = function(msg,args){
 			common.sendMsg(msg,`There are currently **${count}** memes in stock.`,false,15);
 
 		});
+	}else if(args.length >= 1 && args[0] == 'points'){
+		if(args.length >= 2){
+			let members = msg.channel.guild.members.array();
+			let count = 0;
+			let disID;
+			let name;
+			for(let mem in members){
+				if(members[mem].user.username.toLowerCase().includes(args[1].toLowerCase())){
+					count++;
+					disID = members[mem].user.id;
+					name = members[mem].user.username;
+				}
+			}
+			if(count > 1){
+				common.sendMsg(msg,`Multiple users found by that name! Try something more specific.`,false,15);
+			}else if(count == 0){
+				common.sendMsg(msg,`No users found by that name! Try again!`,false,15);
+			}else if(count == 1){
+				db.all(`SELECT * FROM memes WHERE disID="${disID}"`, function(err, rows){
+				let score = 0;
+				for(let y in rows){
+					score += parseInt(rows[y].votes) - 5;
+				}
+
+				common.sendMsg(msg,`${name} currently has **${score}** meme points.`,false,15);
+			})
+			}
+		}else{
+			db.all(`SELECT * FROM memes WHERE disID="${msg.author.id}"`, function(err, rows){
+				let score = 0;
+				for(let y in rows){
+					score += parseInt(rows[y].votes) - 5;
+				}
+				common.sendMsg(msg,`You currently have **${score}** meme points.`,true,15);
+			})
+		}
 	}else{
 		if(msg.channel != msg.guild.channels.find('id','301214003781173249')){
 			common.sendMsg(msg,'This command only works in the #memes chat.',false,15);
