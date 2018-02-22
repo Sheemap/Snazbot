@@ -31,7 +31,7 @@ function checkPoints(disID,callback){
 			memecount++;
 		}
 		if(!memecount == 0){
-			avg = score/memecount;
+			avg = (score/memecount).toFixed(2);
 		}
 
 		callback(score,avg,memecount)
