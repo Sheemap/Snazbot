@@ -67,7 +67,11 @@ exports.parse = function(msg){
 	for(let command in comms){
 		if(comm == command){
 			found = true;
-			comms[command].main(msg,args)
+			if(typeof(comms[command].main) !== 'undefined'){
+				comms[command].main(msg,args)
+			}else{
+				logger.log('error',`User issued command "${command}", but theres no main function defined!`);
+			}
 		}
 	}
 	if(comm == 'help'){
@@ -104,11 +108,14 @@ exports.react = function(reaction,user,added){
 		return;
 	}
 
-
 	for(let c in comms){
 		if(typeof(comms[c].reactions) !== 'undefined'){
 			if(comms[c].reactions.split(',').includes(reaction.emoji.identifier)){
-				comms[c].react(reaction,user,added)
+				if(typeof(comms[c].react) !== 'undefined'){
+					comms[c].react(reaction,user,added)
+				}else{
+					logger.log('error',`Reaction recognized for "${c}", but command has no reaction function!`);
+				}
 			}
 		}
 	}
