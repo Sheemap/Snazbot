@@ -20,6 +20,25 @@ const MAXVOTE = 20;
 
 var buffer = [];
 
+function checkPoints(disID,callback){
+	let score = 0;
+	let memecount = 0;
+	let avg = 0;
+	db.all(`SELECT * FROM memes WHERE disID="${disID}"`, function(err, rows){
+		
+		for(let y in rows){
+			score += parseInt(rows[y].votes) - 5;
+			memecount++;
+		}
+		if(!memecount == 0){
+			avg = score/memecount;
+		}
+
+		callback(score,avg,memecount)
+	})
+	
+}
+
 exports.main = function(msg,args){
 	if(args.length >= 1 && args[0] == 'status'){
 		db.all('SELECT * FROM memes', function(err, rows){
@@ -45,27 +64,25 @@ exports.main = function(msg,args){
 					name = members[mem].user.username;
 				}
 			}
+
 			if(count > 1){
 				common.sendMsg(msg,`Multiple users found by that name! Try something more specific.`,false,15);
+
 			}else if(count == 0){
 				common.sendMsg(msg,`No users found by that name! Try again!`,false,15);
-			}else if(count == 1){
-				db.all(`SELECT * FROM memes WHERE disID="${disID}"`, function(err, rows){
-				let score = 0;
-				for(let y in rows){
-					score += parseInt(rows[y].votes) - 5;
-				}
 
-				common.sendMsg(msg,`${name} currently has **${score}** meme points.`,false,15);
-			})
+			}else if(count == 1){
+
+				checkPoints(disID,function(score,avg,memecount){
+					common.sendMsg(msg,`${name} currently has **${score}** meme points. They've posted **${memecount}** memes, which is an average of **${avg}** points per meme.`,false,15);
+				})
+
+				
 			}
 		}else{
-			db.all(`SELECT * FROM memes WHERE disID="${msg.author.id}"`, function(err, rows){
-				let score = 0;
-				for(let y in rows){
-					score += parseInt(rows[y].votes) - 5;
-				}
-				common.sendMsg(msg,`You currently have **${score}** meme points.`,true,15);
+
+			checkPoints(msg.author.id,function(score,avg,memecount){
+				common.sendMsg(msg,`You currently have **${score}** meme points. You've posted **${memecount}** memes, which is an average of **${avg}** points per meme.`,true,15);
 			})
 		}
 	}else{
