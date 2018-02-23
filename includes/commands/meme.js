@@ -17,6 +17,7 @@ exports.reactions = `%F0%9F%91%8D,%F0%9F%91%8E`;
 
 const BUFFERSIZE = 150;
 const MAXVOTE = 20;
+const STARTSCORE = 5;
 
 var buffer = [];
 
@@ -27,7 +28,7 @@ function checkPoints(disID,callback){
 	db.all(`SELECT * FROM memes WHERE disID="${disID}"`, function(err, rows){
 		
 		for(let y in rows){
-			score += parseInt(rows[y].votes) - 5;
+			score += parseInt(rows[y].votes) - STARTSCORE;
 			memecount++;
 		}
 		if(!memecount == 0){
@@ -249,7 +250,7 @@ exports.scrape = function(msg) {
 		  			if(!memes.includes(msg.content)){
 			  			logger.log('info',`Saving meme sent by ${msg.author.username}`);
 
-						db.run(`INSERT INTO memes VALUES ("${msg.author.username}","${msg.author.id}","${seconds}","${msg.content}","5")`);
+						db.run(`INSERT INTO memes VALUES ("${msg.author.username}","${msg.author.id}","${seconds}","${msg.content}","${STARTSCORE}")`);
 					}else{
 						logger.log('info','Not saving duplicate meme');
 					}
@@ -267,7 +268,7 @@ exports.scrape = function(msg) {
 		  			if(unique){
 			  			logger.log('info',`Saving meme sent by ${msg.author.username}`);
 
-				  		db.run(`INSERT INTO memes VALUES ("${msg.author.username}","${msg.author.id}","${seconds}","${msg.attachments.first().url}","5")`);
+				  		db.run(`INSERT INTO memes VALUES ("${msg.author.username}","${msg.author.id}","${seconds}","${msg.attachments.first().url}","${STARTSCORE}")`);
 				  	}else{
 				  		logger.log('info','Not saving duplicate meme');
 				  	}
