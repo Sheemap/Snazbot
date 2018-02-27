@@ -27,6 +27,6 @@ exports.main = function(msg,args){
 			logger.log('info',`Cleaned ${x} messages.`);
 		}
 	}else{
-		common.sendMsg(msg,'This command is currently disabled.'false,15);
+		common.sendMsg(msg,'This command is currently disabled.',false,15);
 	}
 }
