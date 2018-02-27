@@ -58,12 +58,13 @@ function dbCallback(){
 
 
 client.on('ready', () => {
-  logger.log('info',`Logged in as ${client.user.tag}`);
+    exports.BOTID = BOTID = client.user.id;
+    logger.log('info',`Logged in as ${client.user.tag}`);
 });
 
 
 client.on('message', msg => {
-    if(exports.christ && msg.guild.id == '104981147770990592' && msg.author.id != '208310407201423371' && msg.channel.id == '406571477916319745'){
+    if(exports.christ && msg.guild.id == '104981147770990592' && msg.author.id != BOTID && msg.channel.id == '406571477916319745'){
         filter.filter(msg);
     }
     if(msg.content.startsWith(prefix)){
@@ -71,7 +72,7 @@ client.on('message', msg => {
     }else if(msg.channel.id == '301214003781173249' || msg.channel.id == '208298947997990912'){
         meme.scrape(msg);
     }
-    if(!msg.content.toLowerCase().includes('jim') && msg.guild.id == '384946871103258626' && msg.author.id != '208310407201423371'){
+    if(!msg.content.toLowerCase().includes('jim') && msg.guild.id == '384946871103258626' && msg.author.id != BOTID){
         msg.delete();
         logger.log('info','Offending Jim message from '+msg.author.username);
     }
@@ -88,7 +89,7 @@ client.on('messageReactionRemove', (reaction,user) => {
 })
 
 client.on('messageUpdate', (omsg,nmsg) => {
-    if(!nmsg.content.toLowerCase().includes('jim') && nmsg.guild.id == '384946871103258626' && nmsg.author.id != '208310407201423371'){
+    if(!nmsg.content.toLowerCase().includes('jim') && nmsg.guild.id == '384946871103258626' && nmsg.author.id != BOTID){
         nmsg.delete();
         logger.log('info','Offending Jim edit from '+nmsg.author.username);
     }

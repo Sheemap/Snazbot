@@ -231,7 +231,7 @@ exports.react = function(reaction,user,added){
 }
 
 exports.scrape = function(msg) {
-	if(msg.author.id != '208310407201423371'){
+	if(msg.author.id != app.BOTID){
 
 		if(msg.channel.id == '208298947997990912' || msg.channel.id == '301214003781173249'){
 

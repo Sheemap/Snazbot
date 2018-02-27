@@ -61,6 +61,11 @@ exports.parse = function(msg){
 		return;
 	}
 
+	if(msg.author.id == app.BOTID){
+		logger.log('debug','Not responding to self')
+		return;
+	}
+
 
 	logger.log('info',`Command from ${msg.author.username}: ${msg.content}`)
 
@@ -110,7 +115,7 @@ exports.react = function(reaction,user,added){
 
 	for(let c in comms){
 		if(typeof(comms[c].reactions) !== 'undefined'){
-			if(comms[c].reactions.split(',').includes(reaction.emoji.identifier)){
+			if(comms[c].reactions.split(',').includes(reaction.emoji.identifier) || comms[c].reactions.split(',').includes(reaction.emoji.toString())){
 				if(typeof(comms[c].react) !== 'undefined'){
 					comms[c].react(reaction,user,added)
 				}else{
