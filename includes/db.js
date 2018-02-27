@@ -18,6 +18,23 @@ exports.createNew = function(name,callback){
         var seconds = new Date() / 1000;
         db.run(`INSERT INTO chungus VALUES ("chungus","000","${seconds}","0","0")`);
 
+        db.run("CREATE TABLE events (disNAM TEXT, disID TEXT, timestamp NUMERIC, name TEXT, frequency TEXT, notify_day TEXT, notify_frequency TEXT, default_times TEXT, invites TEXT, channelID TEXT, responses TEXT)");
+
+        /*
+
+    event args:
+        -n name
+        -f frequency (one time, weekly)
+        -i invitees (who to send invites to, cant be used with -c)
+        -c channel id (where to send invites)
+        -d default times (which emojis will be auto placed 1-24)
+        -n notify day (when to first send invites)
+        -w wait time between notifications (how long to wait before sending reminder invite)
+
+        */
+
+
+
 
         // IMPORT PLAINTEXT MEMERS
 
