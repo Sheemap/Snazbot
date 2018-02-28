@@ -278,6 +278,40 @@ function createEvent(msg,oldargs){
 
 	}
 
+	function argDefaultTimes(opt){
+		if(typeof(opt[2]) !== 'undefined'){
+			data.error += 'Time list cannot contain spaces! Please seperate with commas only.\n\n';
+			return;
+		}
+
+		let timelist = opt[1].split(','),
+			times = [],
+			time;
+
+		for(let i in timelist){
+			time = timelist[i].replace(':','');
+
+			if(isNaN(time)){
+				data.error += `${timelist[i]} is formatted incorrectly! Times must be in 24HR format with 2 digits. No AM PM. Ex: 11, 13, 24, etc...\n\n`;
+				return;
+			}
+
+			if(time.length != 2){
+				data.error += `${timelist[i]} is formatted incorrectly! Times must be in 24HR format with 2 digits. No AM PM. Ex: 11, 13, 24, etc...\n\n`;
+				return;
+			}
+
+			if(times.indexOf(time) != -1){
+				data.error += `${timelist[i]} is a duplicate time. Please enter each hour only once.`;
+				return;
+			}
+
+			times.push(time);
+		}
+
+		data.default_times = times;
+	}
+
 	
 	console.log(data)
 }
