@@ -168,6 +168,14 @@ function createEvent(msg,oldargs){
 			case 'nt':
 				argNotifyTime(opt);
 				break;
+
+			case 'rn':
+				argRequiredNum(opt);
+				break;
+
+			case 'rp':
+				argRequiredPerson(opt);
+				break;
 		}
 	}
 
@@ -210,9 +218,22 @@ function createEvent(msg,oldargs){
 			return;
 		}
 
+		let memberlist = [];
+		let memberids = [];
+		let guilds = app.client.guilds.array();
+		for(let i in guilds){
+			let members = guilds[i].members.array();
+			for(let w in members){
+				if(memberids.indexOf(members[w].id) == -1){
+					memberlist.push(members[w]);
+					memberids.push(members[w].id);
+				}
+			}
+		}
+
 		let invites = {};
 		let invitelist = opt[1].split(',');
-		let memberlist = msg.channel.guild.members.array();
+		// let memberlist = msg.channel.guild.members.array();
 		let disID,
 			disNAM,
 			count = 0;
@@ -244,9 +265,10 @@ function createEvent(msg,oldargs){
 
 			invites[disID] = {disNAM: disNAM};
 
-			data.invites = invites;
-
 		}
+
+		invites[data.disID] = {disNAM: data.disNAM};
+		data.invites = invites;
 	}
 
 	function argChannel(opt){
@@ -393,6 +415,82 @@ function createEvent(msg,oldargs){
 		}
 
 		data.notify_time = int_time;
+
+	}
+
+	function argRequiredNum(opt){
+		if(typeof(opt[2]) !== 'undefined' && opt[2] !== '' && opt[2] !== ''){
+			data.error += 'Only one number. No spaces.\n\n';
+			return;
+		}
+
+		if(isNaN(opt[1])){
+			data.error += 'Required amount of people must be a number.\n\n';
+			return;
+		}
+
+		let num = parseInt(opt[1]);
+
+		data.required_num = num;
+	}
+
+	function argRequiredPerson(opt){
+
+		if(typeof(opt[2]) !== 'undefined' && opt[2] !== ''){
+			data.error += 'Required people list cannot contain spaces! Please seperate with commas only.\n\n';
+			return;
+		}
+
+		let memberlist = [];
+		let memberids = [];
+		let guilds = app.client.guilds.array();
+		for(let i in guilds){
+			let members = guilds[i].members.array();
+			for(let w in members){
+				if(memberids.indexOf(members[w].id) == -1){
+					memberlist.push(members[w]);
+					memberids.push(members[w].id);
+				}
+			}
+		}
+
+		let required_people = [];
+		let reqlist = opt[1].split(',');
+		// let memberlist = msg.channel.guild.members.array();
+		let disID,
+			disNAM,
+			count = 0;
+
+		for(let i in reqlist){
+			disID = '';
+			disNAM = '';
+			count = 0;
+			for(let mem in memberlist){
+				if(memberlist[mem].user.username.toLowerCase().includes(reqlist[i].toLowerCase())){
+					count++;
+					disID = memberlist[mem].user.id;
+					disNAM = memberlist[mem].user.username;
+				}
+			}
+			if(count <= 0){
+				data.error += `No user found matching name "${reqlist[i]}"\n\n`
+				return;
+			}else if(count >= 2){
+				data.error += `Multiple users found matching the name "${reqlist[i]}"\n\n`
+				return;
+			}
+
+			if(disID == '' || disNAM == ''){
+				logger.log('error',`Found a user matching name "${reqlist[i]}", but didnt set data. Unknown cause.`);
+				data.error += `Unknown error! Report to <@104848260954357760> please.`
+				return;
+			}
+
+			required_people.push(disID);
+
+		}
+
+		data.required_people = required_people;
 
 	}
 
