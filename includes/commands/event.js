@@ -115,7 +115,8 @@ exports.react = function(reaction,user,added){
 		-i invitees (who to send invites to, cant be used with -c)
 		-c channel id (where to send invites)
 		-d default times (which emojis will be auto placed 1-24)
-		-n notify day (when to first send invites)
+		-nd notify day (when to first send invites)
+		-nt notify time (what time to send invites)
 		-w wait time between notifications (how long to wait before sending reminder invite)
 */
 function createEvent(msg,oldargs){
@@ -159,11 +160,19 @@ function createEvent(msg,oldargs){
 			case 'd':
 				argDefaultTimes(opt);
 				break;
+
+			case 'nd':
+				argNotifyDay(opt);
+				break;
+
+			case 'nt':
+				argNotifyTime(opt);
+				break;
 		}
 	}
 
 	function argName(opt){
-		if(typeof(opt[2]) !== 'undefined'){
+		if(typeof(opt[2]) !== 'undefined' && opt[2] !== ''){
 			data.error += 'Event name cannot contain spaces!\n\n';
 			return;
 		}
@@ -172,7 +181,7 @@ function createEvent(msg,oldargs){
 	}
 
 	function argFrequency(opt){
-		if(typeof(opt[2]) !== 'undefined'){
+		if(typeof(opt[2]) !== 'undefined' && opt[2] !== ''){
 			data.error += 'Frequency cannot contain spaces!\n\n';
 			return;
 		}
@@ -196,7 +205,7 @@ function createEvent(msg,oldargs){
 		}
 		inv_method = true;
 
-		if(typeof(opt[2]) !== 'undefined'){
+		if(typeof(opt[2]) !== 'undefined' && opt[2] !== ''){
 			data.error += 'Invite list cannot contain spaces! Please seperate with commas only.\n\n';
 			return;
 		}
@@ -253,7 +262,7 @@ function createEvent(msg,oldargs){
 			return;
 		}
 
-		if(typeof(opt[2]) !== 'undefined'){
+		if(typeof(opt[2]) !== 'undefined' && opt[2] !== ''){
 			data.error += 'Channel ID cannot contain spaces! Please seperate with commas only.\n\n';
 			return;
 		}
@@ -279,7 +288,7 @@ function createEvent(msg,oldargs){
 	}
 
 	function argDefaultTimes(opt){
-		if(typeof(opt[2]) !== 'undefined'){
+		if(typeof(opt[2]) !== 'undefined' && opt[2] !== ''){
 			data.error += 'Time list cannot contain spaces! Please seperate with commas only.\n\n';
 			return;
 		}
@@ -296,13 +305,13 @@ function createEvent(msg,oldargs){
 				return;
 			}
 
-			if(time.length != 2){
+			if(time.length < 1 || time.length > 2){
 				data.error += `${timelist[i]} is formatted incorrectly! Times must be in 24HR format with 2 digits. No AM PM. Ex: 11, 13, 24, etc...\n\n`;
 				return;
 			}
 
 			if(times.indexOf(time) != -1){
-				data.error += `${timelist[i]} is a duplicate time. Please enter each hour only once.`;
+				data.error += `${timelist[i]} is a duplicate time. Please enter each hour only once.\n\n`;
 				return;
 			}
 
@@ -312,6 +321,85 @@ function createEvent(msg,oldargs){
 		data.default_times = times;
 	}
 
+	function argNotifyDay(opt){
+		if(typeof(opt[2]) !== 'undefined' && opt[2] !== '' && opt[2] !== ''){
+			data.error += 'There can only be one notify day! No spaces.\n\n';
+			return;
+		}
+
+		let day;
+
+		switch(opt[1]){
+			case 'm': case 'mon': case 'monday':
+				day = 'mon';
+				break;
+
+			case 'tu': case 'tue': case 'tuesday':
+				day = 'tue';
+				break;
+				
+			case 'w': case 'wed': case 'wednesday':
+				day = 'wed';
+				break;
+				
+			case 'th': case 'thu': case 'thursday':
+				day = 'thu';
+				break;
+				
+			case 'f': case 'fri': case 'friday':
+				day = 'fri';
+				break;
+				
+			case 'sa': case 'sat': case 'saturday':
+				day = 'sat';
+				break;
+			
+			case 'su': case 'sun': case 'sunday':
+				day = 'sun';
+				break;
+
+			default:
+				data.error += `Unrecognized day of week "${opt[1]}". Please use 3 letter format. Ex: Mon, Tue, Thu, Fri etc...\n\n`;
+				return;
+				break;
+		}
+
+		data.notify_day = day;
+	}
+
+	function argNotifyTime(opt){
+		console.log('o',opt[2],'o')
+		if(typeof(opt[2]) !== 'undefined' && opt[2] !== '' && opt[2] !== ''){
+			data.error += 'There can only be one notify time! No spaces.\n\n';
+			return;
+		}
+
+		let time = opt[1].replace(':','');
+
+		if(isNaN(time)){
+			data.error += `Notify time is formatted incorrectly! Time must be in 24HR format with 2 digits. No AM PM. Ex: 11, 13, 24, etc...\n\n`;
+			return;
+		}
+
+		if(time.length > 2 || time.length < 1){
+			data.error += `Notify time is formatted incorrectly! Time must be in 24HR format with 2 digits. No AM PM. Ex: 11, 13, 24, etc...\n\n`;
+			return;
+		}
+
+		let int_time = parseInt(time);
+		if(int_time < 0 || int_time > 24){
+			data.error += `Notify time is invalid! Time must be between 0-24.\n\n`;
+			return;
+		}
+
+		data.notify_time = int_time;
+
+	}
+
 	
 	console.log(data)
+
+	if(data.error != ''){
+		common.sendMsg(msg,`**Errors occured**\n${data.error}`);
+	}
 }
