@@ -4,6 +4,8 @@ const app = require('../../app.js');
 const logger = require('../logger.js');
 
 const sleep = require('sleep-promise');
+const timestring = require('timestring');
+const schedule = require('node-schedule');
 
 exports.description = 'Auto scheduling';
 
@@ -12,6 +14,12 @@ exports.usage = `Use ${app.prefix}event to do things.`;
 
 
 exports.reactions = "<:99_1am:416844243496075274>,<:98_2am:416844317966204939>,<:97_3am:416844328183267328>,<:96_4am:416844336685252608>,<:95_5am:416844348395618304>,<:94_6am:416844353701412881>,<:93_7am:416844359481294848>,<:92_8am:416844363876794388>,<:91_9am:416844368008183819>,<:90_10am:416844374849093642>,<:89_11am:416844380092104706>,<:88_12pm:416844385049903105>,<:87_1pm:416844391563395072>,<:86_2pm:416844397007732737>,<:85_3pm:416844406151446550>,<:84_4pm:416844412065153024>,<:83_5pm:416844419765895168>,<:82_6pm:416844430776205312>,<:81_7pm:416844438497918977>,<:80_8pm:416844447268208651>,<:79_9pm:416844454742458389>,<:78_10pm:416844460656295937>,<:77_11pm:416844466578653185>,<:76_12am:416844473453117440>";
+
+
+const F_DEFAULT = 'one-time';
+const ND_DEFAULT = 'sun';
+const NT_DEFAULT = '12';
+const NW_DEFAULT = '86400'; // 86400s is 24h
 
 
 // Database structure
@@ -110,14 +118,16 @@ exports.react = function(reaction,user,added){
 
 /*
 	args:
-		-t title/name
+		-n title/name
 		-f frequency (one time, weekly)
 		-i invitees (who to send invites to, cant be used with -c)
 		-c channel id (where to send invites)
-		-d default times (which emojis will be auto placed 1-24)
+		-dt default times (which emojis will be auto placed 1-24)
 		-nd notify day (when to first send invites)
 		-nt notify time (what time to send invites)
-		-w wait time between notifications (how long to wait before sending reminder invite)
+		-rn required num to consider a valid day
+		-rp required attendees to consider valid day
+		-nw wait time between notifications (how long to wait before sending reminder invite)
 */
 function createEvent(msg,oldargs){
 
@@ -131,9 +141,7 @@ function createEvent(msg,oldargs){
 		error: '',
 		disNAM: msg.author.username,
 		disID: msg.author.id,
-		timestamp: new Date() / 1000,
-		name: '',
-		frequency: ''
+		timestamp: new Date() / 1000
 	}
 
 	for(let i in args){
@@ -141,7 +149,7 @@ function createEvent(msg,oldargs){
 
 		switch(opt[0]){
 			// t stands for title
-			case 't':
+			case 'n':
 				argName(opt);
 				break;
 
@@ -157,7 +165,7 @@ function createEvent(msg,oldargs){
 				argChannel(opt);
 				break;
 
-			case 'd':
+			case 'dt':
 				argDefaultTimes(opt);
 				break;
 
@@ -167,6 +175,10 @@ function createEvent(msg,oldargs){
 
 			case 'nt':
 				argNotifyTime(opt);
+				break;
+
+			case 'nw':
+				argWait(opt);
 				break;
 
 			case 'rn':
@@ -482,7 +494,7 @@ function createEvent(msg,oldargs){
 
 			if(disID == '' || disNAM == ''){
 				logger.log('error',`Found a user matching name "${reqlist[i]}", but didnt set data. Unknown cause.`);
-				data.error += `Unknown error! Report to <@104848260954357760> please.`
+				data.error += `Unknown error! Report to <@104848260954357760> please.\n\n`
 				return;
 			}
 
@@ -494,10 +506,106 @@ function createEvent(msg,oldargs){
 
 	}
 
+	function argWait(opt){
+
+		let newopt = opt
+		newopt.shift();
+
+		let time = timestring(newopt.join(' '));
+
+		if(time == 0){
+			data.error += `Notify delay format was incorrect! Please use format such as this "1d 3h 20m"\n\n`;
+			return;
+		}
+
+		// 21600s = 6h
+		if(time < 21600){
+			data.error += `Notify delay has to be at least 6h.\n\n`;
+			return;
+		}
+
+		data.notify_wait = time;
+
+	}
+
+
+	if(typeof(data.name) === 'undefined'){
+		data.error += `Event name is required! Set it with -n\n\n`;
+	}
+	if(typeof(data.channel) === 'undefined' && typeof(data.invites) === 'undefined'){
+		data.error += `Please select an invite method. Either -c or -i\n\n`;
+	}
 	
-	console.log(data)
 
 	if(data.error != ''){
 		common.sendMsg(msg,`**Errors occured**\n${data.error}`);
+		return;
 	}
+
+
+//set defaults
+
+	if(typeof(data.frequency) === 'undefined'){
+		data.frequency = F_DEFAULT;
+	}
+
+	if(typeof(data.notify_day) === 'undefined'){
+		data.notify_day = ND_DEFAULT;
+	}
+
+	if(typeof(data.notify_time) === 'undefined'){
+		data.notify_time = NT_DEFAULT;
+	}
+
+	if(typeof(data.notify_wait) === 'undefined'){
+		data.notify_wait = NW_DEFAULT;
+	}
+
+	let fullmsg = 'Do these options look correct to you? (y/n)\n\n';
+
+	fullmsg += `Name: **${data.name}**\nFrequency: **${data.frequency}**\nNotification day: **${data.notify_day}**\nNotification time: **${data.notify_time}**\nRecurring notify delay: **${(data.notify_wait/60/60).toFixed(2)}h**\n`;
+
+	if(typeof(data.channel) !== 'undefined'){
+		fullmsg += `Invite channel ID: **${data.channel}**\n`;
+	}
+
+	if(typeof(data.invites) !== 'undefined'){
+		fullmsg += `Invited users: `
+		for(let i in data.invites){
+			fullmsg += `**${data.invites[i].disNAM}**, `;
+		}
+		fullmsg += `\n`;
+	}
+
+	if(typeof(data.default_times) !== 'undefined'){
+		fullmsg += `Default start times: **${data.default_times.join(', ')}**\n`;
+	}
+
+	if(typeof(data.required_num) !== 'undefined'){
+		fullmsg += `Required participants: **${data.required_num}**\n`
+	}
+
+	if(typeof(data.required_people) !== 'undefined'){
+		fullmsg += `Required people (ID): **${data.required_people.join(', ')}**\n`;
+	}
+
+	common.sendMsg(msg,fullmsg);
+
+	const filter = m => (m.content.toLowerCase().startsWith('y') && m.author == msg.author || m.content.toLowerCase().startsWith('n') && m.author == msg.author);
+
+	msg.channel.awaitMessages(filter, { max: 1, time: 30000, errors: ['time'] })
+  		.then(collected => finish(collected))
+  		.catch(collected => common.sendMsg(msg,'No response recieved in 30 seconds. Try again.'));
+
+  	function finish(res){
+  		res = res.first();
+
+  		if(res.content.toLowerCase().startsWith('y')){
+  			common.sendMsg(msg,'Event created!')
+  		}else{
+  			common.sendMsg(msg,'Cancelling event creation. Try again soon!')
+  		}
+  	}
+
+	console.log(data)
 }
