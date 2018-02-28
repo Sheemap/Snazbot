@@ -2,6 +2,7 @@
 const common = require('../common.js');
 const app = require('../../app.js');
 const logger = require('../logger.js');
+const db = require('../db.js');
 
 const sleep = require('sleep-promise');
 const timestring = require('timestring');
@@ -122,6 +123,7 @@ exports.react = function(reaction,user,added){
 		-f frequency (one time, weekly)
 		-i invitees (who to send invites to, cant be used with -c)
 		-c channel id (where to send invites)
+		-s start date
 		-dt default times (which emojis will be auto placed 1-24)
 		-nd notify day (when to first send invites)
 		-nt notify time (what time to send invites)
@@ -131,11 +133,11 @@ exports.react = function(reaction,user,added){
 */
 function createEvent(msg,oldargs){
 
-	let inv_method = false;
-
 	//parse msg content
 	var args = msg.content.split('-');
 	args.shift();
+
+	var date_select = false;
 
 	var data = {
 		error: '',
@@ -144,468 +146,552 @@ function createEvent(msg,oldargs){
 		timestamp: new Date() / 1000
 	}
 
-	for(let i in args){
-		let opt = args[i].split(' ');
+	db.all('SELECT * FROM events',function(err,rows){
+		
+		var current_events = rows;
 
-		switch(opt[0]){
-			// t stands for title
-			case 'n':
-				argName(opt);
-				break;
+		for(let i in args){
+			let opt = args[i].split(' ');
 
-			case 'f':
-				argFrequency(opt);
-				break;
+			switch(opt[0]){
+				// t stands for title
+				case 'n':
+					argName(opt);
+					break;
 
-			case 'i':
-				argInvites(opt);
-				break;
+				case 'f':
+					argFrequency(opt);
+					break;
 
-			case 'c':
-				argChannel(opt);
-				break;
+				case 'i':
+					argInvites(opt);
+					break;
 
-			case 'dt':
-				argDefaultTimes(opt);
-				break;
+				case 'c':
+					argChannel(opt);
+					break;
 
-			case 'nd':
-				argNotifyDay(opt);
-				break;
+				case 's':
+					argStartDate(opt);
+					break;
 
-			case 'nt':
-				argNotifyTime(opt);
-				break;
+				case 'dt':
+					argDefaultTimes(opt);
+					break;
 
-			case 'nw':
-				argWait(opt);
-				break;
+				case 'nd':
+					argNotifyDay(opt);
+					break;
 
-			case 'rn':
-				argRequiredNum(opt);
-				break;
+				case 'nt':
+					argNotifyTime(opt);
+					break;
 
-			case 'rp':
-				argRequiredPerson(opt);
-				break;
-		}
-	}
+				case 'nw':
+					argWait(opt);
+					break;
 
-	function argName(opt){
-		if(typeof(opt[2]) !== 'undefined' && opt[2] !== ''){
-			data.error += 'Event name cannot contain spaces!\n\n';
-			return;
-		}
+				case 'rn':
+					argRequiredNum(opt);
+					break;
 
-		data.name = opt[1];
-	}
-
-	function argFrequency(opt){
-		if(typeof(opt[2]) !== 'undefined' && opt[2] !== ''){
-			data.error += 'Frequency cannot contain spaces!\n\n';
-			return;
+				case 'rp':
+					argRequiredPerson(opt);
+					break;
+			}
 		}
 
-		if(opt[1] == 'once' || opt[1] == 'one' || opt[1] == 'one-time'){
-			data.frequency = 'one-time';
-		}
-		else if(opt[1] == 'weekly'){
-			data.frequency = 'weekly';
-		}
-		else{
-			data.error += `Unrecognized frequency "*${opt[1]}*". The options are 'weekly' or 'once'.\n\n`;
-			return;
-		}
-	}
+		function argName(opt){
+			if(typeof(opt[2]) !== 'undefined' && opt[2] !== ''){
+				data.error += 'Event name cannot contain spaces!\n\n';
+				return;
+			}
 
-	function argInvites(opt){
-		if(inv_method){
-			data.error += `-i cannot be used with -c. Please select a single invite method.\n\n`;
-			return;
-		}
-		inv_method = true;
-
-		if(typeof(opt[2]) !== 'undefined' && opt[2] !== ''){
-			data.error += 'Invite list cannot contain spaces! Please seperate with commas only.\n\n';
-			return;
-		}
-
-		let memberlist = [];
-		let memberids = [];
-		let guilds = app.client.guilds.array();
-		for(let i in guilds){
-			let members = guilds[i].members.array();
-			for(let w in members){
-				if(memberids.indexOf(members[w].id) == -1){
-					memberlist.push(members[w]);
-					memberids.push(members[w].id);
+			for(let row in current_events){
+				if(current_events[row].event_name == opt[1] && current_events[row].expired == 0){
+					data.error += `There is already an event with this name!\n\n`;
+					data.name = 'nil';
+					return;
 				}
 			}
+			
+
+			data.name = opt[1];
 		}
 
-		let invites = {};
-		let invitelist = opt[1].split(',');
-		// let memberlist = msg.channel.guild.members.array();
-		let disID,
-			disNAM,
-			count = 0;
+		function argFrequency(opt){
+			if(typeof(opt[2]) !== 'undefined' && opt[2] !== ''){
+				data.error += 'Frequency cannot contain spaces!\n\n';
+				return;
+			}
 
-		for(let i in invitelist){
-			disID = '';
-			disNAM = '';
-			count = 0;
-			for(let mem in memberlist){
-				if(memberlist[mem].user.username.toLowerCase().includes(invitelist[i].toLowerCase())){
-					count++;
-					disID = memberlist[mem].user.id;
-					disNAM = memberlist[mem].user.username;
+			if(opt[1] == 'once' || opt[1] == 'one' || opt[1] == 'one-time'){
+				data.frequency = 'one-time';
+			}
+			else if(opt[1] == 'weekly'){
+				data.frequency = 'weekly';
+			}
+			else{
+				data.error += `Unrecognized frequency "*${opt[1]}*". The options are 'weekly' or 'once'.\n\n`;
+				return;
+			}
+		}
+
+		function argInvites(opt){
+
+			if(typeof(opt[2]) !== 'undefined' && opt[2] !== ''){
+				data.error += 'Invite list cannot contain spaces! Please seperate with commas only.\n\n';
+				return;
+			}
+
+			let memberlist = [];
+			let memberids = [];
+			let guilds = app.client.guilds.array();
+			for(let i in guilds){
+				let members = guilds[i].members.array();
+				for(let w in members){
+					if(memberids.indexOf(members[w].id) == -1){
+						memberlist.push(members[w]);
+						memberids.push(members[w].id);
+					}
 				}
 			}
-			if(count <= 0){
-				data.error += `No user found matching name "${invitelist[i]}"\n\n`
-				return;
-			}else if(count >= 2){
-				data.error += `Multiple users found matching the name "${invitelist[i]}"\n\n`
+
+			let invites = {};
+			let invitelist = opt[1].split(',');
+			// let memberlist = msg.channel.guild.members.array();
+			let disID,
+				disNAM,
+				count = 0;
+
+			for(let i in invitelist){
+				disID = '';
+				disNAM = '';
+				count = 0;
+				for(let mem in memberlist){
+					if(memberlist[mem].user.username.toLowerCase().includes(invitelist[i].toLowerCase())){
+						count++;
+						disID = memberlist[mem].user.id;
+						disNAM = memberlist[mem].user.username;
+					}
+				}
+				if(count <= 0){
+					data.error += `No user found matching name "${invitelist[i]}"\n\n`
+					return;
+				}else if(count >= 2){
+					data.error += `Multiple users found matching the name "${invitelist[i]}"\n\n`
+					return;
+				}
+
+				if(disID == '' || disNAM == ''){
+					logger.log('error',`Found a user matching name "${invitelist[i]}", but didnt set data. Unknown cause.`);
+					data.error += `Unknown error! Report to <@104848260954357760> please.`
+					return;
+				}
+
+				invites[disID] = {disNAM: disNAM};
+
+			}
+
+			invites[data.disID] = {disNAM: data.disNAM};
+			data.invites = invites;
+		}
+
+		function argChannel(opt){
+
+			if(isNaN(opt[1])){
+				data.error += 'Channel must be an ID. Use command "**!id**" to get ID of current channel.\n\n';
 				return;
 			}
 
-			if(disID == '' || disNAM == ''){
-				logger.log('error',`Found a user matching name "${invitelist[i]}", but didnt set data. Unknown cause.`);
-				data.error += `Unknown error! Report to <@104848260954357760> please.`
+			if(typeof(opt[2]) !== 'undefined' && opt[2] !== ''){
+				data.error += 'Channel ID cannot contain spaces! Please seperate with commas only.\n\n';
 				return;
 			}
 
-			invites[disID] = {disNAM: disNAM};
+			let chanlist = app.client.channels.array(),
+				valid_chan = false,
+				chanID;
 
-		}
-
-		invites[data.disID] = {disNAM: data.disNAM};
-		data.invites = invites;
-	}
-
-	function argChannel(opt){
-		if(inv_method){
-			data.error += `-c cannot be used with -i. Please select a single invite method.\n\n`;
-			return;
-		}
-		inv_method = true;
-
-
-		if(isNaN(opt[1])){
-			data.error += 'Channel must be an ID. Use command "**!id**" to get ID of current channel.\n\n';
-			return;
-		}
-
-		if(typeof(opt[2]) !== 'undefined' && opt[2] !== ''){
-			data.error += 'Channel ID cannot contain spaces! Please seperate with commas only.\n\n';
-			return;
-		}
-
-		let chanlist = app.client.channels.array(),
-			valid_chan = false,
-			chanID;
-
-		for(let i in chanlist){
-			if(chanlist[i].id == opt[1]){
-				valid_chan = true;
-				chanID = chanlist[i].id;
+			for(let i in chanlist){
+				if(chanlist[i].id == opt[1]){
+					valid_chan = true;
+					chanID = chanlist[i].id;
+				}
 			}
+
+			if(!valid_chan){
+				data.error += `Channel ID is invalid!\n\n`;
+				return;
+			}
+
+			data.channel = chanID;
+
 		}
 
-		if(!valid_chan){
-			data.error += `Channel ID is invalid!\n\n`;
-			return;
+		function argStartDate(opt){
+			if(date_select){
+				data.error += `-s cannot be used with -nd. Please use one or the other`;
+				return;
+			}
+			date_select = true;
+
+			if(typeof(opt[2]) !== 'undefined' && opt[2] !== ''){
+				data.error += `Start date cannot contain spaces! Please use format "Month/Day" Ex: 2/27: Feb 27th, 11/13: November 13th.\n\n`;
+				return;
+			}
+
+			let date = opt[1].split('/');
+
+			if(typeof(date[1]) === 'undefined'){
+				data.error += `Start date formatted incorrectly! Please use format "Month/Day" Ex: 2/27: Feb 27th, 11/13: November 13th.\n\n`;
+				return;
+			}
+
+			if(date[0].length < 1 || date[0].length > 2 || date[1].length < 1 || date[1].length > 2){
+				data.error += `Start date is invalid! Please use format "Month/Day" Ex: 2/27: Feb 27th, 11/13: November 13th.\n\n`;
+				return;
+			}
+
+			if(isNaN(date[0]) || isNaN(date[1])){
+				data.error += `Start date cannot contain text! Please use numbers only, in the format "Month/Day" Ex: 2/27: Feb 27th, 11/13: November 13th.\n\n`;
+				return;
+			}
+
+			if(date[0] < 1 && date[0] > 12){
+				data.error += `Start month is out of bounds! Make sure it is a valid month 1-12.\n\n`;
+				return;
+			}
+
+			if(date[1] < 1 && date[1] > 31){
+				data.error += `Start day is out of bounds! Make sure it is a valid day 1-31.\n\n`;
+				return;
+			}
+
+			data.notify_date = date.join('/');
 		}
 
-		data.channel = chanID;
+		function argDefaultTimes(opt){
+			if(typeof(opt[2]) !== 'undefined' && opt[2] !== ''){
+				data.error += 'Time list cannot contain spaces! Please seperate with commas only.\n\n';
+				return;
+			}
 
-	}
+			let timelist = opt[1].split(','),
+				times = [],
+				time;
 
-	function argDefaultTimes(opt){
-		if(typeof(opt[2]) !== 'undefined' && opt[2] !== ''){
-			data.error += 'Time list cannot contain spaces! Please seperate with commas only.\n\n';
-			return;
+			for(let i in timelist){
+				time = timelist[i].replace(':','');
+
+				if(isNaN(time)){
+					data.error += `${timelist[i]} is formatted incorrectly! Times must be in 24HR format with 2 digits. No AM PM. Ex: 11, 13, 24, etc...\n\n`;
+					return;
+				}
+
+				if(time.length < 1 || time.length > 2){
+					data.error += `${timelist[i]} is formatted incorrectly! Times must be in 24HR format with 2 digits. No AM PM. Ex: 11, 13, 24, etc...\n\n`;
+					return;
+				}
+
+				if(times.indexOf(time) != -1){
+					data.error += `${timelist[i]} is a duplicate time. Please enter each hour only once.\n\n`;
+					return;
+				}
+
+				times.push(time);
+			}
+
+			data.default_times = times;
 		}
 
-		let timelist = opt[1].split(','),
-			times = [],
-			time;
+		function argNotifyDay(opt){
+			if(date_select){
+				data.error += `-nd cannot be used with -s. Please use one or the other`;
+				return;
+			}
+			date_select = true;
 
-		for(let i in timelist){
-			time = timelist[i].replace(':','');
+			if(typeof(opt[2]) !== 'undefined' && opt[2] !== '' && opt[2] !== ''){
+				data.error += 'There can only be one notify day! No spaces.\n\n';
+				return;
+			}
+
+			let day;
+
+			switch(opt[1]){
+				case 'm': case 'mon': case 'monday':
+					day = 'mon';
+					break;
+
+				case 'tu': case 'tue': case 'tuesday':
+					day = 'tue';
+					break;
+					
+				case 'w': case 'wed': case 'wednesday':
+					day = 'wed';
+					break;
+					
+				case 'th': case 'thu': case 'thursday':
+					day = 'thu';
+					break;
+					
+				case 'f': case 'fri': case 'friday':
+					day = 'fri';
+					break;
+					
+				case 'sa': case 'sat': case 'saturday':
+					day = 'sat';
+					break;
+				
+				case 'su': case 'sun': case 'sunday':
+					day = 'sun';
+					break;
+
+				default:
+					data.error += `Unrecognized day of week "${opt[1]}". Please use 3 letter format. Ex: Mon, Tue, Thu, Fri etc...\n\n`;
+					return;
+					break;
+			}
+
+			data.notify_day = day;
+		}
+
+		function argNotifyTime(opt){
+			console.log('o',opt[2],'o')
+			if(typeof(opt[2]) !== 'undefined' && opt[2] !== '' && opt[2] !== ''){
+				data.error += 'There can only be one notify time! No spaces.\n\n';
+				return;
+			}
+
+			let time = opt[1].replace(':','');
 
 			if(isNaN(time)){
-				data.error += `${timelist[i]} is formatted incorrectly! Times must be in 24HR format with 2 digits. No AM PM. Ex: 11, 13, 24, etc...\n\n`;
+				data.error += `Notify time is formatted incorrectly! Time must be in 24HR format with 2 digits. No AM PM. Ex: 11, 13, 24, etc...\n\n`;
 				return;
 			}
 
-			if(time.length < 1 || time.length > 2){
-				data.error += `${timelist[i]} is formatted incorrectly! Times must be in 24HR format with 2 digits. No AM PM. Ex: 11, 13, 24, etc...\n\n`;
+			if(time.length > 2 || time.length < 1){
+				data.error += `Notify time is formatted incorrectly! Time must be in 24HR format with 2 digits. No AM PM. Ex: 11, 13, 24, etc...\n\n`;
 				return;
 			}
 
-			if(times.indexOf(time) != -1){
-				data.error += `${timelist[i]} is a duplicate time. Please enter each hour only once.\n\n`;
+			let int_time = parseInt(time);
+			if(int_time < 0 || int_time > 24){
+				data.error += `Notify time is invalid! Time must be between 0-24.\n\n`;
 				return;
 			}
 
-			times.push(time);
+			data.notify_time = int_time;
+
 		}
 
-		data.default_times = times;
-	}
-
-	function argNotifyDay(opt){
-		if(typeof(opt[2]) !== 'undefined' && opt[2] !== '' && opt[2] !== ''){
-			data.error += 'There can only be one notify day! No spaces.\n\n';
-			return;
-		}
-
-		let day;
-
-		switch(opt[1]){
-			case 'm': case 'mon': case 'monday':
-				day = 'mon';
-				break;
-
-			case 'tu': case 'tue': case 'tuesday':
-				day = 'tue';
-				break;
-				
-			case 'w': case 'wed': case 'wednesday':
-				day = 'wed';
-				break;
-				
-			case 'th': case 'thu': case 'thursday':
-				day = 'thu';
-				break;
-				
-			case 'f': case 'fri': case 'friday':
-				day = 'fri';
-				break;
-				
-			case 'sa': case 'sat': case 'saturday':
-				day = 'sat';
-				break;
-			
-			case 'su': case 'sun': case 'sunday':
-				day = 'sun';
-				break;
-
-			default:
-				data.error += `Unrecognized day of week "${opt[1]}". Please use 3 letter format. Ex: Mon, Tue, Thu, Fri etc...\n\n`;
+		function argRequiredNum(opt){
+			if(typeof(opt[2]) !== 'undefined' && opt[2] !== '' && opt[2] !== ''){
+				data.error += 'Only one number. No spaces.\n\n';
 				return;
-				break;
+			}
+
+			if(isNaN(opt[1])){
+				data.error += 'Required amount of people must be a number.\n\n';
+				return;
+			}
+
+			let num = parseInt(opt[1]);
+
+			data.required_num = num;
 		}
 
-		data.notify_day = day;
-	}
+		function argRequiredPerson(opt){
 
-	function argNotifyTime(opt){
-		console.log('o',opt[2],'o')
-		if(typeof(opt[2]) !== 'undefined' && opt[2] !== '' && opt[2] !== ''){
-			data.error += 'There can only be one notify time! No spaces.\n\n';
-			return;
-		}
+			if(typeof(opt[2]) !== 'undefined' && opt[2] !== ''){
+				data.error += 'Required people list cannot contain spaces! Please seperate with commas only.\n\n';
+				return;
+			}
 
-		let time = opt[1].replace(':','');
-
-		if(isNaN(time)){
-			data.error += `Notify time is formatted incorrectly! Time must be in 24HR format with 2 digits. No AM PM. Ex: 11, 13, 24, etc...\n\n`;
-			return;
-		}
-
-		if(time.length > 2 || time.length < 1){
-			data.error += `Notify time is formatted incorrectly! Time must be in 24HR format with 2 digits. No AM PM. Ex: 11, 13, 24, etc...\n\n`;
-			return;
-		}
-
-		let int_time = parseInt(time);
-		if(int_time < 0 || int_time > 24){
-			data.error += `Notify time is invalid! Time must be between 0-24.\n\n`;
-			return;
-		}
-
-		data.notify_time = int_time;
-
-	}
-
-	function argRequiredNum(opt){
-		if(typeof(opt[2]) !== 'undefined' && opt[2] !== '' && opt[2] !== ''){
-			data.error += 'Only one number. No spaces.\n\n';
-			return;
-		}
-
-		if(isNaN(opt[1])){
-			data.error += 'Required amount of people must be a number.\n\n';
-			return;
-		}
-
-		let num = parseInt(opt[1]);
-
-		data.required_num = num;
-	}
-
-	function argRequiredPerson(opt){
-
-		if(typeof(opt[2]) !== 'undefined' && opt[2] !== ''){
-			data.error += 'Required people list cannot contain spaces! Please seperate with commas only.\n\n';
-			return;
-		}
-
-		let memberlist = [];
-		let memberids = [];
-		let guilds = app.client.guilds.array();
-		for(let i in guilds){
-			let members = guilds[i].members.array();
-			for(let w in members){
-				if(memberids.indexOf(members[w].id) == -1){
-					memberlist.push(members[w]);
-					memberids.push(members[w].id);
+			let memberlist = [];
+			let memberids = [];
+			let guilds = app.client.guilds.array();
+			for(let i in guilds){
+				let members = guilds[i].members.array();
+				for(let w in members){
+					if(memberids.indexOf(members[w].id) == -1){
+						memberlist.push(members[w]);
+						memberids.push(members[w].id);
+					}
 				}
 			}
-		}
 
-		let required_people = [];
-		let reqlist = opt[1].split(',');
-		// let memberlist = msg.channel.guild.members.array();
-		let disID,
-			disNAM,
-			count = 0;
+			let required_people = [];
+			let reqlist = opt[1].split(',');
+			// let memberlist = msg.channel.guild.members.array();
+			let disID,
+				disNAM,
+				count = 0;
 
-		for(let i in reqlist){
-			disID = '';
-			disNAM = '';
-			count = 0;
-			for(let mem in memberlist){
-				if(memberlist[mem].user.username.toLowerCase().includes(reqlist[i].toLowerCase())){
-					count++;
-					disID = memberlist[mem].user.id;
-					disNAM = memberlist[mem].user.username;
+			for(let i in reqlist){
+				disID = '';
+				disNAM = '';
+				count = 0;
+				for(let mem in memberlist){
+					if(memberlist[mem].user.username.toLowerCase().includes(reqlist[i].toLowerCase())){
+						count++;
+						disID = memberlist[mem].user.id;
+						disNAM = memberlist[mem].user.username;
+					}
 				}
-			}
-			if(count <= 0){
-				data.error += `No user found matching name "${reqlist[i]}"\n\n`
-				return;
-			}else if(count >= 2){
-				data.error += `Multiple users found matching the name "${reqlist[i]}"\n\n`
-				return;
+				if(count <= 0){
+					data.error += `No user found matching name "${reqlist[i]}"\n\n`
+					return;
+				}else if(count >= 2){
+					data.error += `Multiple users found matching the name "${reqlist[i]}"\n\n`
+					return;
+				}
+
+				if(disID == '' || disNAM == ''){
+					logger.log('error',`Found a user matching name "${reqlist[i]}", but didnt set data. Unknown cause.`);
+					data.error += `Unknown error! Report to <@104848260954357760> please.\n\n`
+					return;
+				}
+
+				required_people.push(disID);
+
 			}
 
-			if(disID == '' || disNAM == ''){
-				logger.log('error',`Found a user matching name "${reqlist[i]}", but didnt set data. Unknown cause.`);
-				data.error += `Unknown error! Report to <@104848260954357760> please.\n\n`
-				return;
-			}
-
-			required_people.push(disID);
+			data.required_people = required_people;
 
 		}
 
-		data.required_people = required_people;
+		function argWait(opt){
 
-	}
+			let newopt = opt
+			newopt.shift();
 
-	function argWait(opt){
+			let time = timestring(newopt.join(' '));
 
-		let newopt = opt
-		newopt.shift();
+			if(time == 0){
+				data.error += `Notify delay format was incorrect! Please use format such as this "1d 3h 20m"\n\n`;
+				return;
+			}
 
-		let time = timestring(newopt.join(' '));
+			// 21600s = 6h
+			if(time < 21600){
+				data.error += `Notify delay has to be at least 6h.\n\n`;
+				return;
+			}
 
-		if(time == 0){
-			data.error += `Notify delay format was incorrect! Please use format such as this "1d 3h 20m"\n\n`;
+			data.notify_wait = time;
+
+		}
+
+
+		if(typeof(data.name) === 'undefined'){
+			data.error += `Event name is required! Set it with -n\n\n`;
+		}
+		if(typeof(data.channel) === 'undefined' && typeof(data.invites) === 'undefined'){
+			data.error += `Please select an invite method. Either -c or -i\n\n`;
+		}
+		
+
+		if(data.error != ''){
+			common.sendMsg(msg,`**Errors occured**\n${data.error}`);
 			return;
 		}
 
-		// 21600s = 6h
-		if(time < 21600){
-			data.error += `Notify delay has to be at least 6h.\n\n`;
-			return;
+
+	//set defaults
+
+		if(typeof(data.frequency) === 'undefined'){
+			data.frequency = F_DEFAULT;
 		}
 
-		data.notify_wait = time;
-
-	}
-
-
-	if(typeof(data.name) === 'undefined'){
-		data.error += `Event name is required! Set it with -n\n\n`;
-	}
-	if(typeof(data.channel) === 'undefined' && typeof(data.invites) === 'undefined'){
-		data.error += `Please select an invite method. Either -c or -i\n\n`;
-	}
-	
-
-	if(data.error != ''){
-		common.sendMsg(msg,`**Errors occured**\n${data.error}`);
-		return;
-	}
-
-
-//set defaults
-
-	if(typeof(data.frequency) === 'undefined'){
-		data.frequency = F_DEFAULT;
-	}
-
-	if(typeof(data.notify_day) === 'undefined'){
-		data.notify_day = ND_DEFAULT;
-	}
-
-	if(typeof(data.notify_time) === 'undefined'){
-		data.notify_time = NT_DEFAULT;
-	}
-
-	if(typeof(data.notify_wait) === 'undefined'){
-		data.notify_wait = NW_DEFAULT;
-	}
-
-	let fullmsg = 'Do these options look correct to you? (y/n)\n\n';
-
-	fullmsg += `Name: **${data.name}**\nFrequency: **${data.frequency}**\nNotification day: **${data.notify_day}**\nNotification time: **${data.notify_time}**\nRecurring notify delay: **${(data.notify_wait/60/60).toFixed(2)}h**\n`;
-
-	if(typeof(data.channel) !== 'undefined'){
-		fullmsg += `Invite channel ID: **${data.channel}**\n`;
-	}
-
-	if(typeof(data.invites) !== 'undefined'){
-		fullmsg += `Invited users: `
-		for(let i in data.invites){
-			fullmsg += `**${data.invites[i].disNAM}**, `;
+		let notifday;
+		if(typeof(data.notify_day) === 'undefined' && typeof(data.notify_date) === 'undefined'){
+			data.notify_day = ND_DEFAULT;
+			notifday = ND_DEFAULT;
+		}else if(typeof(data.notify_day) === 'undefined'){
+			notifday = data.notify_date;
+		}else{
+			notifday = data.notify_day;
 		}
-		fullmsg += `\n`;
-	}
 
-	if(typeof(data.default_times) !== 'undefined'){
-		fullmsg += `Default start times: **${data.default_times.join(', ')}**\n`;
-	}
+		if(typeof(data.notify_time) === 'undefined'){
+			data.notify_time = NT_DEFAULT;
+		}
 
-	if(typeof(data.required_num) !== 'undefined'){
-		fullmsg += `Required participants: **${data.required_num}**\n`
-	}
+		if(typeof(data.notify_wait) === 'undefined'){
+			data.notify_wait = NW_DEFAULT;
+		}
 
-	if(typeof(data.required_people) !== 'undefined'){
-		fullmsg += `Required people (ID): **${data.required_people.join(', ')}**\n`;
-	}
+		let fullmsg = 'Do these options look correct to you? (y/n)\n\n';
 
-	common.sendMsg(msg,fullmsg);
+		fullmsg += `Name: **${data.name}**\nFrequency: **${data.frequency}**\nNotification day: **${notifday}**\nNotification time: **${data.notify_time}**\nRecurring notify delay: **${(data.notify_wait/60/60).toFixed(2)}h**\n`;
 
-	const filter = m => (m.content.toLowerCase().startsWith('y') && m.author == msg.author || m.content.toLowerCase().startsWith('n') && m.author == msg.author);
+		if(typeof(data.channel) !== 'undefined'){
+			fullmsg += `Invite channel ID: **${data.channel}**\n`;
+		}
 
-	msg.channel.awaitMessages(filter, { max: 1, time: 30000, errors: ['time'] })
-  		.then(collected => finish(collected))
-  		.catch(collected => common.sendMsg(msg,'No response recieved in 30 seconds. Try again.'));
+		if(typeof(data.invites) !== 'undefined'){
+			fullmsg += `Invited users: `
+			for(let i in data.invites){
+				fullmsg += `**${data.invites[i].disNAM}**, `;
+			}
+			fullmsg += `\n`;
+		}
 
-  	function finish(res){
-  		res = res.first();
+		if(typeof(data.default_times) !== 'undefined'){
+			fullmsg += `Default start times: **${data.default_times.join(', ')}**\n`;
+		}
 
-  		if(res.content.toLowerCase().startsWith('y')){
-  			common.sendMsg(msg,'Event created!')
-  		}else{
-  			common.sendMsg(msg,'Cancelling event creation. Try again soon!')
-  		}
-  	}
+		if(typeof(data.required_num) !== 'undefined'){
+			fullmsg += `Required participants: **${data.required_num}**\n`
+		}
 
-	console.log(data)
+		if(typeof(data.required_people) !== 'undefined'){
+			fullmsg += `Required people (ID): **${data.required_people.join(', ')}**\n`;
+		}
+
+		common.sendMsg(msg,fullmsg);
+
+		const filter = m => (m.content.toLowerCase().startsWith('y') && m.author == msg.author || m.content.toLowerCase().startsWith('n') && m.author == msg.author);
+
+		msg.channel.awaitMessages(filter, { max: 1, time: 30000, errors: ['time'] })
+	  		.then(collected => finish(collected))
+	  		.catch(collected => common.sendMsg(msg,'No response recieved in 30 seconds. Cancelling event creation.'));
+
+	  	function finish(res){
+	  		res = res.first();
+
+	  		if(res.content.toLowerCase().startsWith('y')){
+
+	  			db.runSecure(`INSERT INTO events VALUES (?,?,?,?,?,?)`, {
+	  				1: data.disNAM,
+	  				2: data.disID,
+	  				3: data.timestamp,
+	  				4: data.name,
+	  				5: 0,
+	  				6: JSON.stringify(data)
+	  			})
+
+	  			common.sendMsg(msg,'Event created! Would you like to send a notification now?')
+
+
+	  			msg.channel.awaitMessages(filter, { max: 1, time: 30000, errors: ['time'] })
+			  		.then(collected => function(collected){
+				  			if(res.content.toLowerCase().startsWith('y')){
+				  				console.log('ay')
+			  					// common.sendMsg(msg,'Sending notification!')
+		  					}else{
+					  			common.sendMsg(msg,`Not sending. Will notify on **${notifday}**`);
+					  		}
+				  		})
+			  		.catch(collected => common.sendMsg(msg,'No response recieved in 30 seconds. Cancelling event creation.'));
+
+	  		}else{
+	  			common.sendMsg(msg,'Cancelling event creation. Try again soon!')
+	  		}
+	  	}
+
+		console.log(data)
+	})
 }
