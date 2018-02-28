@@ -107,6 +107,177 @@ exports.react = function(reaction,user,added){
 // frequency TEXT, notify_day TEXT, notify_frequency TEXT, 
 // default_times TEXT, invites TEXT, channelID TEXT, responses TEXT)
 
-function createEvent(msg,args){
 
+/*
+	args:
+		-t title/name
+		-f frequency (one time, weekly)
+		-i invitees (who to send invites to, cant be used with -c)
+		-c channel id (where to send invites)
+		-d default times (which emojis will be auto placed 1-24)
+		-n notify day (when to first send invites)
+		-w wait time between notifications (how long to wait before sending reminder invite)
+*/
+function createEvent(msg,oldargs){
+
+	let inv_method = false;
+
+	//parse msg content
+	var args = msg.content.split('-');
+	args.shift();
+
+	var data = {
+		error: '',
+		disNAM: msg.author.username,
+		disID: msg.author.id,
+		timestamp: new Date() / 1000,
+		name: '',
+		frequency: ''
+	}
+
+	for(let i in args){
+		let opt = args[i].split(' ');
+
+		switch(opt[0]){
+			// t stands for title
+			case 't':
+				argName(opt);
+				break;
+
+			case 'f':
+				argFrequency(opt);
+				break;
+
+			case 'i':
+				argInvites(opt);
+				break;
+
+			case 'c':
+				argChannel(opt);
+				break;
+
+			case 'd':
+				argDefaultTimes(opt);
+				break;
+		}
+	}
+
+	function argName(opt){
+		if(typeof(opt[2]) !== 'undefined'){
+			data.error += 'Event name cannot contain spaces!\n\n';
+			return;
+		}
+
+		data.name = opt[1];
+	}
+
+	function argFrequency(opt){
+		if(typeof(opt[2]) !== 'undefined'){
+			data.error += 'Frequency cannot contain spaces!\n\n';
+			return;
+		}
+
+		if(opt[1] == 'once' || opt[1] == 'one' || opt[1] == 'one-time'){
+			data.frequency = 'one-time';
+		}
+		else if(opt[1] == 'weekly'){
+			data.frequency = 'weekly';
+		}
+		else{
+			data.error += `Unrecognized frequency "*${opt[1]}*". The options are 'weekly' or 'once'.\n\n`;
+			return;
+		}
+	}
+
+	function argInvites(opt){
+		if(inv_method){
+			data.error += `-i cannot be used with -c. Please select a single invite method.\n\n`;
+			return;
+		}
+		inv_method = true;
+
+		if(typeof(opt[2]) !== 'undefined'){
+			data.error += 'Invite list cannot contain spaces! Please seperate with commas only.\n\n';
+			return;
+		}
+
+		let invites = {};
+		let invitelist = opt[1].split(',');
+		let memberlist = msg.channel.guild.members.array();
+		let disID,
+			disNAM,
+			count = 0;
+
+		for(let i in invitelist){
+			disID = '';
+			disNAM = '';
+			count = 0;
+			for(let mem in memberlist){
+				if(memberlist[mem].user.username.toLowerCase().includes(invitelist[i].toLowerCase())){
+					count++;
+					disID = memberlist[mem].user.id;
+					disNAM = memberlist[mem].user.username;
+				}
+			}
+			if(count <= 0){
+				data.error += `No user found matching name "${invitelist[i]}"\n\n`
+				return;
+			}else if(count >= 2){
+				data.error += `Multiple users found matching the name "${invitelist[i]}"\n\n`
+				return;
+			}
+
+			if(disID == '' || disNAM == ''){
+				logger.log('error',`Found a user matching name "${invitelist[i]}", but didnt set data. Unknown cause.`);
+				data.error += `Unknown error! Report to <@104848260954357760> please.`
+				return;
+			}
+
+			invites[disID] = {disNAM: disNAM};
+
+			data.invites = invites;
+
+		}
+	}
+
+	function argChannel(opt){
+		if(inv_method){
+			data.error += `-c cannot be used with -i. Please select a single invite method.\n\n`;
+			return;
+		}
+		inv_method = true;
+
+
+		if(isNaN(opt[1])){
+			data.error += 'Channel must be an ID. Use command "**!id**" to get ID of current channel.\n\n';
+			return;
+		}
+
+		if(typeof(opt[2]) !== 'undefined'){
+			data.error += 'Channel ID cannot contain spaces! Please seperate with commas only.\n\n';
+			return;
+		}
+
+		let chanlist = app.client.channels.array(),
+			valid_chan = false,
+			chanID;
+
+		for(let i in chanlist){
+			if(chanlist[i].id == opt[1]){
+				valid_chan = true;
+				chanID = chanlist[i].id;
+			}
+		}
+
+		if(!valid_chan){
+			data.error += `Channel ID is invalid!\n\n`;
+			return;
+		}
+
+		data.channel = chanID;
+
+	}
+
+	
+	console.log(data)
 }
