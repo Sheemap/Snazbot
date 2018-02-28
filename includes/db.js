@@ -18,7 +18,7 @@ exports.createNew = function(name,callback){
         var seconds = new Date() / 1000;
         db.run(`INSERT INTO chungus VALUES ("chungus","000","${seconds}","0","0")`);
 
-        db.run("CREATE TABLE events (disNAM TEXT, disID TEXT, timestamp NUMERIC, event_name TEXT, data TEXT)");
+        db.run("CREATE TABLE events (disNAM TEXT, disID TEXT, timestamp NUMERIC, event_name TEXT, expired INT, data TEXT)");
 
         /*
 

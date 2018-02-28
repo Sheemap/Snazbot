@@ -28,7 +28,6 @@ exports.sendMsg = function(msg,content,reply,timeout,callback){
             msg.delete().catch(function(){logger.log('warn','Tried to delete a nonexistent message!')});
         })
     }
-    
 }
 
 

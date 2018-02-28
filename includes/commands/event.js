@@ -664,27 +664,11 @@ function createEvent(msg,oldargs){
 
 	  		if(res.content.toLowerCase().startsWith('y')){
 
-	  			db.runSecure(`INSERT INTO events VALUES (?,?,?,?,?,?)`, {
-	  				1: data.disNAM,
-	  				2: data.disID,
-	  				3: data.timestamp,
-	  				4: data.name,
-	  				5: 0,
-	  				6: JSON.stringify(data)
-	  			})
-
-	  			common.sendMsg(msg,'Event created! Would you like to send a notification now?')
+	  			common.sendMsg(msg,'Would you like to send a notification now? (y/n)')
 
 
 	  			msg.channel.awaitMessages(filter, { max: 1, time: 30000, errors: ['time'] })
-			  		.then(collected => function(collected){
-				  			if(res.content.toLowerCase().startsWith('y')){
-				  				console.log('ay')
-			  					// common.sendMsg(msg,'Sending notification!')
-		  					}else{
-					  			common.sendMsg(msg,`Not sending. Will notify on **${notifday}**`);
-					  		}
-				  		})
+			  		.then(collected => initNotif(collected))
 			  		.catch(collected => common.sendMsg(msg,'No response recieved in 30 seconds. Cancelling event creation.'));
 
 	  		}else{
@@ -692,6 +676,38 @@ function createEvent(msg,oldargs){
 	  		}
 	  	}
 
-		console.log(data)
+	  	function initNotif(res){
+	  		let mes = res.first();
+  			if(mes.content.toLowerCase().startsWith('y')){
+
+  				data.initial_notif = true
+  				db.runSecure(`INSERT INTO events VALUES (?,?,?,?,?,?)`, {
+	  				1: data.disNAM,
+	  				2: data.disID,
+	  				3: data.timestamp,
+	  				4: data.name,
+	  				5: 0,
+	  				6: JSON.stringify(data)
+	  			})
+				common.sendMsg(mes,'Event created, sending notification now!')
+
+			}else{
+
+				data.initial_notif = false
+  				db.runSecure(`INSERT INTO events VALUES (?,?,?,?,?,?)`, {
+	  				1: data.disNAM,
+	  				2: data.disID,
+	  				3: data.timestamp,
+	  				4: data.name,
+	  				5: 0,
+	  				6: JSON.stringify(data)
+	  			})
+  				common.sendMsg(mes,`Event created! Will notify on **${notifday}**.`);
+
+	  		}
+	  		console.log(data)
+	  	}
+
+		
 	})
 }
