@@ -137,7 +137,8 @@ function createEvent(msg,oldargs){
 	var args = msg.content.split('-');
 	args.shift();
 
-	var date_select = false;
+	var date_select = false,
+		req_people_list = [];
 
 	var data = {
 		error: '',
@@ -554,6 +555,7 @@ function createEvent(msg,oldargs){
 					return;
 				}
 
+				req_people_list.push(disNAM);
 				required_people.push(disID);
 
 			}
@@ -648,7 +650,7 @@ function createEvent(msg,oldargs){
 		}
 
 		if(typeof(data.required_people) !== 'undefined'){
-			fullmsg += `Required people (ID): **${data.required_people.join(', ')}**\n`;
+			fullmsg += `Required people: **${req_people_list.join(', ')}**\n`;
 		}
 
 		common.sendMsg(msg,fullmsg);
