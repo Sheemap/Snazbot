@@ -29,31 +29,32 @@ const NW_DEFAULT = '86400'; // 86400s is 24h
 // frequency TEXT, notify_day TEXT, notify_frequency TEXT, 
 // default_times TEXT, invites TEXT, channelID TEXT, responses TEXT)
 
-
-// 99_1am:416844243496075274
-// 98_2am:416844317966204939
-// 97_3am:416844328183267328
-// 96_4am:416844336685252608
-// 95_5am:416844348395618304
-// 94_6am:416844353701412881
-// 93_7am:416844359481294848
-// 92_8am:416844363876794388
-// 91_9am:416844368008183819
-// 90_10am:416844374849093642
-// 89_11am:416844380092104706
-// 88_12pm:416844385049903105
-// 87_1pm:416844391563395072
-// 86_2pm:416844397007732737
-// 85_3pm:416844406151446550
-// 84_4pm:416844412065153024
-// 83_5pm:416844419765895168
-// 82_6pm:416844430776205312
-// 81_7pm:416844438497918977
-// 80_8pm:416844447268208651
-// 79_9pm:416844454742458389
-// 78_10pm:416844460656295937
-// 77_11pm:416844466578653185
-// 76_12am:416844473453117440
+var react_times = {
+	1: "99_1am:416844243496075274",
+	2: "98_2am:416844317966204939",
+	3: "97_3am:416844328183267328",
+	4: "96_4am:416844336685252608",
+	5: "95_5am:416844348395618304",
+	6: "94_6am:416844353701412881",
+	7: "93_7am:416844359481294848",
+	8: "92_8am:416844363876794388",
+	9: "91_9am:416844368008183819",
+	10: "90_10am:416844374849093642",
+	11: "89_11am:416844380092104706",
+	12: "88_12pm:416844385049903105",
+	13: "87_1pm:416844391563395072",
+	14: "86_2pm:416844397007732737",
+	15: "85_3pm:416844406151446550",
+	16: "84_4pm:416844412065153024",
+	17: "83_5pm:416844419765895168",
+	18: "82_6pm:416844430776205312",
+	19: "81_7pm:416844438497918977",
+	20: "80_8pm:416844447268208651",
+	21: "79_9pm:416844454742458389",
+	22: "78_10pm:416844460656295937",
+	23: "77_11pm:416844466578653185",
+	24: "76_12am:416844473453117440"
+}
 
 /*
 
@@ -88,9 +89,13 @@ exports.main = function(msg,args){
 			createEvent(msg,args);
 			break;
 
-		case '!sched':
+		case '!event':
 			common.sendMsg(msg,`Usage: \n\n`+exports.usage,false,15);
 			break
+
+		default:
+			eventNotify(args[0])
+			break;
 	}
 	// common.sendMsg(msg,'Ayboi dis testerino.',false,15,cb);
 
@@ -131,6 +136,106 @@ exports.react = function(reaction,user,added){
 		-rp required attendees to consider valid day
 		-nw wait time between notifications (how long to wait before sending reminder invite)
 */
+function eventNotify(event_name){
+	db.all('SELECT * FROM events',function(err,rows){
+
+		var data = '',
+			count = 0;
+
+		for(let i in rows){
+			if(rows[i].expired == 0){
+				if(rows[i].event_name == event_name){
+					count++;
+					data = JSON.parse(rows[i].data)
+				}
+			}
+		}
+
+		if(data == ''){
+			logger.log('error',`No unexpired event with name "${event_name}`);
+			return;
+		}
+
+		if(count > 1){
+			logger.log('error',`Multiple unexpired events with name "${event_name}`);
+			return;
+		}
+
+		var use_channel = typeof(data.channel) !== 'undefined';
+		var use_invites = typeof(data.invites) !== 'undefined';
+
+		if(use_channel && use_invites){
+			if(data.initial_notif){
+
+
+
+			}
+		}
+		else if(use_channel){
+
+		}
+		else if(use_invites){
+
+		}
+		else{
+			logger.log('error',`No notification settings for "${event_name}`);
+			return;
+		}
+
+		sendNotif(data) //debugging purposes, remove when done
+
+	})
+
+	function sendNotif(data){
+		let now = new Date();
+		let later = new Date(Date.now() + 604800000) //604800000ms is 7d
+
+		let chan = data.channel;
+		let default_times = data.default_times;
+		let week = `${now.getMonth()+1}/${now.getDate()} - ${later.getMonth()+1}/${later.getDate()}`;
+
+		let initial_message = `***UPCOMING EVENT***\nScheduling **${event_name}** for the week of ${week}.\nThis event was scheduled by ${data.disNAM}\n\nPlease react to the given days with whatever times you are able to do. Use the black 24hr emojis. If you are unable to attend any days, react to this message with a :thumbsdown:`;
+
+		common.sendChannel(chan,initial_message)
+
+		let days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
+		let index = 1;
+		let today = now.getDay()
+		let sent_messages = [];
+		let day_sec = Date.now();
+		let next_day;
+		for(let i=0;i<7;i++){2
+
+			day_sec += 86400000; //86400000ms is 1d 
+			next_day = new Date(day_sec);
+
+			let sending = `${days[today+index]} - **${next_day.getMonth()+1}/${next_days.getDate()}**`;
+			common.sendChannel(chan,sending,15, async function(message){
+
+				if(typeof(default_times) !== 'undefined'){
+
+
+					for(let x in default_times.sort(function(a, b){return a - b})){
+
+						await message.react(react_times[default_times[x]]);
+					}					
+					
+
+				}
+			})
+			index++;
+			if(index+today == 7){
+				index = index - 7;
+			}
+		}
+	}
+
+	function privateNotif(user){
+
+	}
+}
+
+
 function createEvent(msg,oldargs){
 
 	//parse msg content

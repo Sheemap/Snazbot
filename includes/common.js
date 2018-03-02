@@ -30,7 +30,6 @@ exports.sendMsg = function(msg,content,reply,timeout,callback){
     }
 }
 
-
 exports.sendPM = function(user,content,callback){
     if(typeof(callback) === 'undefined'){
         callback = '';
@@ -86,6 +85,31 @@ exports.findUser = function(user,callback){
         return finalUser;
     }
 
+exports.sendChannel = function(chan,content,timeout,callback){
+    let sent;
+    let push = true;
+    
+    let all_channels = app.client.channels.array();
+    let channel = '';
+
+    for(let c in all_channels){
+        if(all_channels[c].id == chan){
+            channel = all_channels[c];
+        }
+    }
+
+    if(channel !== ''){
+        channel.send(content).then(message => cb(message,'',callback));//.then(message => sent=message);//
+    }else{
+        logger.log('error',`Attempted to send message to nonexistent channel! Channel: ${channel.id}`)
+    }
+    
+    if(!isNaN(timeout) && app.autoclean == 'yes'){
+        push = false;
+        sleep(timeout*1000).then(function(){
+            sent.delete().catch(function(){logger.log('warn','Tried to delete a nonexistent message!')});
+        })
+    }
 }
 
 exports.reset = function(){
