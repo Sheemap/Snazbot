@@ -75,7 +75,7 @@ exports.main = function(msg,args){
 			}else if(count == 1){
 
 				checkPoints(disID,function(score,avg,memecount){
-					common.sendMsg(msg,`${name} currently has **${score}** meme points. They've posted **${memecount}** memes, which is an average of **${avg}** points per meme.`,false,15);
+					common.sendMsg(msg,`${name} currently has **${score}** meme points.`,false,15);
 				})
 
 				
@@ -83,7 +83,7 @@ exports.main = function(msg,args){
 		}else{
 
 			checkPoints(msg.author.id,function(score,avg,memecount){
-				common.sendMsg(msg,`You currently have **${score}** meme points. You've posted **${memecount}** memes, which is an average of **${avg}** points per meme.`,true,15);
+				common.sendMsg(msg,`You currently have **${score}** meme points.`,true,15);
 			})
 		}
 	}else{
