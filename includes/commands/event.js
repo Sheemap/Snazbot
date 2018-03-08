@@ -86,7 +86,7 @@ var react_times = {
 exports.main = function(msg,args){
 	switch(args[0]){
 		case 'create':
-			createEvent(msg,args);
+			messageCreate(msg);
 			break;
 
 		case '!event':
@@ -235,11 +235,10 @@ function eventNotify(event_name){
 	}
 }
 
-
-function createEvent(msg,oldargs){
+function createEvent(args,uname,uid,callback){
 
 	//parse msg content
-	var args = msg.content.split('-');
+	// var args = msg.content.split('-');
 	args.shift();
 
 	var date_select = false,
@@ -247,8 +246,8 @@ function createEvent(msg,oldargs){
 
 	var data = {
 		error: '',
-		disNAM: msg.author.username,
-		disID: msg.author.id,
+		disNAM: uname,
+		disID: uid,
 		timestamp: new Date() / 1000
 	}
 
@@ -692,6 +691,20 @@ function createEvent(msg,oldargs){
 		}
 
 
+		callback(data);
+
+		
+	})
+}
+
+function messageCreate(msg){
+
+	let message_args = msg.content.split('-'),
+		uname = msg.author.username,
+		uid = msg.author.id;
+
+	createEvent(message_args,uname,uid, function(data){
+
 		if(typeof(data.name) === 'undefined'){
 			data.error += `Event name is required! Set it with -n\n\n`;
 		}
@@ -814,7 +827,6 @@ function createEvent(msg,oldargs){
 	  		}
 	  		console.log(data)
 	  	}
-
-		
 	})
+
 }
