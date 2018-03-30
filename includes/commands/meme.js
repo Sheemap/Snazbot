@@ -15,11 +15,13 @@ exports.reactions = `%F0%9F%91%8D,%F0%9F%91%8E`;
 
 //%F0%9F%91%8E = thumbsdown
 
-const BUFFERSIZE = 150;
+// const BUFFERSIZE = 150;
+const BUFFER = 0.50; //percentage
 const MAXVOTE = 20;
 const STARTSCORE = 5;
 
 var buffer = [];
+var buffersize = 0;
 
 function checkPoints(disID,callback){
 	let score = 0;
@@ -45,11 +47,12 @@ exports.main = function(msg,args){
 		db.all('SELECT * FROM memes', function(err, rows){
 			let memelist = [];
 			for(let w in rows){
-				memelist.push(rows[w].url);
+				if(rows[w].votes > 0)
+					memelist.push(rows[w].url);
 			}
 			var count = memelist.length;
 
-			common.sendMsg(msg,`There are currently **${count}** memes in stock.`,false,15);
+			common.sendMsg(msg,`There are currently **${count}** memes in stock. The buffersize is set to **${BUFFER*100}%**.`,false,15);
 
 		});
 	}else if(args.length >= 1 && args[0] == 'points'){
@@ -92,16 +95,22 @@ exports.main = function(msg,args){
 		}else{
 			db.all('SELECT url,votes FROM memes', function(err, rows){
 	    		var memelist = [];
+	    		var memecount = 0;
 	    		var meme,
 	    			found = false;
 
 	    		for(let w in rows){
 
 	    			for(let x=0;x<=rows[w].votes;x++){
-	    				memelist.push(rows[w].url)
+						memelist.push(rows[w].url);
 	    			}
 
+	    			if(rows[w].votes > 0)
+	    				memecount++;
+
 	    		}
+
+	    		buffersize = Math.floor(memecount * BUFFER);
 
 	    		for(let i=0;i<=10000;i++){
 					meme = memelist[Math.floor(Math.random()*(memelist.length-1))];
@@ -109,7 +118,8 @@ exports.main = function(msg,args){
 					if(!buffer.includes(meme)){
 						buffer.push(meme);
 
-						if(buffer.length >= BUFFERSIZE){
+
+						if(buffer.length >= buffersize){
 							buffer.shift();
 						}
 
