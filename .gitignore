@@ -61,7 +61,7 @@ typings/
 tmp/
 
 #config
-config.ini
+*.ini
 
 # data dir
 data/
