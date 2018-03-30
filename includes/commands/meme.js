@@ -256,7 +256,7 @@ exports.scrape = function(msg) {
 		  			if(!memes.includes(msg.content)){
 			  			logger.log('info',`Saving meme sent by ${msg.author.username}`);
 
-						db.run(`INSERT INTO memes VALUES ("${msg.author.username}","${msg.author.id}","${seconds}","${msg.content}","${STARTSCORE}")`);
+						db.run(`INSERT INTO memes VALUES ("${msg.author.username}","${msg.author.id}","${seconds}","${msg.content}","${STARTSCORE}","placeholder")`);
 					}else{
 						logger.log('info','Not saving duplicate meme');
 					}
@@ -274,7 +274,7 @@ exports.scrape = function(msg) {
 		  			if(unique){
 			  			logger.log('info',`Saving meme sent by ${msg.author.username}`);
 
-				  		db.run(`INSERT INTO memes VALUES ("${msg.author.username}","${msg.author.id}","${seconds}","${msg.attachments.first().url}","${STARTSCORE}")`);
+				  		db.run(`INSERT INTO memes VALUES ("${msg.author.username}","${msg.author.id}","${seconds}","${msg.attachments.first().url}","${STARTSCORE}","placeholder")`);
 				  	}else{
 				  		logger.log('info','Not saving duplicate meme');
 				  	}
