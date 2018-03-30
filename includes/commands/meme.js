@@ -16,9 +16,9 @@ exports.reactions = `%F0%9F%91%8D,%F0%9F%91%8E`;
 //%F0%9F%91%8E = thumbsdown
 
 // const BUFFERSIZE = 150;
-const BUFFER = 0.50; //percentage
-const MAXVOTE = 20;
-const STARTSCORE = 5;
+const BUFFER = app.buffer; //percentage
+const MAXVOTE = app.maxvote;
+const STARTSCORE = app.startscore;
 
 var buffer = [];
 var buffersize = 0;

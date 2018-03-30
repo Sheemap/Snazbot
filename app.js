@@ -12,7 +12,12 @@ exports.prefix = prefix = config.general.commandprefix;
 exports.autoclean = autoclean = config.general.autoclean;
 exports.logdir = logdir = config.general.logdir;
 exports.admins = admins = config.general.admins.split(',');
-exports.memechan = memechan = config.general.memechan;
+
+//Meme config
+exports.memechan = memechan = config.meme.memechan;
+exports.buffer = buffer = config.meme.buffer;
+exports.maxvote = maxvote = config.meme.maxvote;
+exports.startscore = startscore = config.meme.startscore;
 
 
 //Cusom Packages
