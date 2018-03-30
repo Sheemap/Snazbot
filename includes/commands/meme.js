@@ -90,8 +90,8 @@ exports.main = function(msg,args){
 			})
 		}
 	}else{
-		if(msg.channel != msg.guild.channels.find('id',app.memechan)){
-			common.sendMsg(msg,'This command only works in the #memes chat.',false,15);
+		if(msg.channel.id != app.rollchan){
+			common.sendMsg(msg,'This command only works in the #memeroll chat.',false,15);
 		}else{
 			db.all('SELECT url,votes FROM memes', function(err, rows){
 	    		var memelist = [];
@@ -158,7 +158,7 @@ exports.react = function(reaction,user,added){
 	let attach = false;
 
 	if(user.id != reaction.message.author.id){
-		if(reaction.message.channel.id == '301214003781173249' || reaction.message.channel.id == '208298947997990912'){
+		if(reaction.message.channel.id == app.memechan || reaction.message.channel.id == app.rollchan){
 			if(reaction.message.content.includes('http')){
 				meme = true;
 				urlmeme = reaction.message.content;
@@ -255,7 +255,7 @@ exports.react = function(reaction,user,added){
 exports.scrape = function(msg) {
 	if(msg.author.id != app.BOTID){
 
-		if(msg.channel.id == '208298947997990912' || msg.channel.id == '301214003781173249'){
+		if(msg.channel.id == app.memechan || msg.channel.id == app.rollchan){
 
 
 			db.all('SELECT url,votes FROM memes', function(err, rows){

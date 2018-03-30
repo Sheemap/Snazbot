@@ -18,6 +18,7 @@ exports.memechan = memechan = config.meme.memechan;
 exports.buffer = buffer = config.meme.buffer;
 exports.maxvote = maxvote = config.meme.maxvote;
 exports.startscore = startscore = config.meme.startscore;
+exports.rollchan = rollchan = config.meme.rollchan;
 
 
 //Cusom Packages
@@ -75,7 +76,7 @@ client.on('message', msg => {
     }
     if(msg.content.startsWith(prefix)){
         comm.parse(msg);
-    }else if(msg.channel.id == '301214003781173249' || msg.channel.id == '208298947997990912'){
+    }else if(msg.channel.id == rollchan || msg.channel.id == memechan){
         meme.scrape(msg);
     }
     if(!msg.content.toLowerCase().includes('jim') && msg.guild.id == '384946871103258626' && msg.author.id != BOTID){
