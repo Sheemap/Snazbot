@@ -112,6 +112,8 @@ exports.main = function(msg,args){
 
 	    		buffersize = Math.floor(memecount * BUFFER);
 
+	    		logger.log('debug',`Buffer size is ${buffersize}, meme count is ${memecount}. \n${buffer}`)
+
 	    		for(let i=0;i<=10000;i++){
 					meme = memelist[Math.floor(Math.random()*(memelist.length-1))];
 
@@ -230,6 +232,10 @@ exports.react = function(reaction,user,added){
 
 							if(newvotes >= MAXVOTE){
 								newvotes = MAXVOTE;
+							}
+
+							if(newvotes < 0){
+								newvotes = 0;
 							}
 
 							db.run(`UPDATE memes SET votes="${newvotes}" WHERE url="${trurow.url}"`);
