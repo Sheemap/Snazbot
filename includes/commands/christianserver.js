@@ -28,7 +28,13 @@ exports.main = function(msg,args){
 	}
 }
 
-exports.filter = function(msg){
+exports.msg = function(msg){
+	if(app.christ && msg.guild.id == '104981147770990592' && msg.author.id != BOTID && msg.channel.id == '406571477916319745'){
+        filter(msg);
+    }
+}
+
+function filter(msg){
 	pure = purityCheck(msg.content);
 	if(!pure[0]){
 		msg.delete().catch(function(){logger.log('warn','Tried to delete a nonexistent message!')});

@@ -11,6 +11,7 @@ const app = require('../app.js');
 const common = require('./common.js');
 
 var comms = {};
+var msg_functions = [];
 
 //Load blacklist
 const blacklist = ini.parse(fs.readFileSync('./config/blacklist.ini', 'utf-8'))
@@ -29,6 +30,12 @@ glob.sync('./includes/commands/**/*.js').forEach(function(file) {
 	comms[name] = require(path.resolve(file));
 	commcount++;
 });
+
+for(let c in comms){
+	if(typeof(comms[c].msg) !== 'undefined'){
+		msg_functions.push(comms[c].msg);
+	} 
+}
 
 logger.log('info',`Loaded ${commcount} commands.`);
 
@@ -123,6 +130,40 @@ exports.react = function(reaction,user,added){
 				}
 			}
 		}
+	}
+}
+
+exports.msg = function(msg){
+	let content = msg.content;
+	let found = false;
+
+	let authid = msg.author.id;
+	let chanid = msg.channel.id;
+	let servid = msg.guild.id;
+
+	if(blackall.indexOf(authid) != -1){
+		logger.log('debug','User is blacklisted, not replying.');
+		return;
+	}
+	if(blackall.indexOf(servid) != -1){
+		logger.log('debug','Server is blacklisted, not replying.');
+		return;
+	}
+	if(blackall.indexOf(chanid) != -1){
+		logger.log('debug','Channel is blacklisted, not replying.');
+		return;
+	}
+
+	if(msg.author.id == app.BOTID){
+		logger.log('debug','Not responding to self')
+		return;
+	}
+
+
+	// logger.log('info',`Command from ${msg.author.username}: ${msg.content}`)
+
+	for(let i=0;i<msg_functions.length;i++){
+		msg_functions[i](msg);
 	}
 }
 

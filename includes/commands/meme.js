@@ -252,7 +252,7 @@ exports.react = function(reaction,user,added){
 
 }
 
-exports.scrape = function(msg) {
+exports.msg = function(msg) {
 	if(msg.author.id != app.BOTID){
 
 		if(msg.channel.id == app.memechan || msg.channel.id == app.rollchan){

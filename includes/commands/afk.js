@@ -102,7 +102,13 @@ exports.callVote = function(usercount,msgtxt,msg,cb){
 	})
 }
 
-exports.voter = function(msg){
+exports.msg = function(msg){
+	if(msg.content.toLowerCase().startsWith('y')){
+        voter(msg);
+    }
+}
+
+function voter(msg){
 	let voted = false;
 	if(voting){
 		for(let x=0;x<scrubnames.length;x++){

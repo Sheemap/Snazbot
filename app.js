@@ -71,21 +71,16 @@ client.on('ready', () => {
 
 
 client.on('message', msg => {
-    if(exports.christ && msg.guild.id == '104981147770990592' && msg.author.id != BOTID && msg.channel.id == '406571477916319745'){
-        filter.filter(msg);
-    }
+    comm.msg(msg);
     if(msg.content.startsWith(prefix)){
         comm.parse(msg);
-    }else if(msg.channel.id == rollchan || msg.channel.id == memechan){
-        meme.scrape(msg);
     }
+    
     if(!msg.content.toLowerCase().includes('jim') && msg.guild.id == '384946871103258626' && msg.author.id != BOTID){
         msg.delete();
         logger.log('info','Offending Jim message from '+msg.author.username);
     }
-    if(msg.content.toLowerCase().startsWith('y')){
-        voting.voter(msg);
-    }
+    
 });
 
 client.on('messageReactionAdd', (reaction,user) => {
