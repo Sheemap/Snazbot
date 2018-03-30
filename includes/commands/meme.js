@@ -114,11 +114,17 @@ exports.main = function(msg,args){
 						}
 
 						if(meme.includes('cdn.discordapp.com')){
-							common.sendMsg(msg,{file:meme},false,15);
+							common.sendMsg(msg,{file:meme},false,15,callback);
 						}else{
-							common.sendMsg(msg,meme,false,15);
+							common.sendMsg(msg,meme,false,15,callback);
 						}
 						found = true;
+
+						async function callback(message){
+							await message.react('👍');
+							await message.react('👎');
+						}
+
 						break;
 					}
 				}

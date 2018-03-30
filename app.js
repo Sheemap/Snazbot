@@ -12,6 +12,7 @@ exports.prefix = prefix = config.general.commandprefix;
 exports.autoclean = autoclean = config.general.autoclean;
 exports.logdir = logdir = config.general.logdir;
 exports.admins = admins = config.general.admins.split(',');
+exports.memechan = memechan = config.general.memechan;
 
 
 //Cusom Packages

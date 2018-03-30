@@ -6,7 +6,7 @@ const app = require('../app.js');
 
 var msgs = exports.msgs = [];
 
-exports.sendMsg = function(msg,content,reply,timeout){
+exports.sendMsg = function(msg,content,reply,timeout,callback){
     let sent;
     let push = true;
     if(reply){
@@ -26,6 +26,10 @@ exports.sendMsg = function(msg,content,reply,timeout){
 	    	msgs.push(message);
 	    	msgs.push(msg);
 	    }
+
+        if(typeof(callback !== 'undefined')){
+            callback(message);
+        }
     }
 }
 
