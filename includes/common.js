@@ -5,14 +5,21 @@ const logger = require('./logger.js');
 const app = require('../app.js');
 
 var msgs = exports.msgs = [];
+var push = true;
+var sent;
 
 exports.sendMsg = function(msg,content,reply,timeout,callback){
-    let sent;
-    let push = true;
+    sent = null;
+    push = true;
+
+    if(typeof(callback) === 'undefined'){
+        callback = '';
+    }
+
     if(reply){
-		msg.reply(content).then(message => cb(message));//.then(message => sent=message);//
+		msg.reply(content).then(message => cb(message,msg,callback));//.then(message => sent=message);//
     }else{
-		msg.channel.send(content).then(message => cb(message));//.then(message => sent=message);//
+		msg.channel.send(content).then(message => cb(message,msg,callback));//.then(message => sent=message);//
     }
     if(!isNaN(timeout) && app.autoclean == 'yes'){
     	push = false;
@@ -21,16 +28,7 @@ exports.sendMsg = function(msg,content,reply,timeout,callback){
             msg.delete().catch(function(){logger.log('warn','Tried to delete a nonexistent message!')});
         })
     }
-    function cb(message){
-    	if(push){
-	    	msgs.push(message);
-	    	msgs.push(msg);
-	    }
-
-        if(typeof(callback !== 'undefined')){
-            callback(message);
-        }
-    }
+    
 }
 
 exports.reset = function(){
@@ -39,4 +37,15 @@ exports.reset = function(){
 
 exports.getMsg = function(cb){
 	cb(msgs);
+}
+
+function cb(message,msg,callback){
+    if(push){
+        msgs.push(message);
+        msgs.push(msg);
+    }
+
+    if(callback !== ''){
+        callback(message);
+    }
 }
