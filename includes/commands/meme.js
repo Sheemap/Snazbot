@@ -112,7 +112,7 @@ exports.main = function(msg,args){
 
 	    		buffersize = Math.floor(memecount * BUFFER);
 
-	    		logger.log('debug',`Buffer size is ${buffersize}, meme count is ${memecount}. \n${buffer}`)
+	    		logger.log('debug',`Buffer size is ${buffersize}, meme count is ${memecount}.`)
 
 	    		for(let i=0;i<=10000;i++){
 					meme = memelist[Math.floor(Math.random()*(memelist.length-1))];
