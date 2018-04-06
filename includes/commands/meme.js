@@ -226,12 +226,15 @@ exports.react = function(reaction,user,added){
 
 							//split for imgur
 							for(let l in row){
-								let image = row[l].url.split('/')[3];
+								if(row[l].url.includes('i.imgur')){
+									let image = row[l].url.split('/')[3];
 
-								if(urlmeme.includes(image) && image != "" && image != " "){
-									trurow = row[l];
-									currentvotes = parseInt(row[l].votes)
+									if(urlmeme.includes(image) && image != "" && image != " "){
+										trurow = row[l];
+										currentvotes = parseInt(row[l].votes)
+									}
 								}
+								
 							}
 						}else{
 							for(let l in row){
@@ -257,6 +260,8 @@ exports.react = function(reaction,user,added){
 
 							db.run(`UPDATE memes SET votes="${newvotes}" WHERE url="${trurow.url}"`);
 							logger.log('debug',`Counted a meme vote. ${val} to ${trurow.url}. New votes is ${newvotes}`);
+						}else{
+							logger.log('debug','Failed to count vote, no meme found')
 						}
 					}
 					
