@@ -19,6 +19,7 @@ exports.buffer = buffer = config.meme.buffer;
 exports.maxvote = maxvote = config.meme.maxvote;
 exports.startscore = startscore = config.meme.startscore;
 exports.rollchan = rollchan = config.meme.rollchan;
+exports.albumhash = albumhash = config.meme.albumhash;
 
 
 //Cusom Packages

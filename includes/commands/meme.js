@@ -4,6 +4,7 @@ const app = require('../../app.js');
 const logger = require('../logger.js');
 const fs = require('fs');
 const db = require('../db.js');
+const imgur = require('imgur');
 
 exports.description = 'Rolls you a random meme';
 
@@ -19,6 +20,7 @@ exports.reactions = `%F0%9F%91%8D,%F0%9F%91%8E`;
 const BUFFER = app.buffer; //percentage
 const MAXVOTE = app.maxvote;
 const STARTSCORE = app.startscore;
+const ALBUMHASH = app.albumhash;
 
 var buffer = [];
 var buffersize = 0;
@@ -125,7 +127,7 @@ exports.main = function(msg,args){
 							buffer.shift();
 						}
 
-						if(meme.includes('cdn.discordapp.com')){
+						if(meme.includes('cdn.discordapp.com') || meme.includes('i.imgur')){
 							common.sendMsg(msg,{file:meme},false,15,callback);
 						}else{
 							common.sendMsg(msg,meme,false,15,callback);
@@ -208,8 +210,19 @@ exports.react = function(reaction,user,added){
 						logger.log('error',err)
 					}else{
 						if(attach){
+							//split for old discord format
 							for(let l in row){
 								let image = row[l].url.split('/')[6];
+
+								if(urlmeme.includes(image) && image != "" && image != " "){
+									trurow = row[l];
+									currentvotes = parseInt(row[l].votes)
+								}
+							}
+
+							//split for imgur
+							for(let l in row){
+								let image = row[l].url.split('/')[3];
 
 								if(urlmeme.includes(image) && image != "" && image != " "){
 									trurow = row[l];
@@ -280,20 +293,34 @@ exports.msg = function(msg) {
 
 		  		if(msg.attachments.array().length >= 1){
 
-		  			let memeimage = msg.attachments.first().url.split('/')[6];
+		  			// let memeimage = msg.attachments.first().url.split('/')[6];
 
-		  			for(let q in memes){
-		  				if(memes[q].includes(memeimage)){
-		  					unique = false;
-		  				}
+		  			// for(let q in memes){
+		  			// 	if(memes[q].includes(memeimage)){
+		  			// 		unique = false;
+		  			// 	}
+		  			// }
+
+		  			let attachments = msg.attachments.array()
+		  			let newurl = '';
+		  			for(let i=0;i<attachments.length;i++){
+
+		  				logger.log('info',`Saving meme sent by ${msg.author.username}`);
+
+		  				imgur.uploadUrl(attachments[i].url,ALBUMHASH)
+							.then(function (json) {
+						        newurl = json.data.link;
+
+						        db.run(`INSERT INTO memes VALUES ("${msg.author.username}","${msg.author.id}","${seconds}","${newurl}","${STARTSCORE}","placeholder")`);
+						    })
+						    .catch(function (err) {
+						        logger.log('error',err.message);
+						    });
+
+				  		
+
 		  			}
-		  			if(unique){
-			  			logger.log('info',`Saving meme sent by ${msg.author.username}`);
-
-				  		db.run(`INSERT INTO memes VALUES ("${msg.author.username}","${msg.author.id}","${seconds}","${msg.attachments.first().url}","${STARTSCORE}","placeholder")`);
-				  	}else{
-				  		logger.log('info','Not saving duplicate meme');
-				  	}
+		  			
 		  		}
 			})
 		}
