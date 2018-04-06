@@ -56,6 +56,18 @@ exports.run = function(query,callback){
     }
 }
 
+exports.runSecure = function(query,values,callback){
+    db.run(query,values,callback2)
+    function callback2(err,row){
+        if(err){
+            logger.log('error',err);
+        }
+        if(typeof callback != 'undefined'){
+            callback(err,row)
+        }
+    }
+}
+
 exports.get = function(query,callback){
     db.get(query,callback)
 }
