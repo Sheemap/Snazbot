@@ -159,6 +159,10 @@ exports.react = function(reaction,user,added){
 	let urlmeme;
 	let attach = false;
 
+	if(user.id == app.BOTID){
+		return;
+	}
+
 	if(user.id != reaction.message.author.id){
 		if(reaction.message.channel.id == app.memechan || reaction.message.channel.id == app.rollchan){
 			if(reaction.message.content.includes('http')){
