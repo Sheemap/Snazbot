@@ -25,131 +25,25 @@ const ALBUMHASH = app.albumhash;
 var buffer = [];
 var buffersize = 0;
 
-function checkPoints(disID,callback){
-	let score = 0;
-	let memecount = 0;
-	let avg = 0;
-	db.all(`SELECT * FROM memes WHERE disID="${disID}"`, function(err, rows){
-		
-		for(let y in rows){
-			score += parseInt(rows[y].votes) - STARTSCORE;
-			memecount++;
-		}
-		if(!memecount == 0){
-			avg = (score/memecount).toFixed(2);
-		}
 
-		callback(score,avg,memecount)
-	})
-	
-}
 
 exports.main = function(msg,args){
-	if(args.length >= 1 && args[0] == 'status'){
-		db.all('SELECT * FROM memes', function(err, rows){
-			let memelist = [];
-			for(let w in rows){
-				if(rows[w].votes > 0)
-					memelist.push(rows[w].url);
-			}
-			var count = memelist.length;
+	switch(args[0]){
 
-			common.sendMsg(msg,`There are currently **${count}** memes in stock. The buffersize is set to **${BUFFER*100}%**.`,false,15);
+		case 'status':
+			checkStats(msg,args);
+			break;
 
-		});
-	}else if(args.length >= 1 && args[0] == 'points'){
-		if(args.length >= 2){
-			let members = msg.channel.guild.members.array();
-			let count = 0;
-			let disID;
-			let name;
-			for(let mem in members){
-				if(members[mem].user.username.toLowerCase().includes(args[1].toLowerCase())){
-					count++;
-					disID = members[mem].user.id;
-					name = members[mem].user.username;
-				}
-			}
+		case 'points':
+			points(msg,args);
+			break;
 
-			if(count > 1){
-				common.sendMsg(msg,`Multiple users found by that name! Try something more specific.`,false,15);
-
-			}else if(count == 0){
-				common.sendMsg(msg,`No users found by that name! Try again!`,false,15);
-
-			}else if(count == 1){
-
-				checkPoints(disID,function(score,avg,memecount){
-					common.sendMsg(msg,`${name} currently has **${score}** meme points.`,false,15);
-				})
-
-				
-			}
-		}else{
-
-			checkPoints(msg.author.id,function(score,avg,memecount){
-				common.sendMsg(msg,`You currently have **${score}** meme points.`,true,15);
-			})
-		}
-	}else{
-		if(msg.channel.id != app.rollchan){
-			common.sendMsg(msg,'This command only works in the #memeroll chat.',false,15);
-		}else{
-			db.all('SELECT url,votes FROM memes', function(err, rows){
-	    		var memelist = [];
-	    		var memecount = 0;
-	    		var meme,
-	    			found = false;
-
-	    		for(let w in rows){
-
-	    			for(let x=0;x<=rows[w].votes;x++){
-						memelist.push(rows[w].url);
-	    			}
-
-	    			if(rows[w].votes > 0)
-	    				memecount++;
-
-	    		}
-
-	    		buffersize = Math.floor(memecount * BUFFER);
-
-	    		logger.log('debug',`Buffer size is ${buffersize}, meme count is ${memecount}.`)
-
-	    		for(let i=0;i<=10000;i++){
-					meme = memelist[Math.floor(Math.random()*(memelist.length-1))];
-
-					if(!buffer.includes(meme)){
-						buffer.push(meme);
-
-
-						if(buffer.length >= buffersize){
-							buffer.shift();
-						}
-
-						if(meme.includes('cdn.discordapp.com') || meme.includes('i.imgur')){
-							common.sendMsg(msg,{file:meme},false,15,callback);
-						}else{
-							common.sendMsg(msg,meme,false,15,callback);
-						}
-						found = true;
-
-						async function callback(message){
-							await message.react('👍');
-							await message.react('👎');
-						}
-
-						break;
-					}
-				}
-				if(!found){
-					logger.log('warn','Failed to randomize a meme not in the buffer!');
-				}
-
-			});
-		}
+		default:
+			roll(msg,args);
+			break;
 	}
 }
+
 
 exports.react = function(reaction,user,added){
 	let val = 0;
@@ -336,4 +230,133 @@ exports.msg = function(msg) {
   		
   	}
 
+}
+
+
+function checkStats(msg,args){
+	db.all('SELECT * FROM memes', function(err, rows){
+		let memelist = [];
+		for(let w in rows){
+			if(rows[w].votes > 0)
+				memelist.push(rows[w].url);
+		}
+		var count = memelist.length;
+
+		common.sendMsg(msg,`There are currently **${count}** memes in stock. The buffersize is set to **${BUFFER*100}%**.`,false,15);
+
+	});
+}
+
+function points(msg,args){
+	if(args.length >= 2){
+		let members = msg.channel.guild.members.array();
+		let count = 0;
+		let disID;
+		let name;
+		for(let mem in members){
+			if(members[mem].user.username.toLowerCase().includes(args[1].toLowerCase())){
+				count++;
+				disID = members[mem].user.id;
+				name = members[mem].user.username;
+			}
+		}
+
+		if(count > 1){
+			common.sendMsg(msg,`Multiple users found by that name! Try something more specific.`,false,15);
+
+		}else if(count == 0){
+			common.sendMsg(msg,`No users found by that name! Try again!`,false,15);
+
+		}else if(count == 1){
+
+			checkPoints(disID,function(score,avg,memecount){
+				common.sendMsg(msg,`${name} currently has **${score}** meme points.`,false,15);
+			})
+
+			
+		}
+	}else{
+
+		checkPoints(msg.author.id,function(score,avg,memecount){
+			common.sendMsg(msg,`You currently have **${score}** meme points.`,true,15);
+		})
+	}
+}
+
+function checkPoints(disID,callback){
+	let score = 0;
+	let memecount = 0;
+	let avg = 0;
+	db.all(`SELECT * FROM memes WHERE disID="${disID}"`, function(err, rows){
+		
+		for(let y in rows){
+			score += parseInt(rows[y].votes) - STARTSCORE;
+			memecount++;
+		}
+		if(!memecount == 0){
+			avg = (score/memecount).toFixed(2);
+		}
+
+		callback(score,avg,memecount)
+	})
+	
+}
+
+function roll(msg,args){
+	if(msg.channel.id != app.rollchan){
+		common.sendMsg(msg,'This command only works in the #memeroll chat.',false,15);
+	}else{
+		db.all('SELECT url,votes FROM memes', function(err, rows){
+    		var memelist = [];
+    		var memecount = 0;
+    		var meme,
+    			found = false;
+
+    		for(let w in rows){
+
+    			for(let x=0;x<=rows[w].votes;x++){
+					memelist.push(rows[w].url);
+    			}
+
+    			if(rows[w].votes > 0)
+    				memecount++;
+
+    		}
+
+    		buffersize = Math.floor(memecount * BUFFER);
+
+    		logger.log('debug',`Buffer size is ${buffersize}, meme count is ${memecount}.`)
+
+    		for(let i=0;i<=10000;i++){
+				meme = memelist[Math.floor(Math.random()*(memelist.length-1))];
+
+				if(!buffer.includes(meme)){
+					buffer.push(meme);
+
+
+					if(buffer.length >= buffersize){
+						buffer.shift();
+					}
+
+					if(meme.includes('cdn.discordapp.com') || meme.includes('i.imgur')){
+						common.sendMsg(msg,{file:meme},false,15,callback);
+					}else{
+						common.sendMsg(msg,meme,false,15,callback);
+					}
+					found = true;
+
+					async function callback(message){
+						await message.react('👍');
+						await message.react('👎');
+					}
+
+					break;
+				}
+			}
+			if(!found){
+				logger.log('warn','Failed to randomize a meme not in the buffer!');
+			}
+
+		});
+	}
 }
