@@ -8,7 +8,7 @@ const imgur = require('imgur');
 
 exports.description = 'Rolls you a random meme';
 
-exports.usage = `Use "${app.prefix}meme" to fetch a meme.\n\nUse "${app.prefix}meme status" to count the memes available.\n\nUse "${app.prefix}meme points" to see how many points your memes have gathered.\n\nUse "${app.prefix}meme points <username>" to see how many points other peoples memes have gathered.`;
+exports.usage = `Use "${app.prefix}meme" to fetch a meme.\n\nUse "${app.prefix}meme status" to count the memes available.\n\nUse "${app.prefix}meme points" to see how many points your memes have gathered.\n\nUse "${app.prefix}meme points <username>" to see how many points other peoples memes have gathered.\n\nUse "${app.prefix}meme youtube <on | off>" to enable/disble rolling youtube memes\n\nUse "${app.prefix}meme save <on | off>" to enable/disable the saving of your memes`;
 
 exports.reactions = `%F0%9F%91%8D,%F0%9F%91%8E`;
 
@@ -40,6 +40,10 @@ exports.main = function(msg,args){
 
 		case 'youtube':
 			changeYoutube(msg,args);
+			break;
+
+		case 'save':
+			changeScrape(msg,args);
 			break;
 
 		default:
@@ -177,59 +181,67 @@ exports.msg = function(msg) {
 
 		if(msg.channel.id == app.memechan || msg.channel.id == app.rollchan){
 
+			db.get(`SELECT * FROM users WHERE disID="${msg.author.id}"`,function(err,row){
 
-			db.all('SELECT url,votes FROM memes', function(err, rows){
-				let memes = [];
-				let unique = true;
-				var seconds = new Date() / 1000;
+				if(typeof(row) !== 'undefined' && row.memeroll == '0'){
+					logger.log('debug',`Not saving meme, ${msg.author.username} has opted out.`)
+				}else{
 
-				for(let u in rows){
-					memes.push(rows[u].url)
+					db.all('SELECT url,votes FROM memes', function(err, rows){
+						let memes = [];
+						let unique = true;
+						var seconds = new Date() / 1000;
+
+						for(let u in rows){
+							memes.push(rows[u].url)
+						}
+
+				  		if(msg.content.includes('http')){
+
+				  			if(!memes.includes(msg.content)){
+					  			logger.log('info',`Saving meme sent by ${msg.author.username}`);
+
+								db.run(`INSERT INTO memes VALUES ("${msg.author.username}","${msg.author.id}","${seconds}","${msg.content}","${STARTSCORE}","placeholder")`);
+							}else{
+								logger.log('info','Not saving duplicate meme');
+							}
+				  		}
+
+				  		if(msg.attachments.array().length >= 1){
+
+				  			// let memeimage = msg.attachments.first().url.split('/')[6];
+
+				  			// for(let q in memes){
+				  			// 	if(memes[q].includes(memeimage)){
+				  			// 		unique = false;
+				  			// 	}
+				  			// }
+
+				  			let attachments = msg.attachments.array()
+				  			let newurl = '';
+				  			for(let i=0;i<attachments.length;i++){
+
+				  				logger.log('info',`Saving meme sent by ${msg.author.username}`);
+
+				  				imgur.uploadUrl(attachments[i].url,ALBUMHASH)
+									.then(function (json) {
+								        newurl = json.data.link;
+
+								        db.run(`INSERT INTO memes VALUES ("${msg.author.username}","${msg.author.id}","${seconds}","${newurl}","${STARTSCORE}","placeholder")`);
+								    })
+								    .catch(function (err) {
+								        logger.log('error',err.message);
+								    });
+
+						  		
+
+				  			}
+				  			
+				  		}
+					})
+
 				}
-
-		  		if(msg.content.includes('http')){
-
-		  			if(!memes.includes(msg.content)){
-			  			logger.log('info',`Saving meme sent by ${msg.author.username}`);
-
-						db.run(`INSERT INTO memes VALUES ("${msg.author.username}","${msg.author.id}","${seconds}","${msg.content}","${STARTSCORE}","placeholder")`);
-					}else{
-						logger.log('info','Not saving duplicate meme');
-					}
-		  		}
-
-		  		if(msg.attachments.array().length >= 1){
-
-		  			// let memeimage = msg.attachments.first().url.split('/')[6];
-
-		  			// for(let q in memes){
-		  			// 	if(memes[q].includes(memeimage)){
-		  			// 		unique = false;
-		  			// 	}
-		  			// }
-
-		  			let attachments = msg.attachments.array()
-		  			let newurl = '';
-		  			for(let i=0;i<attachments.length;i++){
-
-		  				logger.log('info',`Saving meme sent by ${msg.author.username}`);
-
-		  				imgur.uploadUrl(attachments[i].url,ALBUMHASH)
-							.then(function (json) {
-						        newurl = json.data.link;
-
-						        db.run(`INSERT INTO memes VALUES ("${msg.author.username}","${msg.author.id}","${seconds}","${newurl}","${STARTSCORE}","placeholder")`);
-						    })
-						    .catch(function (err) {
-						        logger.log('error',err.message);
-						    });
-
-				  		
-
-		  			}
-		  			
-		  		}
-			})
+			});
 		}
   		
   	}
@@ -415,6 +427,48 @@ function changeYoutube(msg,args){
 	}else{
 
 		common.sendMsg(msg,`I dont understand what you mean by that! Please either use 'on' or 'off' to enable or disable YouTube memes.`);
+
+	}
+}
+
+function changeScrape(msg,args){
+	if(args[1].toLowerCase() == 'on'){
+
+		db.get(`SELECT * FROM users WHERE disID="${msg.author.id}"`,function(err,row){
+			if(typeof(row) === 'undefined'){
+				db.runSecure(`INSERT INTO users VALUES(?,?,?,?)`,{
+					1: msg.author.username,
+					2: msg.author.id,
+					3: 1,
+					4: 1
+				})
+			}else{
+				db.run(`UPDATE users SET memeroll="1" WHERE disID="${msg.author.id}"`);
+			}
+
+			common.sendMsg(msg,'Your memes will be saved');
+		})
+
+	}else if(args[1].toLowerCase() == 'off'){
+
+		db.get(`SELECT * FROM users WHERE disID="${msg.author.id}"`,function(err,row){
+			if(typeof(row) === 'undefined'){
+				db.runSecure(`INSERT INTO users VALUES(?,?,?,?)`,{
+					1: msg.author.username,
+					2: msg.author.id,
+					3: 1,
+					4: 0
+				})
+			}else{
+				db.run(`UPDATE users SET memeroll="0" WHERE disID="${msg.author.id}"`);
+			}
+
+			common.sendMsg(msg,'Your memes will no longer be saved');
+		})
+
+	}else{
+
+		common.sendMsg(msg,`I dont understand what you mean by that! Please either use 'on' or 'off' to enable or disable adding your memes to memepool.`);
 
 	}
 }
