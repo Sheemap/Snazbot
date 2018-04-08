@@ -38,6 +38,10 @@ exports.main = function(msg,args){
 			points(msg,args);
 			break;
 
+		case 'youtube':
+			changeYoutube(msg,args);
+			break;
+
 		default:
 			roll(msg,args);
 			break;
@@ -307,56 +311,110 @@ function roll(msg,args){
 		common.sendMsg(msg,'This command only works in the #memeroll chat.',false,15);
 	}else{
 		db.all('SELECT url,votes FROM memes', function(err, rows){
-    		var memelist = [];
-    		var memecount = 0;
-    		var meme,
-    			found = false;
+			db.get(`SELECT * FROM users WHERE disID="${msg.author.id}"`,function(err,row){
+				var ytmemes = true;
+	    		var memelist = [];
+	    		var memecount = 0;
+	    		var meme,
+	    			wanted,
+	    			found = false;
 
-    		for(let w in rows){
-
-    			for(let x=0;x<=rows[w].votes;x++){
-					memelist.push(rows[w].url);
-    			}
-
-    			if(rows[w].votes > 0)
-    				memecount++;
-
-    		}
-
-    		buffersize = Math.floor(memecount * BUFFER);
-
-    		logger.log('debug',`Buffer size is ${buffersize}, meme count is ${memecount}.`)
-
-    		for(let i=0;i<=10000;i++){
-				meme = memelist[Math.floor(Math.random()*(memelist.length-1))];
-
-				if(!buffer.includes(meme)){
-					buffer.push(meme);
-
-
-					if(buffer.length >= buffersize){
-						buffer.shift();
-					}
-
-					if(meme.includes('cdn.discordapp.com') || meme.includes('i.imgur')){
-						common.sendMsg(msg,{file:meme},false,15,callback);
-					}else{
-						common.sendMsg(msg,meme,false,15,callback);
-					}
-					found = true;
-
-					async function callback(message){
-						await message.react('👍');
-						await message.react('👎');
-					}
-
-					break;
+	    		if(typeof(row) !== 'undefined' && row.ytmemes == '0'){
+					ytmemes = false;
 				}
-			}
-			if(!found){
-				logger.log('warn','Failed to randomize a meme not in the buffer!');
+
+	    		for(let w in rows){
+
+	    			for(let x=0;x<=rows[w].votes;x++){
+						memelist.push(rows[w].url);
+	    			}
+
+	    			if(rows[w].votes > 0)
+	    				memecount++;
+
+	    		}
+
+	    		buffersize = Math.floor(memecount * BUFFER);
+
+	    		logger.log('debug',`Buffer size is ${buffersize}, meme count is ${memecount}.`)
+
+	    		for(let i=0;i<=10000;i++){
+					meme = memelist[Math.floor(Math.random()*(memelist.length-1))];
+					wanted = true;
+
+					if(meme.includes('youtu') && !ytmemes){
+						wanted = false;
+					}
+
+					if(!buffer.includes(meme) && wanted){
+						buffer.push(meme);
+
+
+						if(buffer.length >= buffersize){
+							buffer.shift();
+						}
+
+						if(meme.includes('cdn.discordapp.com') || meme.includes('i.imgur')){
+							common.sendMsg(msg,{file:meme},false,15,callback);
+						}else{
+							common.sendMsg(msg,meme,false,15,callback);
+						}
+						found = true;
+
+						async function callback(message){
+							await message.react('👍');
+							await message.react('👎');
+						}
+
+						break;
+					}
+				}
+				if(!found){
+					logger.log('warn','Failed to randomize a meme not in the buffer!');
+				}
+			});
+		});
+	}
+}
+
+function changeYoutube(msg,args){
+	if(args[1].toLowerCase() == 'on'){
+
+		db.get(`SELECT * FROM users WHERE disID="${msg.author.id}"`,function(err,row){
+			if(typeof(row) === 'undefined'){
+				db.runSecure(`INSERT INTO users VALUES(?,?,?,?)`,{
+					1: msg.author.username,
+					2: msg.author.id,
+					3: 1,
+					4: 1
+				})
+			}else{
+				db.run(`UPDATE users SET ytmemes="1" WHERE disID="${msg.author.id}"`);
 			}
 
-		});
+			common.sendMsg(msg,'YouTube memes have been enabled');
+		})
+
+	}else if(args[1].toLowerCase() == 'off'){
+
+		db.get(`SELECT * FROM users WHERE disID="${msg.author.id}"`,function(err,row){
+			if(typeof(row) === 'undefined'){
+				db.runSecure(`INSERT INTO users VALUES(?,?,?,?)`,{
+					1: msg.author.username,
+					2: msg.author.id,
+					3: 0,
+					4: 1
+				})
+			}else{
+				db.run(`UPDATE users SET ytmemes="0" WHERE disID="${msg.author.id}"`);
+			}
+
+			common.sendMsg(msg,'YouTube memes have been disabled');
+		})
+
+	}else{
+
+		common.sendMsg(msg,`I dont understand what you mean by that! Please either use 'on' or 'off' to enable or disable YouTube memes.`);
+
 	}
 }
