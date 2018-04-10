@@ -66,7 +66,7 @@ exports.react = function(reaction,user,added){
 	}
 
 	if(user.id != reaction.message.author.id){
-		if(reaction.message.channel.id == app.memechan || reaction.message.channel.id == app.rollchan){
+		if(reaction.message.channel.id == app.rollchan){
 			if(reaction.message.content.includes('http')){
 				meme = true;
 				urlmeme = reaction.message.content;
