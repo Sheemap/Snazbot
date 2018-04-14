@@ -55,7 +55,7 @@ exports.main = function(msg,args){
 
 exports.react = function(reaction,user,added){
 	let val = 0;
-	let meme = false;
+	let meme = false;git 
 	let currentvotes;
 	let newvotes;
 	let urlmeme;
@@ -201,7 +201,14 @@ exports.msg = function(msg) {
 				  			if(!memes.includes(msg.content)){
 					  			logger.log('info',`Saving meme sent by ${msg.author.username}`);
 
-								db.run(`INSERT INTO memes VALUES ("${msg.author.username}","${msg.author.id}","${seconds}","${msg.content}","${STARTSCORE}","placeholder")`);
+								db.runSecure(`INSERT INTO memes VALUES (?,?,?,?,?,?)`,{ 
+									1: msg.author.username,
+									2: msg.author.id,
+									3: seconds,
+									4: msg.content,
+									5: STARTSCORE,
+									6: "placeholder"
+								});
 							}else{
 								logger.log('info','Not saving duplicate meme');
 							}
@@ -227,7 +234,14 @@ exports.msg = function(msg) {
 									.then(function (json) {
 								        newurl = json.data.link;
 
-								        db.run(`INSERT INTO memes VALUES ("${msg.author.username}","${msg.author.id}","${seconds}","${newurl}","${STARTSCORE}","placeholder")`);
+								        db.runSecure(`INSERT INTO memes VALUES (?,?,?,?,?,?)`, {
+								        	1: msg.author.username,
+								        	2: msg.author.id,
+								        	3: seconds,
+								        	4: newurl,
+								        	5: STARTSCORE,
+								        	6: "placeholder"
+								        });
 								    })
 								    .catch(function (err) {
 								        logger.log('error',err.message);
