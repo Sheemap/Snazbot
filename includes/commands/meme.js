@@ -55,7 +55,7 @@ exports.main = function(msg,args){
 
 exports.react = function(reaction,user,added){
 	let val = 0;
-	let meme = false;git 
+	let meme = false;
 	let currentvotes;
 	let newvotes;
 	let urlmeme;
