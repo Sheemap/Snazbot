@@ -12,7 +12,11 @@ exports.createNew = function(name,callback){
     db.serialize(function() {
         db.run("CREATE TABLE johntime (disNAM TEXT, disID TEXT, timestamp NUMERIC, claim NUMERIC, actual NUMERIC)");
         db.run("CREATE TABLE memes (disNAM TEXT, disID NUMERIC, timestamp NUMERIC, url TEXT, votes NUMERIC, hash TEXT)");
-        db.run("CREATE TABLE users (disNAM TEXT, disID NUMERIC, ytmemes INTEGER, memeroll INTEGER)")
+        db.run("CREATE TABLE users (disNAM TEXT, disID NUMERIC, ytmemes INTEGER, memeroll INTEGER)");
+        db.run("CREATE TABLE chungus (disNAM TEXT, disID NUMERIC, lastclaim NUMERIC, points NUMERIC)");
+
+        var seconds = new Date() / 1000;
+        db.run(`INSERT INTO chungus VALUES ("chungus","000","${seconds}","0")`);
 
 
         // IMPORT PLAINTEXT MEMERS
