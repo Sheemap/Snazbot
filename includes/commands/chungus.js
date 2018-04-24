@@ -8,16 +8,29 @@ exports.description = 'Claim yourself as chungus';
 
 exports.usage = `Use "${app.prefix}chungus" to claim your chungus points.\n\nUse "${app.prefix}chungus top" to check leaderboard.`;
 
+const CHUNGUSROLE = app.chungusrole;
+
+
+var lastcall;
+
 
 exports.main = function(msg,args){
 	switch(args[0]){
+
+		case 'tmp':
+			checkLeader(msg,args);
+			break;
 
 		case 'top':
 			top(msg,args);
 			break;
 
-		default:
+		case '!chungus':
 			claim(msg,args);
+			break;
+
+		default:
+			common.sendMsg(msg,`\`\`\`${exports.usage}\`\`\``)
 			break;
 
 	}
@@ -42,6 +55,14 @@ function top(msg,args){
 }
 
 function claim(msg,args){
+
+	if(msg.author.id == lastcall){
+		common.sendMsg(msg,`You cant claim chungus twice in a row!`);
+		return;
+	}else{
+		lastcall = msg.author.id;
+	}
+
 	var seconds = new Date() / 1000;
 	db.get("SELECT lastclaim FROM chungus WHERE disNAM='chungus'",function(err,row){
 		var chungustime = Math.round((seconds - row.lastclaim)/60);
@@ -61,6 +82,8 @@ function claim(msg,args){
 						2: msg.author.id,
 						3: seconds,
 						4: chunguspoints
+					},function(err,row){
+						checkLeader(msg);
 					})
 
 					var newpoints = chunguspoints;
@@ -68,14 +91,52 @@ function claim(msg,args){
 
 					var newpoints = Math.round(row.points + chunguspoints);
 							
-					db.run(`UPDATE chungus SET points="${newpoints}" WHERE disID="${msg.author.id}"`);
+					db.run(`UPDATE chungus SET points="${newpoints}" WHERE disID="${msg.author.id}"`,function(err,row){
+						checkLeader(msg);
+					});
 
 				}
 
 				common.sendMsg(msg,`Congrats! Its been **${chungustime}** minutes since the last chungus call. You have successfully claimed **${chunguspoints}** chungus, your new total is **${newpoints}** chungus.`,true)
-
 			
 			});
 		});
 	});
+}
+
+function checkLeader(msg){
+	var roles;
+	var topmember;
+	var roleset = false;
+	var members = msg.guild.members.array();
+	db.get("SELECT * FROM chungus ORDER BY points DESC, lastclaim ASC", function(err,row){
+
+		for(let i=0;i<members.length;i++){
+		
+			if(members[i].id == row.disID){
+				topmember = members[i];
+			}
+
+			roles = members[i].roles.array();
+			for(let x=0;x<roles.length;x++){
+
+				if(roles[x].id == CHUNGUSROLE){
+					if(members[i].id == row.disID){
+						roleset = true;
+					}else{
+						members[i].removeRole(CHUNGUSROLE);
+					}
+				}
+
+			}
+
+		}
+
+		if(!roleset){
+				topmember.addRole(CHUNGUSROLE);
+			}
+
+	})
+	
+	// msg.member.addRole(CHUNGUSROLE)
 }

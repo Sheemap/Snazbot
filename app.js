@@ -21,6 +21,9 @@ exports.startscore = startscore = config.meme.startscore;
 exports.rollchan = rollchan = config.meme.rollchan;
 exports.albumhash = albumhash = config.meme.albumhash;
 
+//Chungus config
+exports.chungusrole = chungusrole = config.chungus.chungusrole;
+
 
 //Cusom Packages
 const logger = require("./includes/logger.js");
