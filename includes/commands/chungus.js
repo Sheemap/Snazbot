@@ -6,17 +6,39 @@ const db = require('../db.js')
 
 exports.description = 'Claim yourself as chungus';
 
-exports.usage = `Use ${app.prefix}chungus to claim your chungus points.`;
+exports.usage = `Use "${app.prefix}chungus" to claim your chungus points.\n\nUse "${app.prefix}chungus top" to check leaderboard.`;
 
 
 exports.main = function(msg,args){
 	switch(args[0]){
+
+		case 'top':
+			top(msg,args);
+			break;
 
 		default:
 			claim(msg,args);
 			break;
 
 	}
+}
+
+function top(msg,args){
+	db.all("SELECT * FROM chungus WHERE disNAM != 'chungus' ORDER BY points DESC",function(err,rows){
+
+		var content = 'Top chungus:\n';
+
+		for(let i=0;i<rows.length;i++){
+
+			if(i>=10)
+				break;
+
+			content += `${i+1}. ${rows[i].disNAM}: **${rows[i].points}**\n`;
+		}
+
+		common.sendMsg(msg,content);
+
+	})
 }
 
 function claim(msg,args){
