@@ -45,7 +45,7 @@ exports.main = function(msg,args){
 
 function confirm(msg){
 	if(!progress){
-		common.sendMsg(msg,`There is no report needing confirmation! If you want to report, please use \`\`\`${app.prefix}johntime report <time in minutes>\`\`\``)
+		common.sendMsg(msg,`There is no report needing confirmation! If you want to report, please use \`\`\`${app.prefix}johntime report <claimed time in minutes> <actual time in minutes>\`\`\``)
 	}else if(msg.author.id == authorid){
 		common.sendMsg(msg,`You cant confirm your own report!`,true,15);
 	}else if(confirmed.includes(authorid)){
