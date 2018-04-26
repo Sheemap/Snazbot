@@ -112,11 +112,12 @@ function claim(msg,args){
 			db.get(`SELECT points FROM chungus WHERE disID="${msg.author.id}"`,function(err,row){
 
 				if(typeof(row) === 'undefined'){
-					db.runSecure(`INSERT INTO chungus VALUES (?,?,?,?)`,{
+					db.runSecure(`INSERT INTO chungus VALUES (?,?,?,?,?)`,{
 						1: msg.author.username,
 						2: msg.author.id,
 						3: seconds,
-						4: chunguspoints
+						4: chunguspoints,
+						5: 0
 					},function(err,row){
 						checkLeader(msg);
 					})
@@ -170,10 +171,13 @@ function checkLeader(msg){
 		}
 
 		if(!roleset){
+			if(typeof(topmember) !== 'undefined'){
 				topmember.addRole(CHUNGUSROLE);
 
 				db.run(`UPDATE chungus SET lastchungus = "${seconds}" WHERE disID = "${topmember.id}"`);
 			}
+			
+		}
 
 	})
 	
