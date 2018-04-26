@@ -49,7 +49,7 @@ function dbCallback(){
     commEvents = comm.events;
 
 
-    if(fs.existsSync('data/christ.txt')){
+    if(fs.existsSync('data/christ.txt')){ // The appendix of Snazbot
         exports.christ = christ = true;
     }else{
         exports.christ = christ = false;
