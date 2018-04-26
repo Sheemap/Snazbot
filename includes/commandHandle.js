@@ -50,6 +50,8 @@ exports.parse = function(msg){
 	let comm = content.split(' ')[0].replace(app.prefix,'');
 	let args = content.replace(app.prefix+comm+' ','').split(' ');
 
+	comm = comm.toLowerCase();
+
 
 	if(blackall.indexOf(authid) != -1){
 		logger.log('debug','User is blacklisted, not replying.');
@@ -168,7 +170,7 @@ exports.msg = function(msg){
 }
 
 function help(msg,args){
-	if(args[0] == '!help' || args[0] == 'help'){
+	if(args[0].toLowerCase() == '!help' || args[0].toLowerCase() == 'help'){
 		let rich = new Discord.RichEmbed();
 		rich.setTitle('List of commands')
 		rich.setDescription(`Use ${app.prefix}help <command> for a more detailed description.`)
@@ -186,7 +188,7 @@ function help(msg,args){
 		let found = false;
 		let rich = new Discord.RichEmbed();
 		for(let command in comms){
-			let com = args[0].replace(app.prefix,'');
+			let com = args[0].toLowerCase().replace(app.prefix,'');
 			if(com == command){
 				found = true;
 				if(typeof(comms[com].usage) !== 'undefined'){

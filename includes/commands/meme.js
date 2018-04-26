@@ -28,7 +28,7 @@ var buffersize = 0;
 
 
 exports.main = function(msg,args){
-	switch(args[0]){
+	switch(args[0].toLowerCase()){
 
 		case 'status':
 			checkStats(msg,args);

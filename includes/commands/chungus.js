@@ -16,7 +16,7 @@ var lastcall;
 
 exports.main = function(msg,args){
 
-	// logger.log('debug',`${args[0].toLowerCase()}`)
+	logger.log('debug',`${args[0].toLowerCase()}`)
 	switch(args[0].toLowerCase()){
 
 

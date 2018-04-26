@@ -19,7 +19,7 @@ var progress = false,
 	confirmed;
 
 exports.main = function(msg,args){
-	switch(args[0]){
+	switch(args[0].toLowerCase()){
 
 		case 'confirm':
 			confirm(msg);
