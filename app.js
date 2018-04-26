@@ -50,7 +50,7 @@ function dbCallback(){
 
 
     if(fs.existsSync('data/christ.txt')){ // The appendix of Snazbot
-        exports.christ = christ = true;
+        exports.christ = christ = true; // Test commit plz ignore, no appendix plz
     }else{
         exports.christ = christ = false;
     }
