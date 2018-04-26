@@ -140,7 +140,7 @@ function claim(msg,args){
 }
 
 function checkLeader(msg){
-	console.log(msg.member.roles)
+	let seconds = new Date() / 1000;
 
 	var roles;
 	var topmember;
@@ -171,6 +171,8 @@ function checkLeader(msg){
 
 		if(!roleset){
 				topmember.addRole(CHUNGUSROLE);
+
+				db.run(`UPDATE chungus SET lastchungus = "${seconds}" WHERE disID = "${topmember.id}"`);
 			}
 
 	})
