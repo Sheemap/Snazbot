@@ -15,7 +15,11 @@ var lastcall;
 
 
 exports.main = function(msg,args){
-	switch(args[0]){
+
+	// logger.log('debug',`${args[0].toLowerCase()}`)
+	switch(args[0].toLowerCase()){
+
+
 
 		case 'tmp':
 			checkLeader(msg,args);
@@ -55,9 +59,13 @@ function changeColor(msg,args){
 	}
 
 	if(chungus){
-		role.setColor(args[1].toUpperCase())
-			.then(updated => common.sendMsg(msg,`Changed chungus color to ${args[1]}`))
-			// .catch(common.sendMsg(msg,`Failed to change chungus color. Make sure you have a valid color!`))
+		if(typeof(args[1]) !== 'undefined'){
+			role.setColor(args[1].toUpperCase())
+				.then(updated => common.sendMsg(msg,`Changed chungus color to ${args[1]}`))
+				// .catch(common.sendMsg(msg,`Failed to change chungus color. Make sure you have a valid color!`))
+		}else{
+			common.sendMsg(msg,`Please enter a valid hex code as the final argument.`)
+		}
 	}else{
 		common.sendMsg(msg,`You arent the chungus! You dont decide the color!`);
 	}
@@ -132,6 +140,8 @@ function claim(msg,args){
 }
 
 function checkLeader(msg){
+	console.log(msg.member.roles)
+
 	var roles;
 	var topmember;
 	var roleset = false;
@@ -146,7 +156,7 @@ function checkLeader(msg){
 
 			roles = members[i].roles.array();
 			for(let x=0;x<roles.length;x++){
-
+ 
 				if(roles[x].id == CHUNGUSROLE){
 					if(members[i].id == row.disID){
 						roleset = true;
