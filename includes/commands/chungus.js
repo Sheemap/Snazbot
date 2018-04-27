@@ -33,6 +33,10 @@ exports.main = function(msg,args){
 			changeColor(msg,args);
 			break;
 
+		case 'name':
+			changeName(msg,args);
+			break;
+
 		case '!chungus':
 			claim(msg,args);
 			break;
@@ -41,6 +45,36 @@ exports.main = function(msg,args){
 			common.sendMsg(msg,`\`\`\`${exports.usage}\`\`\``)
 			break;
 
+	}
+}
+
+function changeName(msg,args){
+	let role;
+	let roles = msg.member.roles.array();
+	let chungus = false;
+
+	for(let i=0;i<roles.length;i++){
+
+		if(roles[i].id == CHUNGUSROLE){
+			role = roles[i];
+			chungus = true;
+		}
+
+	}
+
+	if(chungus){
+
+		let name = msg.content.toLowerCase().replace(`${app.prefix}chungus name `,'')
+
+		if(typeof(name) !== 'undefined' && name !== '' && name.includes('chungus')){
+			role.setName(name)
+				.then(updated => common.sendMsg(msg,`Changed name to ${name}`))
+				// .catch(common.sendMsg(msg,`Failed to change chungus color. Make sure you have a valid color!`))
+		}else{
+			common.sendMsg(msg,`Please enter a valid name. The name must contain "chungus" somewhere in it.`)
+		}
+	}else{
+		common.sendMsg(msg,`You arent the chungus! You dont decide the color!`);
 	}
 }
 
