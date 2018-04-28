@@ -7,26 +7,70 @@ const db = new sqlite3.Database('./data/data.db');
 //Hours they may be chungus before decay begins.
 const THRESHOLD = 24;
 
-db.get('SELECT * FROM chungus ORDER BY lastchungus DESC',function(err,row){
-	var now = new Date() / 1000;
-	var oldpoints = row.points;
-	var decay;
-	var newpoints;
+//Decay percent every 6 hours
+const DECAYPERCENT = 0.0175 //0.0175 equates to 7% per day
 
-	var chungushours = (now - row.lastchungus)/60/60;
-	
-	var decaytime = Math.round(chungushours - THRESHOLD);
+var oldpoints,
+	newpoints,
+	decay,
+	ids = [];
 
-	if(decaytime > 1){
+function allDecay(){
+	db.all('SELECT * FROM chungus WHERE disNAM != "chungus"',function(err,rows){
+		var stmnt = `UPDATE chungus SET points = CASE disID `
+
+		for(let i=0;i<rows.length;i++){
+
+			oldpoints = rows[i].points;
+			newpoints = Math.round(oldpoints*(1-DECAYPERCENT));
+			decay = oldpoints-newpoints;
+
+			if(isNaN(newpoints) || decay == 0 || newpoints <= 0){
+				console.log(`Not running decay on ${rows[i].disNAM}`)
+				
+			}else{
+
+				stmnt += `WHEN "${rows[i].disID}" THEN "${newpoints}" `
+
+				console.log(`${rows[i].disNAM} had ${oldpoints} but now has ${newpoints}\nDecayed ${decay}\n\n`)
+			}
+
+		}
+
+		stmnt += `END WHERE disNAM != 'chungus'`
+
+		db.run(stmnt,function(err,row){
+			if(err)
+				console.log(err)
+		})
+
+	})
+}
+
+function chungusDecay(){
+	db.get('SELECT * FROM chungus ORDER BY lastchungus DESC',function(err,row){
+		var now = new Date() / 1000;
+		var oldpoints = row.points;
+		var decay;
+		var newpoints;
+
+		var chungushours = (now - row.lastchungus)/60/60;
 		
-		decay = Math.log(decaytime)
+		var decaytime = Math.round(chungushours - THRESHOLD);
 
-		newpoints = (oldpoints - decay).toFixed(2);
+		if(decaytime > 1){
+			
+			decay = Math.log(decaytime)
 
-		db.run(`UPDATE chungus SET points = "${newpoints}" WHERE disID = "${row.disID}"`)
-		console.log(`Decayed user ${row.disNAM} from ${oldpoints} to ${newpoints}\nLost ${decay}`)
+			newpoints = (oldpoints - decay).toFixed(2);
 
-	}else{
-		console.log('Chungus within grace period. No decay.')
-	}
-})
+			db.run(`UPDATE chungus SET points = "${newpoints}" WHERE disID = "${row.disID}"`)
+			console.log(`Decayed user ${row.disNAM} from ${oldpoints} to ${newpoints}\nLost ${decay}`)
+
+		}else{
+			console.log('Chungus within grace period. No decay.')
+		}
+	})
+}
+
+allDecay()
