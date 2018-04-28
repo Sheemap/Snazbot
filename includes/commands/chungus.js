@@ -140,7 +140,7 @@ function claim(msg,args){
 		// var chunguspoints = Math.round(Math.log(chungustime)*10);
 
 		// Power of 2
-		var chunguspoints = Math.round(Math.pow(chungustime,2)/100);
+		var chunguspoints = Math.round(Math.pow(chungustime,1.7)/70);
 
 		db.run(`UPDATE chungus SET lastclaim="${seconds}" WHERE disNAM="chungus"`,function(err,row){
 			db.get(`SELECT points FROM chungus WHERE disID="${msg.author.id}"`,function(err,row){
