@@ -128,49 +128,59 @@ function claim(msg,args){
 	if(msg.author.id == lastcall){
 		common.sendMsg(msg,`You cant claim chungus twice in a row!`);
 		return;
-	}else{
-		lastcall = msg.author.id;
 	}
 
 	var seconds = new Date() / 1000;
 	db.get("SELECT lastclaim FROM chungus WHERE disNAM='chungus'",function(err,row){
 		var chungustime = Math.round((seconds - row.lastclaim)/60);
+		var chungussecs = seconds-row.lastclaim
 
 		// Logarithm
 		// var chunguspoints = Math.round(Math.log(chungustime)*10);
 
 		// Power of 2
 		var chunguspoints = Math.round(Math.pow(chungustime,1.85)/70);
+			db.get(`SELECT * FROM chungus WHERE disID="${msg.author.id}"`,function(err,row){
 
-		db.run(`UPDATE chungus SET lastclaim="${seconds}" WHERE disNAM="chungus"`,function(err,row){
-			db.get(`SELECT points FROM chungus WHERE disID="${msg.author.id}"`,function(err,row){
-
-				if(typeof(row) === 'undefined'){
-					db.runSecure(`INSERT INTO chungus VALUES (?,?,?,?,?)`,{
-						1: msg.author.username,
-						2: msg.author.id,
-						3: seconds,
-						4: chunguspoints,
-						5: 0
-					},function(err,row){
-						checkLeader(msg);
-					})
-
-					var newpoints = chunguspoints;
-				}else{
-
-					var newpoints = Math.round(row.points + chunguspoints);
-							
-					db.run(`UPDATE chungus SET points="${newpoints}" WHERE disID="${msg.author.id}"`,function(err,row){
-						checkLeader(msg);
-					});
-
+				var cooldown = 0;
+				if(typeof(row) !== 'undefined' && row.points != "0"){
+					cooldown = Math.log(row.points)*60*60;
 				}
 
-				common.sendMsg(msg,`Congrats! Its been **${chungustime}** minutes since the last chungus call. You have successfully claimed **${chunguspoints}** chungus, your new total is **${newpoints}** chungus.`,true)
-			
+				if(chungussecs > cooldown){
+					db.run(`UPDATE chungus SET lastclaim="${seconds}" WHERE disNAM="chungus"`,function(err,not_needed){
+					if(typeof(row) === 'undefined'){
+						db.runSecure(`INSERT INTO chungus VALUES (?,?,?,?,?)`,{
+							1: msg.author.username,
+							2: msg.author.id,
+							3: seconds,
+							4: chunguspoints,
+							5: 0
+						},function(err,row){
+							checkLeader(msg);
+						})
+
+						var newpoints = chunguspoints;
+					}else{
+
+						var newpoints = Math.round(row.points + chunguspoints);
+								
+						db.run(`UPDATE chungus SET points="${newpoints}" WHERE disID="${msg.author.id}"`,function(err,row){
+							checkLeader(msg);
+						});
+
+					}
+
+					lastcall = msg.author.id;
+
+					common.sendMsg(msg,`Congrats! Its been **${chungustime}** minutes since the last chungus call. You have successfully claimed **${chunguspoints}** chungus, your new total is **${newpoints}** chungus.`,true)
+				});
+				}else{
+					let timeleft = ((cooldown -  chungussecs)/60).toFixed(2)
+					common.sendMsg(msg,`Sorry my dude! You're still on cooldown. You must wait **${timeleft}** minutes to chungus again.`)
+				}
+				
 			});
-		});
 	});
 }
 
