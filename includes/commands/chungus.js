@@ -149,7 +149,7 @@ function claim(msg,args){
 					cooldown = Math.log(row.points)*60*60;
 				}
 				//>
-				if(chungussecs < cooldown){
+				if(chungussecs > cooldown){
 					db.run(`UPDATE chungus SET lastclaim="${seconds}" WHERE disNAM="chungus"`,function(err,not_needed){
 					if(typeof(row) === 'undefined'){
 						db.runSecure(`INSERT INTO chungus VALUES (?,?,?,?,?)`,{
