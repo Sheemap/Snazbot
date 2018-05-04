@@ -6,7 +6,7 @@ const db = require('../db.js')
 
 exports.description = 'Claim yourself as chungus';
 
-exports.usage = `Use "${app.prefix}chungus" to claim your chungus points.\n\nUse "${app.prefix}chungus top" to check leaderboard.\n\nIf you're the chungus, use "${app.prefix}chungus color <#hex code>" to change your color.`;
+exports.usage = `Use "${app.prefix}chungus" to claim your chungus points.\n\nUse "${app.prefix}chungus top" to check leaderboard.\n\nUse "${app.prefix}chungus cd" to check your current cooldown.\n\nIf you're the chungus, use "${app.prefix}chungus color <#hex code>" to change your color.`;
 
 const CHUNGUSROLE = app.chungusrole;
 
@@ -37,6 +37,11 @@ exports.main = function(msg,args){
 
 		case 'name':
 			changeName(msg,args);
+			break;
+
+		case 'cooldown':
+		case 'cd':
+			checkCD(msg,args);
 			break;
 
 		case '!chungus':
@@ -168,7 +173,7 @@ function claim(msg,args){
 
 						var newpoints = Math.round(row.points + chunguspoints);
 								
-						db.run(`UPDATE chungus SET points="${newpoints}" WHERE disID="${msg.author.id}"`,function(err,row){
+						db.run(`UPDATE chungus SET points="${newpoints}", lastclaim="${seconds}" WHERE disID="${msg.author.id}"`,function(err,row){
 							checkLeader(msg);
 						});
 
@@ -240,4 +245,21 @@ function checkLeader(msg){
 	})
 	
 	// msg.member.addRole(CHUNGUSROLE)
+}
+
+function checkCD(msg){
+	db.get(`SELECT * FROM chungus WHERE disID = "${msg.author.id}"`,function(err,row){
+		let seconds = new Date() / 1000;
+
+		let total_cooldown = Math.log(row.points)*60*60;
+		let time_since = seconds - row.lastclaim;
+		
+		if(total_cooldown > time_since){
+			let cooldown = (total_cooldown - time_since)/60;
+			common.sendMsg(msg,`You have **${cooldown.toFixed(2)}** minutes left on your cooldown.`);
+		}else{
+			common.sendMsg(msg,`You have no cooldown! Happy chungusing!`);
+		}
+
+	})
 }
