@@ -11,6 +11,8 @@ exports.usage = `Use "${app.prefix}chungus" to claim your chungus points.\n\nUse
 const CHUNGUSROLE = app.chungusrole;
 
 
+
+
 var lastcall;
 
 
@@ -146,8 +148,8 @@ function claim(msg,args){
 				if(typeof(row) !== 'undefined' && row.points != "0"){
 					cooldown = Math.log(row.points)*60*60;
 				}
-
-				if(chungussecs > cooldown){
+				//>
+				if(chungussecs < cooldown){
 					db.run(`UPDATE chungus SET lastclaim="${seconds}" WHERE disNAM="chungus"`,function(err,not_needed){
 					if(typeof(row) === 'undefined'){
 						db.runSecure(`INSERT INTO chungus VALUES (?,?,?,?,?)`,{
@@ -173,7 +175,18 @@ function claim(msg,args){
 
 					lastcall = msg.author.id;
 
-					common.sendMsg(msg,`Congrats! Its been **${chungustime}** minutes since the last chungus call. You have successfully claimed **${chunguspoints}** chungus, your new total is **${newpoints}** chungus.`,true)
+					const CALLTEXT = [
+						`Congrats! Its been **${chungustime}** minutes since the last chungus call. You have successfully claimed **${chunguspoints}** chungus, your new total is **${newpoints}** chungus.`,
+						`Woo wee! Its been **${chungustime}** minutes since the last chungus call. You've just adopted **${chunguspoints}** chungus, that makes you the proud owner of **${newpoints}** chungus.`,
+						`Hallelujah! Its been **${chungustime}** minutes since the last chungus call. The lord has blessed you with **${chunguspoints}** additional chungus. Thank thine lord as you now hold **${newpoints}** chungus.`,
+						`I **${chungustime}** II **${chunguspoints}** II **${newpoints}** L`,
+						`Youve been waiting for **${chungustime}** minutes. I hope it was worth it, as you just gained **${chunguspoints}** chungus. Thats just the right amount to put you at **${newpoints}** chungus.`,
+						`You my friend, are going to the top! Its been **${chungustime}** minutes. You racked up **${chunguspoints}** chungus. This brings you to the perfect chungus count of **${newpoints}**.`
+					]
+
+
+					common.sendMsg(msg,`${CALLTEXT[Math.floor(Math.random()*CALLTEXT.length)]}`)
+					// common.sendMsg(msg,`Congrats! Its been **${chungustime}** minutes since the last chungus call. You have successfully claimed **${chunguspoints}** chungus, your new total is **${newpoints}** chungus.`,true)
 				});
 				}else{
 					let timeleft = ((cooldown -  chungussecs)/60).toFixed(2)
