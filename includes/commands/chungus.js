@@ -135,7 +135,7 @@ function claim(msg,args){
 	var seconds = new Date() / 1000;
 	db.get("SELECT lastclaim FROM chungus WHERE disNAM='chungus'",function(err,row){
 		var chungustime = Math.round((seconds - row.lastclaim)/60);
-		var chungussecs = seconds-row.lastclaim
+		
 
 		// Logarithm
 		// var chunguspoints = Math.round(Math.log(chungustime)*10);
@@ -144,6 +144,7 @@ function claim(msg,args){
 		var chunguspoints = Math.round(Math.pow(chungustime,1.85)/70);
 			db.get(`SELECT * FROM chungus WHERE disID="${msg.author.id}"`,function(err,row){
 
+				var chungussecs = seconds-row.lastclaim;
 				var cooldown = 0;
 				if(typeof(row) !== 'undefined' && row.points != "0"){
 					cooldown = Math.log(row.points)*60*60;
