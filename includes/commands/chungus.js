@@ -2,7 +2,9 @@
 const logger = require('../logger.js');
 const common = require('../common.js');
 const app = require('../../app.js');
-const db = require('../db.js')
+const db = require('../db.js');
+
+const moment = require('moment');
 
 exports.description = 'Claim yourself as chungus';
 
@@ -250,13 +252,14 @@ function checkLeader(msg){
 function checkCD(msg){
 	db.get(`SELECT * FROM chungus WHERE disID = "${msg.author.id}"`,function(err,row){
 		let seconds = new Date() / 1000;
-
 		let total_cooldown = (Math.log(row.points)*0.75)*60*60;
 		let time_since = seconds - row.lastclaim;
 		
 		if(total_cooldown > time_since){
 			let cooldown = (total_cooldown - time_since)/60;
-			common.sendMsg(msg,`You have **${cooldown.toFixed(2)}** minutes left on your cooldown.`);
+			let niceformat = ((cooldown*60) + seconds)*1000;
+			common.sendMsg(msg,`You will be able to chungus again **${moment(niceformat).fromNow()}**.`)
+			// common.sendMsg(msg,`You have **${cooldown.toFixed(2)}** minutes left on your cooldown.`);
 		}else{
 			common.sendMsg(msg,`You have no cooldown! Happy chungusing!`);
 		}
