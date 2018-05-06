@@ -154,7 +154,7 @@ function claim(msg,args){
 				var chungussecs = seconds-row.lastclaim;
 				var cooldown = 0;
 				if(typeof(row) !== 'undefined' && row.points != "0"){
-					cooldown = (Math.log(row.points)*0.75)*60*60;
+					cooldown = row.points*15;
 				}
 				//>
 				if(chungussecs > cooldown){
@@ -252,7 +252,8 @@ function checkLeader(msg){
 function checkCD(msg){
 	db.get(`SELECT * FROM chungus WHERE disID = "${msg.author.id}"`,function(err,row){
 		let seconds = new Date() / 1000;
-		let total_cooldown = (Math.log(row.points)*0.75)*60*60;
+		// let total_cooldown = (Math.log(row.points)*0.75)*60*60;
+		let total_cooldown = row.points*15;
 		let time_since = seconds - row.lastclaim;
 		
 		if(total_cooldown > time_since){
