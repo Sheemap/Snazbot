@@ -151,9 +151,10 @@ function claim(msg,args){
 		var chunguspoints = Math.round(Math.pow(chungustime,1.85)/70);
 			db.get(`SELECT * FROM chungus WHERE disID="${msg.author.id}"`,function(err,row){
 
-				var chungussecs = seconds-row.lastclaim;
+				var chungussecs = seconds;
 				var cooldown = 0;
 				if(typeof(row) !== 'undefined' && row.points != "0"){
+					chungussecs = seconds-row.lastclaim;
 					cooldown = row.points*15;
 				}
 				//>
