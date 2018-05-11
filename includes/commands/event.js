@@ -169,6 +169,8 @@ function eventNotify(event_name){
 
 
 
+
+
 			}
 		}
 		else if(use_channel){
@@ -182,11 +184,11 @@ function eventNotify(event_name){
 			return;
 		}
 
-		sendNotif(data) //debugging purposes, remove when done
-
+		// sendSchedChanNotif(data) //debugging purposes, remove when done
+		sendSchedPrivateNotif(data)
 	})
 
-	function sendNotif(data){
+	function sendSchedChanNotif(data){
 		let now = new Date();
 		let later = new Date(Date.now() + 604800000) //604800000ms is 7d
 
@@ -209,7 +211,7 @@ function eventNotify(event_name){
 			day_sec += 86400000; //86400000ms is 1d 
 			next_day = new Date(day_sec);
 
-			let sending = `${days[today+index]} - **${next_day.getMonth()+1}/${next_days.getDate()}**`;
+			let sending = `${days[today+index]} - **${next_day.getMonth()+1}/${next_day.getDate()}**`;
 			common.sendChannel(chan,sending,15, async function(message){
 
 				if(typeof(default_times) !== 'undefined'){
@@ -230,7 +232,63 @@ function eventNotify(event_name){
 		}
 	}
 
-	function privateNotif(user){
+	function sendSchedPrivateNotif(data){
+
+		let now = new Date();
+		let later = new Date(Date.now() + 604800000) //604800000ms is 7d
+
+		for(let x in data.invites){
+
+			// let chan = data.channel;
+			let chan = x;
+			let default_times = data.default_times;
+			let week = `${now.getMonth()+1}/${now.getDate()} - ${later.getMonth()+1}/${later.getDate()}`;
+
+			let initial_message = `***UPCOMING EVENT***\nScheduling **${event_name}** for the week of ${week}.\nThis event was created by ${data.disNAM}\n\nIf you are able and want to go to this event, please react with a :thumbsup: otherwise react with a :thumbsdown:.\n\nWe will not alert anyone whether you decided not to go, or if time just didnt line up for you.`;
+
+			common.sendPM(chan,initial_message,function(msg){
+				data.invites[x]['initial_message_id'] = msg.id;
+				db.runSecure(`UPDATE events SET data=? WHERE event_name=? AND expired=?`,3
+					{
+						1: JSON.stringify(data),
+						2: data.name,
+						3: 0
+					})
+			})
+		}
+		
+
+		// 	let days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
+		// 	let index = 1;
+		// 	let today = now.getDay()
+		// 	let sent_messages = [];
+		// 	let day_sec = Date.now();
+		// 	let next_day;
+		// 	for(let i=0;i<7;i++){2
+
+		// 		day_sec += 86400000; //86400000ms is 1d 
+		// 		next_day = new Date(day_sec);
+
+		// 		let sending = `${days[today+index]} - **${next_day.getMonth()+1}/${next_day.getDate()}**`;
+		// 		common.sendPM(chan,sending, async function(message){
+
+		// 			if(typeof(default_times) !== 'undefined'){
+
+
+		// 				for(let x in default_times.sort(function(a, b){return a - b})){
+
+		// 					await message.react(react_times[default_times[x]]);
+		// 				}					
+						
+
+		// 			}
+		// 		})
+		// 		index++;
+		// 		if(index+today == 7){
+		// 			index = index - 7;
+		// 		}
+		// 	}
+		// }
 
 	}
 }
