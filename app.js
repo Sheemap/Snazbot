@@ -1,6 +1,6 @@
 //Packages
 const Discord = require("discord.js");
-const client = new Discord.Client();
+const client = exports.client = new Discord.Client();
 const ini = require('ini');
 const fs = require('fs');
 

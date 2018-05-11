@@ -31,6 +31,51 @@ exports.sendMsg = function(msg,content,reply,timeout,callback){
     
 }
 
+
+exports.findUser = function(user,callback){
+    var finalUser = '';
+    var guilds = app.client.guilds.array();
+    var members = [];
+
+    for(let i=0;i<guilds.length;i++){
+
+        let tmp_mem = guilds[i].members.array();
+
+        for(let x=0;x<tmp_mem.length;x++){
+
+            if(!members.includes(tmp_mem[x]))
+                members.push(tmp_mem[x]);
+
+        }
+    }
+    if(isNaN(user)){
+        for(let i=0;i<members.length;i++){
+            if(members[i].displayName.toLowerCase().includes(user.toLowerCase())){
+                if(finalUser.id !== members[i].id){
+                    console.log('User found',members[i].displayName)
+                    finalUser = members[i];
+                }
+            }
+        }
+    }else{
+        for(let i=0;i<members.length;i++){
+            if(members[i].id == user){
+                if(finalUser.id !== members[i].id){
+                    console.log('User found',members[i].displayName)
+                    finalUser = members[i];
+                }
+            }
+        }
+    }
+
+    if(typeof(callback) !== 'undefined'){
+        callback(finalUser);
+    }else{
+        return finalUser;
+    }
+
+}
+
 exports.reset = function(){
 	msgs = [];
 }
