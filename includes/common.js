@@ -32,6 +32,17 @@ exports.sendMsg = function(msg,content,reply,timeout,callback){
 }
 
 
+exports.sendPM = function(user,content,callback){
+    if(typeof(user.id) !== 'undefined'){
+        user.send(content).then(message => cb(message,'',callback));
+    }else{
+        exports.findUser(user,function(foundUser){
+            foundUser.send(content).then(message => cb(message,'',callback));
+        })
+    }
+}
+
+
 exports.findUser = function(user,callback){
     var finalUser = '';
     var guilds = app.client.guilds.array();
