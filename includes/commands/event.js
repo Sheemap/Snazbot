@@ -167,17 +167,15 @@ function eventNotify(event_name){
 		if(use_channel && use_invites){
 			if(data.initial_notif){
 
-
-
-
-
 			}
+			sendSchedChanNotif(data);
+			sendSchedPrivateNotif(data);
 		}
 		else if(use_channel){
-
+			sendSchedChanNotif(data);
 		}
 		else if(use_invites){
-
+			sendSchedPrivateNotif(data);
 		}
 		else{
 			logger.log('error',`No notification settings for "${event_name}`);
@@ -185,7 +183,7 @@ function eventNotify(event_name){
 		}
 
 		// sendSchedChanNotif(data) //debugging purposes, remove when done
-		sendSchedPrivateNotif(data)
+		// sendSchedPrivateNotif(data)
 	})
 
 	function sendSchedChanNotif(data){
@@ -248,7 +246,7 @@ function eventNotify(event_name){
 
 			common.sendPM(chan,initial_message,function(msg){
 				data.invites[x]['initial_message_id'] = msg.id;
-				db.runSecure(`UPDATE events SET data=? WHERE event_name=? AND expired=?`,3
+				db.runSecure(`UPDATE events SET data=? WHERE event_name=? AND expired=?`,
 					{
 						1: JSON.stringify(data),
 						2: data.name,
