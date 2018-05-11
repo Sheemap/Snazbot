@@ -80,9 +80,11 @@ client.on('message', msg => {
         comm.parse(msg);
     }
     
-    if(!msg.content.toLowerCase().includes('jim') && msg.guild.id == '384946871103258626' && msg.author.id != BOTID){
-        msg.delete();
-        logger.log('info','Offending Jim message from '+msg.author.username);
+    if(msg.guild !== null){
+        if(!msg.content.toLowerCase().includes('jim') && msg.guild.id == '384946871103258626' && msg.author.id != BOTID){
+            msg.delete();
+            logger.log('info','Offending Jim message from '+msg.author.username);
+        }
     }
     
 });
@@ -95,9 +97,11 @@ client.on('messageReactionRemove', (reaction,user) => {
 })
 
 client.on('messageUpdate', (omsg,nmsg) => {
-    if(!nmsg.content.toLowerCase().includes('jim') && nmsg.guild.id == '384946871103258626' && nmsg.author.id != BOTID){
-        nmsg.delete();
-        logger.log('info','Offending Jim edit from '+nmsg.author.username);
+    if(nmsg.guild !== null){
+        if(!nmsg.content.toLowerCase().includes('jim') && nmsg.guild.id == '384946871103258626' && nmsg.author.id != BOTID){
+            nmsg.delete();
+            logger.log('info','Offending Jim edit from '+nmsg.author.username);
+        }
     }
 })
 

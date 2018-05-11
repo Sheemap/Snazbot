@@ -45,7 +45,13 @@ exports.parse = function(msg){
 
 	let authid = msg.author.id;
 	let chanid = msg.channel.id;
-	let servid = msg.guild.id;
+	let servid;
+
+	if(msg.guild !== null){
+		servid = msg.guild.id;
+	}else{
+		servid = 'NotAGuild';
+	}
 
 	let comm = content.split(' ')[0].replace(app.prefix,'');
 	let args = content.replace(app.prefix+comm+' ','').split(' ');
@@ -103,7 +109,14 @@ exports.react = function(reaction,user,added){
 
 	let authid = reaction.message.author.id;
 	let chanid = reaction.message.channel.id;
-	let servid = reaction.message.guild.id;
+	let servid;
+
+
+	if(reaction.message.guild !== null){
+		servid = reaction.message.guild.id;
+	}else{
+		servid = 'NotAGuild';
+	}
 
 	let comm = content.split(' ')[0].replace(app.prefix,'');
 	let args = content.replace(app.prefix+comm+' ','').split(' ');
@@ -141,7 +154,13 @@ exports.msg = function(msg){
 
 	let authid = msg.author.id;
 	let chanid = msg.channel.id;
-	let servid = msg.guild.id;
+	let servid;
+
+	if(msg.guild !== null){
+		servid = msg.guild.id;
+	}else{
+		servid = 'NotAGuild';
+	}
 
 	if(blackall.indexOf(authid) != -1){
 		logger.log('debug','User is blacklisted, not replying.');
