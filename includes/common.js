@@ -33,6 +33,10 @@ exports.sendMsg = function(msg,content,reply,timeout,callback){
 
 
 exports.sendPM = function(user,content,callback){
+    if(typeof(callback) === 'undefined'){
+        callback = '';
+    }    
+
     if(typeof(user.id) !== 'undefined'){
         user.send(content).then(message => cb(message,'',callback));
     }else{
@@ -63,7 +67,6 @@ exports.findUser = function(user,callback){
         for(let i=0;i<members.length;i++){
             if(members[i].displayName.toLowerCase().includes(user.toLowerCase())){
                 if(finalUser.id !== members[i].id){
-                    console.log('User found',members[i].displayName)
                     finalUser = members[i];
                 }
             }
@@ -72,7 +75,6 @@ exports.findUser = function(user,callback){
         for(let i=0;i<members.length;i++){
             if(members[i].id == user){
                 if(finalUser.id !== members[i].id){
-                    console.log('User found',members[i].displayName)
                     finalUser = members[i];
                 }
             }
