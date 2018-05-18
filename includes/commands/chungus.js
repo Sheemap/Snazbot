@@ -11,7 +11,7 @@ exports.description = 'Claim yourself as chungus';
 exports.usage = `Use "${app.prefix}chungus" to claim your chungus points.\n\nUse "${app.prefix}chungus top" to check leaderboard.\n\nUse "${app.prefix}chungus cd" to check your current cooldown.\n\nIf you're the chungus, use "${app.prefix}chungus color <#hex code>" to change your color.`;
 
 const CHUNGUSROLE = app.chungusrole;
-
+const CHUNGUSCHAN = app.chunguschan.split(',');
 
 
 
@@ -133,6 +133,11 @@ function top(msg,args){
 }
 
 function claim(msg,args){
+
+	if(!CHUNGUSCHAN.includes(msg.channel.id)){
+		common.sendMsg(msg,`You may only chungus in the #botspam channel`);
+		return;
+	}
 
 	if(msg.author.id == lastcall){
 		common.sendMsg(msg,`You cant claim chungus twice in a row!`);
