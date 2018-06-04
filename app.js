@@ -24,6 +24,7 @@ exports.albumhash = albumhash = config.meme.albumhash;
 //Chungus config
 exports.chungusrole = chungusrole = config.chungus.chungusrole;
 exports.chunguschan = chunguschan = config.chungus.channel;
+exports.chunguscd = chunguscd = config.chungus.maxcd;
 
 
 //Cusom Packages

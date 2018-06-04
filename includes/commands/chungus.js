@@ -12,6 +12,21 @@ exports.usage = `Use "${app.prefix}chungus" to claim your chungus points.\n\nUse
 
 const CHUNGUSROLE = app.chungusrole;
 const CHUNGUSCHAN = app.chunguschan.split(',');
+var MAXCD = app.chunguscd; //43200seconds is 12hours
+
+if(CHUNGUSCHAN == ""){
+	logger.log('error','Chungus channel is not configured! Chungus will not work without this setting.');
+}
+if(CHUNGUSROLE == ""){
+	logger.log('error','Chungus role is not configured! Chungus will not work without this setting.');
+}
+
+if(MAXCD == ""){
+	MAXCD = 0;
+	logger.log('info','No max chungus cooldown set.');
+}
+
+
 
 
 
@@ -161,6 +176,11 @@ function claim(msg,args){
 				if(typeof(row) !== 'undefined' && row.points != "0"){
 					chungussecs = seconds-row.lastclaim;
 					cooldown = row.points*15;
+					if(cooldown > MAXCD && MAXCD !== 0){
+						cooldown = MAXCD;
+						console.log('waow')
+					}
+					console.log(`Chungus cooldown ${MAXCD}`)
 				}
 				//>
 				if(chungussecs > cooldown){
@@ -260,6 +280,10 @@ function checkCD(msg){
 		let seconds = new Date() / 1000;
 		// let total_cooldown = (Math.log(row.points)*0.75)*60*60;
 		let total_cooldown = row.points*15;
+		if(total_cooldown > MAXCD && MAXCD !== 0){
+			total_cooldown = MAXCD;
+			console.log('waow')
+		}
 		let time_since = seconds - row.lastclaim;
 		
 		if(total_cooldown > time_since){
