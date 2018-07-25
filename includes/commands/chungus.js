@@ -10,19 +10,19 @@ exports.description = 'Claim yourself as chungus';
 
 exports.usage = `Use "${app.prefix}chungus" to claim your chungus points.\n\nUse "${app.prefix}chungus top" to check leaderboard.\n\nUse "${app.prefix}chungus cd" to check your current cooldown.\n\nIf you're the chungus, use "${app.prefix}chungus color <#hex code>" to change your color.`;
 
-const CHUNGUSROLE = app.chungusrole;
-const CHUNGUSCHAN = app.chunguschan.split(',');
-var MAXCD = app.chunguscd; //43200seconds is 12hours
+// const app.chungusrole = app.chungusrole;
+// const app.chunguschan.split(',') = app.chunguschan.split(',');
+// var app.chunguscd = app.chunguscd; //43200seconds is 12hours
 
-if(CHUNGUSCHAN == ""){
+if(app.chunguschan.split(',') == ""){
 	logger.log('error','Chungus channel is not configured! Chungus will not work without this setting.');
 }
-if(CHUNGUSROLE == ""){
+if(app.chungusrole == ""){
 	logger.log('error','Chungus role is not configured! Chungus will not work without this setting.');
 }
 
-if(MAXCD == ""){
-	MAXCD = 0;
+if(app.chunguscd == ""){
+	app.chunguscd = 0;
 	logger.log('info','No max chungus cooldown set.');
 }
 
@@ -79,7 +79,7 @@ function changeName(msg,args){
 
 	for(let i=0;i<roles.length;i++){
 
-		if(roles[i].id == CHUNGUSROLE){
+		if(roles[i].id == app.chungusrole){
 			role = roles[i];
 			chungus = true;
 		}
@@ -109,7 +109,7 @@ function changeColor(msg,args){
 
 	for(let i=0;i<roles.length;i++){
 
-		if(roles[i].id == CHUNGUSROLE){
+		if(roles[i].id == app.chungusrole){
 			role = roles[i];
 			chungus = true;
 		}
@@ -149,7 +149,7 @@ function top(msg,args){
 
 function claim(msg,args){
 
-	if(!CHUNGUSCHAN.includes(msg.channel.id)){
+	if(!app.chunguschan.split(',').includes(msg.channel.id)){
 		common.sendMsg(msg,`You may only chungus in the #botspam channel`);
 		return;
 	}
@@ -176,11 +176,11 @@ function claim(msg,args){
 				if(typeof(row) !== 'undefined' && row.points != "0"){
 					chungussecs = seconds-row.lastclaim;
 					cooldown = row.points*15;
-					if(cooldown > MAXCD && MAXCD !== 0){
-						cooldown = MAXCD;
+					if(cooldown > app.chunguscd && app.chunguscd !== 0){
+						cooldown = app.chunguscd;
 						console.log('waow')
 					}
-					console.log(`Chungus cooldown ${MAXCD}`)
+					console.log(`Chungus cooldown ${app.chunguscd}`)
 				}
 				//>
 				if(chungussecs > cooldown){
@@ -249,11 +249,11 @@ function checkLeader(msg){
 			roles = members[i].roles.array();
 			for(let x=0;x<roles.length;x++){
  
-				if(roles[x].id == CHUNGUSROLE){
+				if(roles[x].id == app.chungusrole){
 					if(members[i].id == row.disID){
 						roleset = true;
 					}else{
-						members[i].removeRole(CHUNGUSROLE);
+						members[i].removeRole(app.chungusrole);
 					}
 				}
 
@@ -263,7 +263,7 @@ function checkLeader(msg){
 
 		if(!roleset){
 			if(typeof(topmember) !== 'undefined'){
-				topmember.addRole(CHUNGUSROLE);
+				topmember.addRole(app.chungusrole);
 
 				db.run(`UPDATE chungus SET lastchungus = "${seconds}" WHERE disID = "${topmember.id}"`);
 			}
@@ -272,7 +272,7 @@ function checkLeader(msg){
 
 	})
 	
-	// msg.member.addRole(CHUNGUSROLE)
+	// msg.member.addRole(app.chungusrole)
 }
 
 function checkCD(msg){
@@ -280,8 +280,8 @@ function checkCD(msg){
 		let seconds = new Date() / 1000;
 		// let total_cooldown = (Math.log(row.points)*0.75)*60*60;
 		let total_cooldown = row.points*15;
-		if(total_cooldown > MAXCD && MAXCD !== 0){
-			total_cooldown = MAXCD;
+		if(total_cooldown > app.chunguscd && app.chunguscd !== 0){
+			total_cooldown = app.chunguscd;
 			console.log('waow')
 		}
 		let time_since = seconds - row.lastclaim;

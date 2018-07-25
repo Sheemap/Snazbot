@@ -16,11 +16,11 @@ exports.reactions = `%F0%9F%91%8D,%F0%9F%91%8E`;
 
 //%F0%9F%91%8E = thumbsdown
 
-// const BUFFERSIZE = 150;
-const BUFFER = app.buffer; //percentage
-const MAXVOTE = app.maxvote;
-const STARTSCORE = app.startscore;
-const ALBUMHASH = app.albumhash;
+// const app.bufferSIZE = 150;
+// const app.buffer = app.buffer; //percentage
+// const app.maxvote = app.maxvote;
+// const app.startscore = app.startscore;
+// const app.albumhash = app.albumhash;
 
 var buffer = [];
 var buffersize = 0;
@@ -152,8 +152,8 @@ exports.react = function(reaction,user,added){
 						if(trurow != false){
 							newvotes = currentvotes + val;
 
-							if(newvotes >= MAXVOTE){
-								newvotes = MAXVOTE;
+							if(newvotes >= app.maxvote){
+								newvotes = app.maxvote;
 							}
 
 							if(newvotes < 0){
@@ -206,7 +206,7 @@ exports.msg = function(msg) {
 									2: msg.author.id,
 									3: seconds,
 									4: msg.content,
-									5: STARTSCORE,
+									5: app.startscore,
 									6: "placeholder"
 								});
 							}else{
@@ -230,7 +230,7 @@ exports.msg = function(msg) {
 
 				  				logger.log('info',`Saving meme sent by ${msg.author.username}`);
 
-				  				imgur.uploadUrl(attachments[i].url,ALBUMHASH)
+				  				imgur.uploadUrl(attachments[i].url,app.albumhash)
 									.then(function (json) {
 								        newurl = json.data.link;
 
@@ -239,7 +239,7 @@ exports.msg = function(msg) {
 								        	2: msg.author.id,
 								        	3: seconds,
 								        	4: newurl,
-								        	5: STARTSCORE,
+								        	5: app.startscore,
 								        	6: "placeholder"
 								        });
 								    })
@@ -272,7 +272,7 @@ function checkStats(msg,args){
 		}
 		var count = memelist.length;
 
-		common.sendMsg(msg,`There are currently **${count}** memes in stock. The buffersize is set to **${BUFFER*100}%**.`,false,15);
+		common.sendMsg(msg,`There are currently **${count}** memes in stock. The buffersize is set to **${app.buffer*100}%**.`,false,15);
 
 	});
 }
@@ -320,7 +320,7 @@ function checkPoints(disID,callback){
 	db.all(`SELECT * FROM memes WHERE disID="${disID}"`, function(err, rows){
 		
 		for(let y in rows){
-			score += parseInt(rows[y].votes) - STARTSCORE;
+			score += parseInt(rows[y].votes) - app.startscore;
 			memecount++;
 		}
 		if(!memecount == 0){
@@ -360,7 +360,7 @@ function roll(msg,args){
 
 	    		}
 
-	    		buffersize = Math.floor(memecount * BUFFER);
+	    		buffersize = Math.floor(memecount * app.buffer);
 
 	    		logger.log('debug',`Buffer size is ${buffersize}, meme count is ${memecount}.`)
 
