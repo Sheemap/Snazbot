@@ -26,6 +26,9 @@ exports.chungusrole = chungusrole = config.chungus.chungusrole;
 exports.chunguschan = chunguschan = config.chungus.channel;
 exports.chunguscd = chunguscd = config.chungus.maxcd;
 
+//Deceit config
+exports.deceitusers = deceitusers = config.deceit.users.split(',');
+
 
 //Cusom Packages
 const logger = require("./includes/logger.js");
