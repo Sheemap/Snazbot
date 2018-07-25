@@ -3,26 +3,37 @@ const Discord = require("discord.js");
 const client = exports.client = new Discord.Client();
 const ini = require('ini');
 const fs = require('fs');
+var token;
 
-//Config
-const config = ini.parse(fs.readFileSync('./config/config.ini', 'utf-8'))
+exports.loadConf = loadConf = function(){
+    //Config
+    var config = ini.parse(fs.readFileSync('./config/config.ini', 'utf-8'))
 
-const token = config.general.token;
-exports.prefix = prefix = config.general.commandprefix;
-exports.autoclean = autoclean = config.general.autoclean;
-exports.logdir = logdir = config.general.logdir;
-exports.admins = admins = config.general.admins.split(',');
+    token = config.general.token;
+    exports.prefix = prefix = config.general.commandprefix;
+    exports.autoclean = autoclean = config.general.autoclean;
+    exports.logdir = logdir = config.general.logdir;
+    exports.admins = admins = config.general.admins.split(',');
 
-//Meme config
-exports.memechan = memechan = config.meme.memechan;
-exports.buffer = buffer = config.meme.buffer;
-exports.maxvote = maxvote = config.meme.maxvote;
-exports.startscore = startscore = config.meme.startscore;
-exports.rollchan = rollchan = config.meme.rollchan;
-exports.albumhash = albumhash = config.meme.albumhash;
+    //Meme config
+    exports.memechan = memechan = config.meme.memechan;
+    exports.buffer = buffer = config.meme.buffer;
+    exports.maxvote = maxvote = config.meme.maxvote;
+    exports.startscore = startscore = config.meme.startscore;
+    exports.rollchan = rollchan = config.meme.rollchan;
+    exports.albumhash = albumhash = config.meme.albumhash;
 
-//Chungus config
-exports.chungusrole = chungusrole = config.chungus.chungusrole;
+    //Chungus config
+    exports.chungusrole = chungusrole = config.chungus.chungusrole;
+    exports.chunguschan = chunguschan = config.chungus.channel;
+    exports.chunguscd = chunguscd = config.chungus.maxcd;
+
+    //Deceit config
+    exports.deceitusers = deceitusers = config.deceit.users.split(',');
+}
+
+//Load config
+loadConf();
 
 
 //Cusom Packages

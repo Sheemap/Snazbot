@@ -8,6 +8,34 @@ var msgs = exports.msgs = [];
 var push = true;
 var sent;
 
+//Returns the voice chat that the user is in given a specific guild, if any.
+exports.userVC = function(user, guild){
+    if(typeof(guild) === 'undefined'){
+        logger.log('warning','function userVC was not passed a correct guild!');
+        return;
+    }
+    let userchan;
+    let all_channels = guild.channels.array();
+    for(let i=0; i<all_channels.length; i++){
+        if(all_channels[i].type == 'voice'){
+
+            let vcmem = all_channels[i].members;
+
+            if(vcmem.has(user.id))
+                userchan = all_channels[i];
+        }
+        
+    }
+
+    if(typeof(userchan) === 'undefined'){
+        logger.log('debug','User passed to userVC was not in a voice chat.')
+        return;
+    }else{
+        return userchan;
+    }
+
+}
+
 exports.sendMsg = function(msg,content,reply,timeout,callback){
     sent = null;
     push = true;

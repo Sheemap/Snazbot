@@ -29,9 +29,12 @@ exports.main = function(msg,args){
 }
 
 exports.msg = function(msg){
-	if(app.christ && msg.guild.id == '104981147770990592' && msg.author.id != BOTID && msg.channel.id == '406571477916319745'){
-        filter(msg);
-    }
+	if(msg.guild !== null){
+		if(app.christ && msg.guild.id == '104981147770990592' && msg.author.id != BOTID && msg.channel.id == '406571477916319745'){
+        	filter(msg);
+    	}
+	}
+	
 }
 
 function filter(msg){
