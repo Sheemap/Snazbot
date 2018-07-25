@@ -13,22 +13,21 @@ exports.description = 'Auto scheduling';
 exports.usage = `Use ${app.prefix}event to do things.`;
 
 
-
+//Reactions to respond to
 exports.reactions = "<:99_1am:416844243496075274>,<:98_2am:416844317966204939>,<:97_3am:416844328183267328>,<:96_4am:416844336685252608>,<:95_5am:416844348395618304>,<:94_6am:416844353701412881>,<:93_7am:416844359481294848>,<:92_8am:416844363876794388>,<:91_9am:416844368008183819>,<:90_10am:416844374849093642>,<:89_11am:416844380092104706>,<:88_12pm:416844385049903105>,<:87_1pm:416844391563395072>,<:86_2pm:416844397007732737>,<:85_3pm:416844406151446550>,<:84_4pm:416844412065153024>,<:83_5pm:416844419765895168>,<:82_6pm:416844430776205312>,<:81_7pm:416844438497918977>,<:80_8pm:416844447268208651>,<:79_9pm:416844454742458389>,<:78_10pm:416844460656295937>,<:77_11pm:416844466578653185>,<:76_12am:416844473453117440>";
 
-
-const F_DEFAULT = 'one-time';
-const ND_DEFAULT = 'sun';
-const NT_DEFAULT = '12';
-const NW_DEFAULT = '86400'; // 86400s is 24h
+//Defaults
+const F_DEFAULT = 'one-time'; //Sets the default frequency to one off
+const ND_DEFAULT = 'sun'; //Sets the default notification date to sunday
+const NT_DEFAULT = '12'; //Sets the default notification time to noon
+const NW_DEFAULT = '86400'; //Sets the default time in seconds to wait between notifications, 86400s is 24h
 
 
 // Database structure
 
-// events (disNAM TEXT, disID TEXT, timestamp NUMERIC, name TEXT, 
-// frequency TEXT, notify_day TEXT, notify_frequency TEXT, 
-// default_times TEXT, invites TEXT, channelID TEXT, responses TEXT)
+// db.run("CREATE TABLE events (disNAM TEXT, disID TEXT, timestamp NUMERIC, event_name TEXT, expired INT, data TEXT)");
 
+//Object with key values for reactions based on time
 var react_times = {
 	1: "99_1am:416844243496075274",
 	2: "98_2am:416844317966204939",
@@ -137,11 +136,13 @@ exports.react = function(reaction,user,added){
 		-nw wait time between notifications (how long to wait before sending reminder invite)
 */
 function eventNotify(event_name){
+	//Get all the events in DB
 	db.all('SELECT * FROM events',function(err,rows){
 
 		var data = '',
 			count = 0;
 
+		//Look through rows for our event name, check for duplicates, and for expiration
 		for(let i in rows){
 			if(rows[i].expired == 0){
 				if(rows[i].event_name == event_name){
@@ -151,6 +152,7 @@ function eventNotify(event_name){
 			}
 		}
 
+		//Throw errors if there is a duplicate, or all events with name are expired
 		if(data == ''){
 			logger.log('error',`No unexpired event with name "${event_name}`);
 			return;
@@ -161,23 +163,19 @@ function eventNotify(event_name){
 			return;
 		}
 
+		//Set our invitation system(s) to true or false depending on if its defined
 		var use_channel = typeof(data.channel) !== 'undefined';
 		var use_invites = typeof(data.invites) !== 'undefined';
 
-		if(use_channel && use_invites){
-			if(data.initial_notif){
+		//Send our notifications based on methods
+		if(use_channel)
+			sendSchedChanNotif(data);
 
-			}
-			sendSchedChanNotif(data);
+		if(use_invites)
 			sendSchedPrivateNotif(data);
-		}
-		else if(use_channel){
-			sendSchedChanNotif(data);
-		}
-		else if(use_invites){
-			sendSchedPrivateNotif(data);
-		}
-		else{
+
+		//If no notification method set, throw error and return
+		if(!use_channel && !use_invites){
 			logger.log('error',`No notification settings for "${event_name}`);
 			return;
 		}
@@ -187,17 +185,22 @@ function eventNotify(event_name){
 	})
 
 	function sendSchedChanNotif(data){
+		//Get today as date object, and calculate week from now
 		let now = new Date();
-		let later = new Date(Date.now() + 604800000) //604800000ms is 7d
+		let week_later = new Date(Date.now() + 604800000) //604800000ms is 7d
 
+		//Get some data settings
 		let chan = data.channel;
 		let default_times = data.default_times;
-		let week = `${now.getMonth()+1}/${now.getDate()} - ${later.getMonth()+1}/${later.getDate()}`;
 
+		//Find the actual mon/day formatted date
+		let week = `${now.getMonth()+1}/${now.getDate()} - ${week_later.getMonth()+1}/${week_later.getDate()}`;
+
+		//Prepare initial message and send
 		let initial_message = `***UPCOMING EVENT***\nScheduling **${event_name}** for the week of ${week}.\nThis event was scheduled by ${data.disNAM}\n\nPlease react to the given days with whatever times you are able to do. Use the black 24hr emojis. If you are unable to attend any days, react to this message with a :thumbsdown:`;
-
 		common.sendChannel(chan,initial_message)
 
+		//This will print off each day, starting with tomorrow, and will react with the default emojis on it
 		let days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
 		let index = 1;
 		let today = now.getDay()
@@ -223,6 +226,7 @@ function eventNotify(event_name){
 
 				}
 			})
+			//Keep track of where we are and wrap around
 			index++;
 			if(index+today == 7){
 				index = index - 7;
@@ -315,47 +319,58 @@ function createEvent(args,uname,uid,callback){
 			let opt = args[i].split(' ');
 
 			switch(opt[0]){
-				// t stands for title
+				
+				//Name
 				case 'n':
 					argName(opt);
 					break;
 
+				//Frequency
 				case 'f':
 					argFrequency(opt);
 					break;
 
+				//Invites option
 				case 'i':
 					argInvites(opt);
 					break;
 
+				//Channel option
 				case 'c':
 					argChannel(opt);
 					break;
 
+				//First date for event to take place, if its a one off then this is the date
 				case 's':
 					argStartDate(opt);
 					break;
 
+				//Default emoji times to show on a message invite
 				case 'dt':
 					argDefaultTimes(opt);
 					break;
 
+				//What day of the week to notify
 				case 'nd':
 					argNotifyDay(opt);
 					break;
 
+				//What time of day to notify
 				case 'nt':
 					argNotifyTime(opt);
 					break;
 
+				//How long to wait between notifications
 				case 'nw':
 					argWait(opt);
 					break;
 
+				//Number of required participants
 				case 'rn':
 					argRequiredNum(opt);
 					break;
 
+				//Specific required person
 				case 'rp':
 					argRequiredPerson(opt);
 					break;
@@ -491,10 +506,11 @@ function createEvent(args,uname,uid,callback){
 		}
 
 		function argStartDate(opt){
-			if(date_select){
-				data.error += `-s cannot be used with -nd. Please use one or the other`;
-				return;
-			}
+			//I dont know why it cant be, past me was on drugs I guess
+			// if(date_select){
+			// 	data.error += `-s cannot be used with -nd. Please use one or the other`;
+			// 	return;
+			// }
 			date_select = true;
 
 			if(typeof(opt[2]) !== 'undefined' && opt[2] !== ''){
@@ -567,10 +583,11 @@ function createEvent(args,uname,uid,callback){
 		}
 
 		function argNotifyDay(opt){
-			if(date_select){
-				data.error += `-nd cannot be used with -s. Please use one or the other`;
-				return;
-			}
+			//I dont know why it cant be, past me was on drugs I guess
+			// if(date_select){
+			// 	data.error += `-nd cannot be used with -s. Please use one or the other`;
+			// 	return;
+			// }
 			date_select = true;
 
 			if(typeof(opt[2]) !== 'undefined' && opt[2] !== '' && opt[2] !== ''){
@@ -755,12 +772,15 @@ function createEvent(args,uname,uid,callback){
 
 function messageCreate(msg){
 
+	//Split into arguments, set username and user id values for later use
 	let message_args = msg.content.split('-'),
 		uname = msg.author.username,
 		uid = msg.author.id;
 
+	//call create event function to parse our arguments, callback to validate returned data
 	createEvent(message_args,uname,uid, function(data){
 
+		//Make sure required vars are set
 		if(typeof(data.name) === 'undefined'){
 			data.error += `Event name is required! Set it with -n\n\n`;
 		}
@@ -775,7 +795,7 @@ function messageCreate(msg){
 		}
 
 
-	//set defaults
+		//set defaults if the values arent already set
 
 		if(typeof(data.frequency) === 'undefined'){
 			data.frequency = F_DEFAULT;
@@ -799,10 +819,11 @@ function messageCreate(msg){
 			data.notify_wait = NW_DEFAULT;
 		}
 
+		//Prepare verification message
 		let fullmsg = 'Do these options look correct to you? (y/n)\n\n';
-
 		fullmsg += `Name: **${data.name}**\nFrequency: **${data.frequency}**\nNotification day: **${notifday}**\nNotification time: **${data.notify_time}**\nRecurring notify delay: **${(data.notify_wait/60/60).toFixed(2)}h**\n`;
 
+		//Add optional args to verification message if they are set
 		if(typeof(data.channel) !== 'undefined'){
 			fullmsg += `Invite channel ID: **${data.channel}**\n`;
 		}
@@ -827,10 +848,13 @@ function messageCreate(msg){
 			fullmsg += `Required people: **${req_people_list.join(', ')}**\n`;
 		}
 
+		//Send the completed message
 		common.sendMsg(msg,fullmsg);
 
+		//Wait for reply, (y)es or (n)o
 		const filter = m => (m.content.toLowerCase().startsWith('y') && m.author == msg.author || m.content.toLowerCase().startsWith('n') && m.author == msg.author);
 
+		//Wait 30 seconds for reply, cancel if no response.
 		msg.channel.awaitMessages(filter, { max: 1, time: 30000, errors: ['time'] })
 	  		.then(collected => finish(collected))
 	  		.catch(collected => common.sendMsg(msg,'No response recieved in 30 seconds. Cancelling event creation.'));
@@ -838,11 +862,12 @@ function messageCreate(msg){
 	  	function finish(res){
 	  		res = res.first();
 
+	  		//Verification passed, ask if we should send notification now
 	  		if(res.content.toLowerCase().startsWith('y')){
 
 	  			common.sendMsg(msg,'Would you like to send a notification now? (y/n)')
 
-
+	  			//Wait another 30 seconds,cancel if no response
 	  			msg.channel.awaitMessages(filter, { max: 1, time: 30000, errors: ['time'] })
 			  		.then(collected => initNotif(collected))
 			  		.catch(collected => common.sendMsg(msg,'No response recieved in 30 seconds. Cancelling event creation.'));
@@ -852,6 +877,7 @@ function messageCreate(msg){
 	  		}
 	  	}
 
+	  	//Finally store event into database
 	  	function initNotif(res){
 	  		let mes = res.first();
   			if(mes.content.toLowerCase().startsWith('y')){
@@ -866,6 +892,8 @@ function messageCreate(msg){
 	  				6: JSON.stringify(data)
 	  			})
 				common.sendMsg(mes,'Event created, sending notification now!')
+				//Send notification now as requested
+				//function goes here when created
 
 			}else{
 
