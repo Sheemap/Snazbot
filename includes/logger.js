@@ -28,7 +28,7 @@ var logger = new (winston.Logger)({
     new (winston.transports.Console)({
       timestamp: tsFormat,
       colorize: true,
-      level: 'debug'
+      level: app.loglevel
     }),
     new winston.transports.Rotate({
         file: logDir+'/log.log', // this path needs to be absolute

@@ -13,6 +13,7 @@ exports.loadConf = loadConf = function(){
     exports.prefix = prefix = config.general.commandprefix;
     exports.autoclean = autoclean = config.general.autoclean;
     exports.logdir = logdir = config.general.logdir;
+    exports.loglevel = loglevel = config.general.loglevel;
     exports.admins = admins = config.general.admins.split(',');
 
     //Meme config
