@@ -35,7 +35,7 @@ var logger = new (winston.Logger)({
         colorize: false,
         timestamp: true,
         json: false,
-        size: '100m',
+        size: '10m',
         keep: 3,
         compress: true
     })
