@@ -130,10 +130,12 @@ function setState(msg,start,dead){
 
 		if(dead){
 			msg.member.setDeaf(false).catch(console.error)
+			msg.member.setMute(false).catch(console.error)
 		}else{
 			let members = vc.members;
 			members.forEach(function(user){
 				user.setDeaf(start).catch(console.error)
+				user.setMute(start).catch(console.error)
 			})
 
 			if(start){
