@@ -15,4 +15,7 @@ exports.main = function(msg,args){
 	}
 
 	app.loadConf();
+
+	logger.log('info','Reloaded configuration file.');
+	common.sendMsg(msg,`Reloaded configuration file.`);
 }
