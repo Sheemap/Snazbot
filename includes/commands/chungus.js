@@ -90,6 +90,11 @@ function changeName(msg,args){
 
 		let name = msg.content.toLowerCase().replace(`${app.prefix}chungus name `,'')
 
+		if(name == app.prefix+"chungus name"){
+			common.sendMsg(msg,`No name detected! Not changing.`);
+			return;
+		}
+
 		if(typeof(name) !== 'undefined' && name !== '' && name.includes('chungus')){
 			role.setName(name)
 				.then(updated => common.sendMsg(msg,`Changed name to ${name}`))
