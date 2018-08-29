@@ -30,7 +30,8 @@ if(app.chunguscd == ""){
 
 
 
-var lastcall;
+var lastcall,
+	chungusmins;
 
 
 exports.main = function(msg,args){
@@ -183,9 +184,7 @@ function claim(msg,args){
 					cooldown = row.points*15;
 					if(cooldown > app.chunguscd && app.chunguscd !== 0){
 						cooldown = app.chunguscd;
-						console.log('waow')
 					}
-					console.log(`Chungus cooldown ${app.chunguscd}`)
 				}
 				//>
 				if(chungussecs > cooldown){
@@ -214,13 +213,15 @@ function claim(msg,args){
 
 					lastcall = msg.author.id;
 
+					chungusmins = chungustime
+					chungustime = moment.duration(chungustime,"minutes").humanize()
+
 					const CALLTEXT = [
-						`Congrats! Its been **${chungustime}** minutes since the last chungus call. You have successfully claimed **${chunguspoints}** chungus, your new total is **${newpoints}** chungus.`,
-						`Woo wee! Its been **${chungustime}** minutes since the last chungus call. You've just adopted **${chunguspoints}** chungus, that makes you the proud owner of **${newpoints}** chungus.`,
-						`Hallelujah! Its been **${chungustime}** minutes since the last chungus call. The lord has blessed you with **${chunguspoints}** additional chungus. Thank thine lord as you now hold **${newpoints}** chungus.`,
-						`I **${chungustime}** II **${chunguspoints}** II **${newpoints}** L`,
-						`Youve been waiting for **${chungustime}** minutes. I hope it was worth it, as you just gained **${chunguspoints}** chungus. Thats just the right amount to put you at **${newpoints}** chungus.`,
-						`You my friend, are going to the top! Its been **${chungustime}** minutes. You racked up **${chunguspoints}** chungus. This brings you to the perfect chungus count of **${newpoints}**.`
+						`Congrats! Its been **${chungustime}** (${chungusmins} minutes) since the last chungus call. You have successfully claimed **${chunguspoints}** chungus, your new total is **${newpoints}** chungus.`,
+						`Woo wee! Its been **${chungustime}** (${chungusmins} minutes) since the last chungus call. You've just adopted **${chunguspoints}** chungus, that makes you the proud owner of **${newpoints}** chungus.`,
+						`Hallelujah! Its been **${chungustime}** (${chungusmins} minutes) since the last chungus call. The lord has blessed you with **${chunguspoints}** additional chungus. Thank thine lord as you now hold **${newpoints}** chungus.`,
+						`Youve been waiting for **${chungustime}** (${chungusmins} minutes). I hope it was worth it, as you just gained **${chunguspoints}** chungus. Thats just the right amount to put you at **${newpoints}** chungus.`,
+						`You my friend, are going to the top! Its been **${chungustime}** (${chungusmins} minutes). You racked up **${chunguspoints}** chungus. This brings you to the perfect chungus count of **${newpoints}**.`
 					]
 
 
@@ -228,8 +229,8 @@ function claim(msg,args){
 					// common.sendMsg(msg,`Congrats! Its been **${chungustime}** minutes since the last chungus call. You have successfully claimed **${chunguspoints}** chungus, your new total is **${newpoints}** chungus.`,true)
 				});
 				}else{
-					let timeleft = ((cooldown -  chungussecs)/60).toFixed(2)
-					common.sendMsg(msg,`Sorry my dude! You're still on cooldown. You must wait **${timeleft}** minutes to chungus again.`)
+					let timeleft = moment.duration((cooldown -  chungussecs),'seconds').humanize()
+					common.sendMsg(msg,`Sorry my dude! You're still on cooldown. You must wait **${timeleft}** to chungus again.`)
 				}
 				
 			});
@@ -287,7 +288,6 @@ function checkCD(msg){
 		let total_cooldown = row.points*15;
 		if(total_cooldown > app.chunguscd && app.chunguscd !== 0){
 			total_cooldown = app.chunguscd;
-			console.log('waow')
 		}
 		let time_since = seconds - row.lastclaim;
 		
