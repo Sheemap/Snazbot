@@ -5,10 +5,11 @@ const logger = require('../logger.js');
 const fs = require('fs');
 const db = require('../db.js');
 const imgur = require('imgur');
+const sleep = require('sleep-promise')
 
 exports.description = 'Rolls you a random meme';
 
-exports.usage = `Use "${app.prefix}meme" to fetch a meme.\n\nUse "${app.prefix}meme status" to count the memes available.\n\nUse "${app.prefix}meme points" to see how many points your memes have gathered.\n\nUse "${app.prefix}meme points <username>" to see how many points other peoples memes have gathered.\n\nUse "${app.prefix}meme youtube <on | off>" to enable/disble rolling youtube memes\n\nUse "${app.prefix}meme save <on | off>" to enable/disable the saving of your memes`;
+exports.usage = `Use "${app.prefix}meme" to fetch a meme. \n\nYou can roll multiple memes by using "${app.prefix}meme <number of memes> <seconds delay between memes>"\n\nUse "${app.prefix}meme status" to count the memes available.\n\nUse "${app.prefix}meme points" to see how many points your memes have gathered.\n\nUse "${app.prefix}meme points <username>" to see how many points other peoples memes have gathered.\n\nUse "${app.prefix}meme youtube <on | off>" to enable/disble rolling youtube memes\n\nUse "${app.prefix}meme save <on | off>" to enable/disable the saving of your memes`;
 
 exports.reactions = `%F0%9F%91%8D,%F0%9F%91%8E`;
 
@@ -25,7 +26,8 @@ exports.reactions = `%F0%9F%91%8D,%F0%9F%91%8E`;
 var buffer = [];
 var buffersize = 0;
 
-
+const defaultdelay = 3;
+const maxrolltime = 300;
 
 exports.main = function(msg,args){
 	switch(args[0].toLowerCase()){
@@ -332,10 +334,47 @@ function checkPoints(disID,callback){
 	
 }
 
+function timeRoll(msg,num,delay){
+
+	num += -1
+	sleep(delay*1000).then(function(){
+			if(num > 0){
+				roll(msg,[])
+				timeRoll(msg,num,delay)
+			}
+			
+	})
+}
+
 function roll(msg,args){
 	if(msg.channel.id != app.rollchan){
 		common.sendMsg(msg,'This command only works in the #memeroll chat.',false,15);
 	}else{
+
+		let memequeue = 0;
+		let memedelay = 3;
+		if(!isNaN(args[0])){
+			memequeue = parseInt(args[0]);
+
+			if(!isNaN(args[1])){
+				memedelay = parseInt(args[1]);
+				if(memedelay < 1){
+					memedelay = 1;
+				}
+			}else{
+				memedelay = defaultdelay;
+			}
+
+			if(memequeue * memedelay > maxrolltime){
+				common.sendMsg(msg,`Rolling ${memequeue} memes with a delay of ${memedelay} seconds would take over ${maxrolltime} seconds, which is not allowed. Rolling one meme instead.`);
+			}else{
+				logger.log('info',`Rolling ${memequeue} memes, will finish in ${memedelay*memequeue} seconds`)
+				timeRoll(msg,memequeue,memedelay);
+			}
+
+		}
+
+
 		db.all('SELECT url,votes FROM memes', function(err, rows){
 			db.get(`SELECT * FROM users WHERE disID="${msg.author.id}"`,function(err,row){
 				var ytmemes = true;
