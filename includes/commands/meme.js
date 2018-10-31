@@ -361,55 +361,76 @@ function roll(msg,args){
 
 
 		db.all('SELECT url,votes FROM memes', function(err, rows){
-    		var memelist = [];
-    		var memecount = 0;
-    		var meme,
-    			found = false;
 
-    		for(let w in rows){
+			db.get(`SELECT data FROM data WHERE disID=${msg.guild.id}`,function(err,row){
 
-    			for(let x=0;x<=rows[w].votes;x++){
-					memelist.push(rows[w].url);
-    			}
-
-    			if(rows[w].votes > 0)
-    				memecount++;
-
-    		}
-
-    		buffersize = Math.floor(memecount * app.buffer);
-
-    		logger.log('debug',`Buffer size is ${buffersize}, meme count is ${memecount}.`)
-
-    		for(let i=0;i<=50000;i++){
-				meme = memelist[Math.floor(Math.random()*(memelist.length-1))];
-
-				if(!buffer.includes(meme)){
-					buffer.push(meme);
-
-
-					if(buffer.length >= buffersize){
-						buffer.shift();
-					}
-
-					if(meme.includes('cdn.discordapp.com') || meme.includes('i.imgur')){
-						common.sendMsg(msg,{file:meme},false,15,callback);
-					}else{
-						common.sendMsg(msg,meme,false,15,callback);
-					}
-					found = true;
-
-					async function callback(message){
-						await message.react('👍');
-						await message.react('👎');
-					}
-
-					break;
+				var data = JSON.parse(row.data);
+				buffer = data.memebuffer;
+				if( typeof(buffer) === 'undefined'){
+					buffer = [];
 				}
-			}
-			if(!found){
-				logger.log('warn','Failed to randomize a meme not in the buffer!');
-			}
+
+	    		var memelist = [];
+	    		var memecount = 0;
+	    		var meme,
+	    			found = false;
+
+	    		for(let w in rows){
+
+	    			for(let x=0;x<=rows[w].votes;x++){
+						memelist.push(rows[w].url);
+	    			}
+
+	    			if(rows[w].votes > 0)
+	    				memecount++;
+
+	    		}
+
+	    		buffersize = Math.floor(memecount * app.buffer);
+
+	    		logger.log('debug',`Buffer size is ${buffersize}, meme count is ${memecount}.`)
+
+	    		for(let i=0;i<=50000;i++){
+					meme = memelist[Math.floor(Math.random()*(memelist.length-1))];
+
+					if(!buffer.includes(meme)){
+						buffer.push(meme);
+
+
+						while(buffer.length > buffersize){
+							buffer.shift();
+							if( buffer.length <= 0 && buffersize <= 0){
+								break;
+							}
+						}
+
+						if(meme.includes('cdn.discordapp.com') || meme.includes('i.imgur')){
+							common.sendMsg(msg,{file:meme},false,15,callback);
+						}else{
+							common.sendMsg(msg,meme,false,15,callback);
+						}
+						found = true;
+
+						async function callback(message){
+							await message.react('👍');
+							await message.react('👎');
+						}
+
+						break;
+					}
+				}
+				if(!found){
+					logger.log('warn','Failed to randomize a meme not in the buffer!');
+				}
+				data['memebuffer'] = buffer;
+
+				db.runSecure(`UPDATE data SET data=? WHERE disID=?`,
+				{
+					1: JSON.stringify(data),
+					2: msg.guild.id
+				})
+				
+			});
 
 		});
 	}
