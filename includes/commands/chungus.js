@@ -160,10 +160,11 @@ function claim(msg,args){
 		return;
 	}
 
-	if(msg.author.id == lastcall){
-		common.sendMsg(msg,`You cant claim chungus twice in a row!`);
-		return;
-	}
+	// Cant claim chungus twice in a row
+	// if(msg.author.id == lastcall){
+	// 	common.sendMsg(msg,`You cant claim chungus twice in a row!`);
+	// 	return;
+	// }
 
 	var seconds = new Date() / 1000;
 	db.get("SELECT lastclaim FROM chungus WHERE disNAM='chungus'",function(err,row){
