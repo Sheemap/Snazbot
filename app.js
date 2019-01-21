@@ -7,8 +7,41 @@ var token;
 
 exports.loadConf = loadConf = function(){
     //Config
-    var config = ini.parse(fs.readFileSync('./config/config.ini', 'utf-8'))
 
+    let needrs = false;
+    if(!fs.existsSync('./config/config.ini')){
+        try{
+            fs.copyFileSync('./config/example.config.ini','./config/config.ini')
+            console.log("Copied the example config to 'config/config.ini' Please adjust all config values and restart the program.")
+            needrs = true;
+        }
+        catch(error){
+            if(error.code == "ENOENT"){
+                console.log("No config exists, and no example config exists to copy! Please download the config file template from my github. https://github.com/Sheemap/Snazbot")
+                needrs = true;
+            }
+        }
+    }
+
+    if(!fs.existsSync('./config/blacklist.ini')){
+        try{
+            fs.copyFileSync('./config/example.blacklist.ini','./config/blacklist.ini')
+            console.log("Copied the example blacklist to 'config/blacklist.ini'")
+        }
+        catch(error){
+            if(error.code == "ENOENT"){
+                console.log("No blacklist exists, and no example blacklist exists to copy! Please download the blacklist file template from my github. https://github.com/Sheemap/Snazbot")
+                needrs = true;
+            }
+        }
+    }
+
+    if(needrs)
+        process.exit();
+
+
+    var config = ini.parse(fs.readFileSync('./config/config.ini', 'utf-8'))
+   
     token = config.general.token;
     exports.prefix = prefix = config.general.commandprefix;
     exports.autoclean = autoclean = config.general.autoclean;
