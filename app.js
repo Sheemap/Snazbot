@@ -40,7 +40,7 @@ exports.loadConf = loadConf = function(){
         process.exit();
 
 
-    var config = ini.parse(fs.readFileSync('./config/config.ini', 'utf-8'))
+    exports.config = config = ini.parse(fs.readFileSync('./config/config.ini', 'utf-8'))
    
     token = config.general.token;
     exports.prefix = prefix = config.general.commandprefix;
