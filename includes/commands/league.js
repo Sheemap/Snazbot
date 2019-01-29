@@ -29,6 +29,8 @@ exports.main = function(msg,args){
 function register(msg,args){
 	let summoner = args[1].toLowerCase();
 	let dupe = false;
+	let alt = false;
+	let allsummons = [];
 
 	if(summoner.length > 16){
 		logger.log('info',`${msg.author.username} tried to register invalid summoner name: ${summoner}`)
@@ -39,19 +41,28 @@ function register(msg,args){
 	db.all('SELECT * FROM league',function(err,rows){
 		for(let i in rows){
 			if(rows[i].disID == msg.author.id){
-				common.sendMsg(msg,'You\'ve already registered!');
-				dupe = true;
+				allsummons.push(JSON.parse(rows[i].summoner));
+				alt = true;
 			}
+				
+		}
 
-			if(JSON.parse(rows[i].summoner).name.toLowerCase() == summoner){
+		for(let u in allsummons){
+			if(allsummons[u].name.toLowerCase() == summoner){
+				logger.log('info',`${msg.author.username} just tried to register a summoner thats already been claimed!`)
 				common.sendMsg(msg,'That summoner name is already registered!');
 				dupe = true;
 			}
 		}
+		
 	
-		if(dupe){
+		if(dupe)
 			return;
-		}
+
+		if(alt)
+			logger.log('info',`Attempting to register alt for ${msg.author.username}. Once finished there will be, ${allsummons.length+1} accounts registered to them.`)
+		else
+			logger.log('info',`Attempting to register ${msg.author.username}'s first account.`)
 
 		leaguejs.Summoner
 			.gettingByName(summoner)
@@ -64,16 +75,18 @@ function register(msg,args){
 						4: JSON.stringify(data),
 						5: ''
 				})
-				logger.log('info',data);
 				common.sendMsg(msg,`Registered successfully! You will now be included in the weekly awards.`)
 			})
 			.catch(err => {
-				logger.log('error',err);
+				
+				if(err.statusCode == 404){
+					common.sendMsg(msg,`No summoner found with that name! Make sure its spelled correctly.`)
+					return;
+				}
 
-				console.log(err.keys)
-
-				common.sendMsg(msg,`Error occured! Please let Seka know.`)
-			});
+				common.sendMsg(msg,`Error occured! Please let <@104848260954357760> know.`)
+		});
+		
 	})
 
 }
