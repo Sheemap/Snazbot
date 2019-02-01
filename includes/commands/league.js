@@ -27,7 +27,8 @@ exports.main = function(msg,args){
 }
 
 function register(msg,args){
-	let summoner = args[1].toLowerCase();
+	args.shift()
+	let summoner = args.join(' ').toLowerCase();
 	let dupe = false;
 	let alt = false;
 	let allsummons = [];
@@ -78,7 +79,7 @@ function register(msg,args){
 				common.sendMsg(msg,`Registered successfully! You will now be included in the weekly awards.`)
 			})
 			.catch(err => {
-				
+
 				if(err.statusCode == 404){
 					common.sendMsg(msg,`No summoner found with that name! Make sure its spelled correctly.`)
 					return;
