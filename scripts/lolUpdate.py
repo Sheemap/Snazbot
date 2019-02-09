@@ -7,6 +7,9 @@ import sys
 import sqlite3
 import json
 import datetime
+from random import randint
+
+adj_list = ['an awesome','a fantastic','a delicious','a delightful','a scrumptious','a boolin','a sick','a rad','a tubular','a cool','a nice','a super','a neato','an okayish','an alright','a fine','a decent','a mediocre','a chill','an amazing']
 
 today = datetime.datetime.now()
 start_delta = datetime.timedelta(weeks=1)
@@ -36,7 +39,6 @@ def main():
 			return
 
 		summoner = cass.get_summoner(name=summoner_name)
-		# test = cass.get_summoner(name="ScroobleDooble")
 		history = summoner.match_history
 
 		print(history[0])
@@ -53,6 +55,10 @@ def listAvg(data,rounding):
 	else:
 		return total/count
 
+def randomAdjective():
+	index = random.randint(0,len(adj_list)-1)
+	return adj_list.pop(index)
+
 
 def wotw():
 	win_string = ''
@@ -67,7 +73,6 @@ def wotw():
 		if games_played <= 0:
 			continue
 
-		# print(scores[row[1]])
 		if row[1] in scores:
 			scores[row[1]]['count'] += games_played
 		else:
@@ -80,20 +85,12 @@ def wotw():
 			scores[row[1]]['aassists'] = []
 			scores[row[1]]['adeaths'] = []
 
-		gold = []
-		damage = []
-		cs = []
-		kills = []
-		assists = []
-		deaths = []
-
-		agold = 0
-		adamage = 0
-		acs = 0
-		akills = 0
-		aassists = 0
-		adeaths = 0
-
+		# gold = []
+		# damage = []
+		# cs = []
+		# kills = []
+		# assists = []
+		# deaths = []
 
 
 		for match in history:
@@ -106,22 +103,70 @@ def wotw():
 
 			for p in match.participants:
 				if p.summoner == summoner:
-					gold.append(p.stats.gold_earned)
-					damage.append(p.stats.total_damage_dealt_to_champions)
-					cs.append(p.stats.total_minions_killed)
-					kills.append(p.stats.kills)
-					assists.append(p.stats.assists)
-					deaths.append(p.stats.deaths)
+					scores[row[1]]['agold'].append(p.stats.gold_earned)
+					scores[row[1]]['adamage'].append(p.stats.total_damage_dealt_to_champions)
+					scores[row[1]]['acs'].append(p.stats.total_minions_killed)
+					scores[row[1]]['akills'].append(p.stats.kills)
+					scores[row[1]]['aassists'].append(p.stats.assists)
+					scores[row[1]]['adeaths'].append(p.stats.deaths)
 
-		scores[row[1]]['agold'].append(listAvg(gold,False))
-		scores[row[1]]['adamage'].append(listAvg(damage,False))
-		scores[row[1]]['acs'].append(listAvg(cs,False))
-		scores[row[1]]['akills'].append(listAvg(kills,False))
-		scores[row[1]]['aassists'].append(listAvg(assists,False))
-		scores[row[1]]['adeaths'].append(listAvg(deaths,False))
+		# scores[row[1]]['agold'].append(listAvg(gold,False))
+		# scores[row[1]]['adamage'].append(listAvg(damage,False))
+		# scores[row[1]]['acs'].append(listAvg(cs,False))
+		# scores[row[1]]['akills'].append(listAvg(kills,False))
+		# scores[row[1]]['aassists'].append(listAvg(assists,False))
+		# scores[row[1]]['adeaths'].append(listAvg(deaths,False))
 
 
 	# TODO: Average scores from summoners per person, then detirmine winners then build and send the win_string
+
+	for user in scores:
+		scores[row[1]]['agold'] = listAvg(scores[row[1]]['agold'],True)
+		scores[row[1]]['adamage'] = listAvg(scores[row[1]]['adamage'],True)
+		scores[row[1]]['acs'] = listAvg(scores[row[1]]['acs'],True)
+		scores[row[1]]['akills'] = listAvg(scores[row[1]]['akills'],True)
+		scores[row[1]]['aassists'] = listAvg(scores[row[1]]['aassists'],True)
+		scores[row[1]]['adeaths'] = listAvg(scores[row[1]]['adeaths'],True)
+
+	top_gold = [0,0]
+	top_damage = [0,0]
+	top_cs = [0,0]
+	top_kills = [0,0]
+	top_assists = [0,0]
+	top_deaths = [0,0]
+	for user in scores:
+		print(user)
+		if scores[user]['agold'] > top_gold[0]:
+			top_gold[0] = scores[user]['agold']
+			top_gold[1] = user
+
+		if scores[user]['adamage'] > top_damage[0]:
+			top_damage[0] = scores[user]['adamage']
+			top_damage[1] = user
+
+		if scores[user]['acs'] > top_acs[0]:
+			top_acs[0] = scores[user]['acs']
+			top_acs[1] = user
+
+		if scores[user]['akills'] > top_kills[0]:
+			top_kills[0] = scores[user]['akills']
+			top_kills[1] = user
+
+		if scores[user]['aassists'] > top_assists[0]:
+			top_assists[0] = scores[user]['aassists']
+			top_assists[1] = user
+
+		if scores[user]['adeaths'] > top_deaths[0]:
+			top_deaths[0] = scores[user]['adeaths']
+			top_deaths[1] = user
+
+
+	win_string = ''
+
+
+
+
+	print(scores)
 
 
 
