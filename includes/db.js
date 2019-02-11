@@ -18,6 +18,8 @@ exports.createNew = function(name,callback){
         db.run("CREATE TABLE memes (disNAM TEXT, disID NUMERIC, timestamp NUMERIC, url TEXT, votes NUMERIC, hash TEXT)");
         db.run("CREATE TABLE data (disNAM TEXT, disID TEXT, data TEXT)");
         db.run("CREATE TABLE chungus (disNAM TEXT, disID TEXT, lastclaim TEXT, points NUMERIC, lastchungus TEXT)");
+        db.run("CREATE TABLE league (disNAM TEXT, disID TEXT, timestamp NUMERIC, summoner TEXT, data TEXT)")
+        db.run("CREATE TABLE league_matches (gameID TEXT, timestamp NUMERIC, season NUMERIC, data TEXT)")
 
         var seconds = new Date() / 1000;
         db.run(`INSERT INTO chungus VALUES ("chungus","000","${seconds}","0","0")`);

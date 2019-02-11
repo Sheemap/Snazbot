@@ -1,0 +1,18 @@
+{
+  "pipeline": {
+    "Cache": {},
+
+    "SimpleKVDiskStore": {
+      "package": "cassiopeia_diskstore",
+      "path": "ABSOLUTE PATH TO DATA FOLDER"
+    },
+
+    "DDragon": {},
+
+    "RiotAPI": {
+    "api_key": "RIOT_API_KEY",
+    "limiting_share": 1.0
+    }
+
+  }
+}
