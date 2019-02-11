@@ -19,11 +19,21 @@ exports.main = function(msg,args){
 
 	switch(args[0].toLowerCase()){
 		case 'register':
-				register(msg,args);
+			register(msg,args);
 			break;
+
+		case 'join':
+			join(msg,args)
+			break;
+
 		default:
 			common.sendMsg(msg,`\`\`\`${exports.usage}\`\`\``)
 	}
+}
+
+function join(msg,args){
+	msg.member.addRole(app.config.league.role)
+	common.sendMsg(msg,'You have been added to the league weekly channel.')
 }
 
 function register(msg,args){
