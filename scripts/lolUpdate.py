@@ -142,7 +142,8 @@ async def wotw():
 	top_deaths = [0,0]
 	top_vision = [0,0]
 	for user in scores:
-		print(user)
+		if scores[user]['count'] < 4:
+			continue
 		if scores[user]['agold'] > top_gold[0]:
 			top_gold[0] = scores[user]['agold']
 			top_gold[1] = user
