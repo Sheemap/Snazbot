@@ -7,6 +7,8 @@ import sys
 import sqlite3
 import json
 import datetime
+import discord
+import asyncio
 from random import randint
 
 adj_list = ['an awesome','a fantastic','a delicious','a delightful','a scrumptious','a boolin','a sick','a rad','a tubular','a cool','a nice','a super','a neato','an okayish','an alright','a fine','a decent','a mediocre','a chill','an amazing']
@@ -14,7 +16,8 @@ adj_list = ['an awesome','a fantastic','a delicious','a delightful','a scrumptio
 today = datetime.datetime.now()
 start_delta = datetime.timedelta(weeks=1)
 last_week = int((today - start_delta).timestamp())*1000
-print(last_week)
+
+client = discord.Client()
 
 conn = sqlite3.connect('../data/data.db')
 c = conn.cursor()
@@ -56,11 +59,11 @@ def listAvg(data,rounding):
 		return total/count
 
 def randomAdjective():
-	index = random.randint(0,len(adj_list)-1)
+	index = randint(0,len(adj_list)-1)
 	return adj_list.pop(index)
 
 
-def wotw():
+async def wotw():
 	win_string = ''
 	scores = {}
 	for row in c.execute('SELECT * FROM league'):
@@ -84,6 +87,7 @@ def wotw():
 			scores[row[1]]['akills'] = []
 			scores[row[1]]['aassists'] = []
 			scores[row[1]]['adeaths'] = []
+			scores[row[1]]['avision'] = []
 
 		# gold = []
 		# damage = []
@@ -109,6 +113,7 @@ def wotw():
 					scores[row[1]]['akills'].append(p.stats.kills)
 					scores[row[1]]['aassists'].append(p.stats.assists)
 					scores[row[1]]['adeaths'].append(p.stats.deaths)
+					scores[row[1]]['avision'].append(p.stats.vision_score)
 
 		# scores[row[1]]['agold'].append(listAvg(gold,False))
 		# scores[row[1]]['adamage'].append(listAvg(damage,False))
@@ -127,6 +132,7 @@ def wotw():
 		scores[row[1]]['akills'] = listAvg(scores[row[1]]['akills'],True)
 		scores[row[1]]['aassists'] = listAvg(scores[row[1]]['aassists'],True)
 		scores[row[1]]['adeaths'] = listAvg(scores[row[1]]['adeaths'],True)
+		scores[row[1]]['avision'] = listAvg(scores[row[1]]['avision'],True)
 
 	top_gold = [0,0]
 	top_damage = [0,0]
@@ -134,6 +140,7 @@ def wotw():
 	top_kills = [0,0]
 	top_assists = [0,0]
 	top_deaths = [0,0]
+	top_vision = [0,0]
 	for user in scores:
 		print(user)
 		if scores[user]['agold'] > top_gold[0]:
@@ -144,9 +151,9 @@ def wotw():
 			top_damage[0] = scores[user]['adamage']
 			top_damage[1] = user
 
-		if scores[user]['acs'] > top_acs[0]:
-			top_acs[0] = scores[user]['acs']
-			top_acs[1] = user
+		if scores[user]['acs'] > top_cs[0]:
+			top_cs[0] = scores[user]['acs']
+			top_cs[1] = user
 
 		if scores[user]['akills'] > top_kills[0]:
 			top_kills[0] = scores[user]['akills']
@@ -160,17 +167,59 @@ def wotw():
 			top_deaths[0] = scores[user]['adeaths']
 			top_deaths[1] = user
 
+		if scores[user]['avision'] > top_vision[0]:
+			top_vision[0] = scores[user]['avision']
+			top_vision[1] = user
 
-	win_string = ''
+	win_string = "**This weeks winners are in!**\n\n"\
+					"First up comes the midas award, smelted by <@{gold_user}>! On average they snatched {adj1} **{gold_top}** gold per game!\n\n"\
+					"Next we have the bruiser award, smashed by <@{damage_user}>! On average they dished out {adj2} **{damage_top}** damage each match!\n\n"\
+					"Third is the humble farmer, reaped by <@{cs_user}>! On average they harvested {adj3} **{cs_top}** minions per game!\n\n"\
+					"Next award is the seriel killer, slaughtered by <@{kills_user}>! On average they murdered {adj4} **{kills_top}** champions in cold blood!\n\n"\
+					"The accomplice is the next award, slurped by <@{assists_user}>! On average they claimed {adj5} **{assists_top}** assists per game!\n\n"\
+					"Next we have the omnipotent award, sighted by <@{vision_user}>! On average they had {adj6} **{vision_top}** vision score per match!\n\n"\
+					"Finally, we have the feeder of the week. Inted by <@{deaths_user}>. On average they fed {adj7} **{deaths_top}** deaths per game. Shame them.".format(gold_user=top_gold[1],
+																																									gold_top=top_gold[0],
+																																									damage_user=top_damage[1],
+																																									damage_top=top_damage[0],
+																																									cs_user=top_cs[1],
+																																									cs_top=top_cs[0],
+																																									kills_user=top_kills[1],
+																																									kills_top=top_kills[0],
+																																									assists_user=top_assists[1],
+																																									assists_top=top_assists[0],
+																																									deaths_user=top_deaths[1],
+																																									deaths_top=top_deaths[0],
+																																									vision_user=top_vision[1],
+																																									vision_top=top_vision[0],
+																																									adj1=randomAdjective(),adj2=randomAdjective(),adj3=randomAdjective(),adj4=randomAdjective(),adj5=randomAdjective(),adj6=randomAdjective(),adj7=randomAdjective())
+
+
+	
+	await client.send_message(client.get_channel(config['league']['channel']), win_string)
+	# print(client.get_channel(config['league']['channel']))
 
 
 
 
-	print(scores)
+	print(win_string)
 
 
+
+# @client.event
+# async def on_ready():
+# 	client.send_message(client.get_channel(config['league']['channel']), 'Calculating messages...')
+
+@client.event
+async def on_ready():
+	print('Ready!')
+	await wotw()
+	client.logout()
+	sys.exit()
 
 
 if __name__ == "__main__":
 	# main()
-	wotw()
+	client.run(config['general']['token'])
+	# wotw()
+
