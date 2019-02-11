@@ -13,7 +13,7 @@ const leaguejs = new LeagueJS(APIKEY, {useV4: 'true'});
 
 exports.description = 'League of Legends winners of the week';
 
-exports.usage = `Use "${app.prefix}league register <summoner name>" to add yourself to the tracked users.`;
+exports.usage = `Use "${app.prefix}league register <summoner name>" to add yourself to the tracked users.\nAUse "${app.prefix}league join" to be added to awards chat, without account being registered.`;
 
 exports.main = function(msg,args){
 
