@@ -86,6 +86,7 @@ function register(msg,args){
 						4: JSON.stringify(data),
 						5: ''
 				})
+				msg.member.addRole(app.config.league.role)
 				common.sendMsg(msg,`Registered successfully! You will now be included in the weekly awards.`)
 			})
 			.catch(err => {
