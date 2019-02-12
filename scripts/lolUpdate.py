@@ -126,13 +126,13 @@ async def wotw():
 	# TODO: Average scores from summoners per person, then detirmine winners then build and send the win_string
 
 	for user in scores:
-		scores[row[1]]['agold'] = listAvg(scores[row[1]]['agold'],True)
-		scores[row[1]]['adamage'] = listAvg(scores[row[1]]['adamage'],True)
-		scores[row[1]]['acs'] = listAvg(scores[row[1]]['acs'],True)
-		scores[row[1]]['akills'] = listAvg(scores[row[1]]['akills'],True)
-		scores[row[1]]['aassists'] = listAvg(scores[row[1]]['aassists'],True)
-		scores[row[1]]['adeaths'] = listAvg(scores[row[1]]['adeaths'],True)
-		scores[row[1]]['avision'] = listAvg(scores[row[1]]['avision'],True)
+		scores[user]['agold'] = listAvg(scores[user]['agold'],True)
+		scores[user]['adamage'] = listAvg(scores[user]['adamage'],True)
+		scores[user]['acs'] = listAvg(scores[user]['acs'],True)
+		scores[user]['akills'] = listAvg(scores[user]['akills'],True)
+		scores[user]['aassists'] = listAvg(scores[user]['aassists'],True)
+		scores[user]['adeaths'] = listAvg(scores[user]['adeaths'],True)
+		scores[user]['avision'] = listAvg(scores[user]['avision'],True)
 
 	top_gold = [0,0]
 	top_damage = [0,0]
