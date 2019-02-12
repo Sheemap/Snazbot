@@ -204,6 +204,7 @@ async def wotw():
 
 
 	print(win_string)
+	print(scores)
 
 
 
