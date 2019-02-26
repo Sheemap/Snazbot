@@ -104,7 +104,7 @@ function changeName(msg,args){
 			common.sendMsg(msg,`Please enter a valid name. The name must contain "chungus" somewhere in it.`)
 		}
 	}else{
-		common.sendMsg(msg,`You arent the chungus! You dont decide the color!`);
+		common.sendMsg(msg,`You arent the chungus! You dont decide the name!`);
 	}
 }
 
@@ -139,13 +139,18 @@ function top(msg,args){
 	db.all("SELECT * FROM chungus WHERE disNAM != 'chungus' ORDER BY points DESC",function(err,rows){
 
 		var content = 'Top chungus:\n';
+		var user_display_name = '';
 
 		for(let i=0;i<rows.length;i++){
 
 			if(i>=10)
 				break;
 
-			content += `${i+1}. ${rows[i].disNAM}: **${rows[i].points}**\n`;
+			user_display_name = rows[i].disNAM;
+			common.findUser(rows[i].disID,function(user){
+				user_display_name = user.displayName;
+			})
+			content += `${i+1}. ${user_display_name}: **${rows[i].points}**\n`;
 		}
 
 		common.sendMsg(msg,content);
