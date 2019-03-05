@@ -68,7 +68,9 @@ async def wotw():
 	scores = {}
 	for row in c.execute('SELECT * FROM league'):
 		print(row[3])
-		summoner = cass.Summoner(id=json.loads(row[3])['id'])
+
+		summ_id = json.loads(row[3])['id']
+		summoner = cass.Summoner(id=summ_id)
 
 		history = summoner.match_history(begin_time=last_week)
 
@@ -106,6 +108,9 @@ async def wotw():
 			minutes += round(int(duration[2])/60)
 
 			for p in match.participants:
+				if p.summoner.account_id == "0":
+					continue
+
 				if p.summoner == summoner:
 					scores[row[1]]['agold'].append(p.stats.gold_earned)
 					scores[row[1]]['adamage'].append(p.stats.total_damage_dealt_to_champions)
@@ -141,6 +146,7 @@ async def wotw():
 	top_assists = [0,0]
 	top_deaths = [0,0]
 	top_vision = [0,0]
+
 	for user in scores:
 		if scores[user]['count'] < 4:
 			continue
