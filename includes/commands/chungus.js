@@ -8,7 +8,7 @@ const moment = require('moment');
 
 exports.description = 'Claim yourself as chungus';
 
-exports.usage = `Use "${app.prefix}chungus" to claim your chungus points.\n\nUse "${app.prefix}chungus top" to check leaderboard.\n\nUse "${app.prefix}chungus cd" to check your current cooldown.\n\nIf you're the chungus, use "${app.prefix}chungus color <#hex code>" to change your color.`;
+exports.usage = `Use "${app.prefix}chungus" to claim your chungus points.\n\nUse "${app.prefix}chungus top" to check leaderboard.\n\nUse "${app.prefix}chungus cd" to check your current cooldown.\n\nIf you're the chungus, use "${app.prefix}chungus color <#hex code>" to change your color, and "${app.prefix}chungus name <name>" to change your role title (Must include the word chungus).`;
 
 // const app.chungusrole = app.chungusrole;
 // const app.chunguschan.split(',') = app.chunguschan.split(',');
