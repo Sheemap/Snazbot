@@ -287,7 +287,7 @@ function checkLeader(msg){
 	// msg.member.addRole(app.chungusrole)
 }
 
-function checkCD(msg){
+function checkCD(msg,args){
 	db.get(`SELECT * FROM chungus WHERE disID = "${msg.author.id}"`,function(err,row){
 		let seconds = new Date() / 1000;
 		// let total_cooldown = (Math.log(row.points)*0.75)*60*60;
@@ -300,7 +300,7 @@ function checkCD(msg){
 		if(total_cooldown > time_since){
 			let cooldown = (total_cooldown - time_since)/60;
 			let niceformat = ((cooldown*60) + seconds)*1000;
-			common.sendMsg(msg,`You will be able to chungus again **${moment(niceformat).fromNow()}**.`)
+			common.sendMsg(msg,`You will be able to chungus again **${moment(niceformat).fromNow()}** (${Math.round(cooldown)} minutes).`)
 			// common.sendMsg(msg,`You have **${cooldown.toFixed(2)}** minutes left on your cooldown.`);
 		}else{
 			common.sendMsg(msg,`You have no cooldown! Happy chungusing!`);
