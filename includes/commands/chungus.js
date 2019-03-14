@@ -8,7 +8,7 @@ const moment = require('moment');
 
 exports.description = 'Claim yourself as chungus';
 
-exports.usage = `Use "${app.prefix}chungus" to claim your chungus points.\n\nUse "${app.prefix}chungus top" to check leaderboard.\n\nUse "${app.prefix}chungus cd" to check your current cooldown.\n\nIf you're the chungus, use "${app.prefix}chungus color <#hex code>" to change your color, and "${app.prefix}chungus name <name>" to change your role title (Must include the word chungus).`;
+exports.usage = `Use "${app.prefix}chungus" to claim your chungus points.\n\nUse "${app.prefix}chungus top" to check leaderboard.\n\nUse "${app.prefix}chungus cd <user>" to check someones current cooldown. If you dont specify a person, it defaults to you.\n\nIf you're the chungus, use "${app.prefix}chungus color <#hex code>" to change your color, and "${app.prefix}chungus name <name>" to change your role title (Must include the word chungus).`;
 
 // const app.chungusrole = app.chungusrole;
 // const app.chunguschan.split(',') = app.chunguschan.split(',');
@@ -288,7 +288,21 @@ function checkLeader(msg){
 }
 
 function checkCD(msg,args){
-	db.get(`SELECT * FROM chungus WHERE disID = "${msg.author.id}"`,function(err,row){
+	let chungus_user = msg.author;
+	if(typeof(args[1]) !== 'undefined'){
+		chungus_user = common.findUser(args[1])
+	}
+	if(chungus_user == ''){
+		common.sendMsg(msg,`Did not find a user with that name! Try again.`)
+		return;
+	}
+	db.get(`SELECT * FROM chungus WHERE disID = "${chungus_user.id}"`,function(err,row){
+
+		if(typeof(row) == 'undefined'){
+			common.sendMsg(msg,`${chungus_user.displayName} has no cooldown!`)
+			return
+		}
+
 		let seconds = new Date() / 1000;
 		// let total_cooldown = (Math.log(row.points)*0.75)*60*60;
 		let total_cooldown = row.points*15;
@@ -300,10 +314,20 @@ function checkCD(msg,args){
 		if(total_cooldown > time_since){
 			let cooldown = (total_cooldown - time_since)/60;
 			let niceformat = ((cooldown*60) + seconds)*1000;
-			common.sendMsg(msg,`You will be able to chungus again **${moment(niceformat).fromNow()}** (${Math.round(cooldown)} minutes).`)
+
+			if(chungus_user.id == msg.author.id){
+				common.sendMsg(msg,`You will be able to chungus again **${moment(niceformat).fromNow()}** (${Math.round(cooldown)} minutes).`)
+			}else{
+				common.sendMsg(msg,`${chungus_user.displayName} will be able to chungus again **${moment(niceformat).fromNow()}** (${Math.round(cooldown)} minutes).`)
+			}
 			// common.sendMsg(msg,`You have **${cooldown.toFixed(2)}** minutes left on your cooldown.`);
 		}else{
-			common.sendMsg(msg,`You have no cooldown! Happy chungusing!`);
+			if(chungus_user.id == msg.author.id){
+				common.sendMsg(msg,`You have no cooldown! Happy chungusing!`);
+			}else{
+				common.sendMsg(msg,`${chungus_user.displayName} has no cooldown!`);
+			}
+			
 		}
 
 	})
