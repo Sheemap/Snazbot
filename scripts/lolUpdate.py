@@ -67,7 +67,7 @@ async def wotw():
 	win_string = ''
 	scores = {}
 	for row in c.execute('SELECT * FROM league'):
-		print(row[3])
+		print(row[3].encode('utf-8'))
 
 		summ_id = json.loads(row[3])['id']
 		summoner = cass.Summoner(id=summ_id)
