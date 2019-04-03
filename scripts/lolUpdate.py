@@ -72,7 +72,7 @@ async def wotw():
 		summ_id = json.loads(row[3])['id']
 		summoner = cass.Summoner(id=summ_id)
 
-		history = summoner.match_history(begin_time=last_week)
+		history = summoner.match_history(begin_time=last_week,queues=['NORMAL_5V5_BLIND_PICK','RANKED_FLEX_SR','RANKED_SOLO_5x5','TEAM_BUILDER_DRAFT_UNRANKED_5x5'])
 
 		games_played = len(history)
 		if games_played <= 0:
@@ -106,6 +106,9 @@ async def wotw():
 			minutes += int(duration[0])*60
 			minutes += int(duration[1])
 			minutes += round(int(duration[2])/60)
+
+			# print(minutes)
+			# print(match.queue)
 
 			for p in match.participants:
 				if p.summoner.account_id == "0":
