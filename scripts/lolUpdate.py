@@ -110,6 +110,10 @@ async def wotw():
 			# print(minutes)
 			# print(match.queue)
 
+			if minutes <= 10:
+				scores[row[1]]['count'] += -1
+				continue
+
 			for p in match.participants:
 				if p.summoner.account_id == "0":
 					continue
