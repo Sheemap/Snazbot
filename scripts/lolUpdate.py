@@ -189,7 +189,7 @@ async def wotw():
 					"First up comes the midas award, smelted by <@{gold_user}>! On average they snatched {adj1} **{gold_top}** gold per game!\n\n"\
 					"Next we have the bruiser award, smashed by <@{damage_user}>! On average they dished out {adj2} **{damage_top}** damage each match!\n\n"\
 					"Third is the humble farmer, reaped by <@{cs_user}>! On average they harvested {adj3} **{cs_top}** minions per game!\n\n"\
-					"Next award is the seriel killer, slaughtered by <@{kills_user}>! On average they murdered {adj4} **{kills_top}** champions in cold blood!\n\n"\
+					"Next award is the serial killer, slaughtered by <@{kills_user}>! On average they murdered {adj4} **{kills_top}** champions in cold blood!\n\n"\
 					"The accomplice is the next award, slurped by <@{assists_user}>! On average they claimed {adj5} **{assists_top}** assists per game!\n\n"\
 					"Next we have the omnipotent award, sighted by <@{vision_user}>! On average they had {adj6} **{vision_top}** vision score per match!\n\n"\
 					"Finally, we have the feeder of the week. Inted by <@{deaths_user}>. On average they fed {adj7} **{deaths_top}** deaths per game. Shame them.".format(gold_user=top_gold[1],
