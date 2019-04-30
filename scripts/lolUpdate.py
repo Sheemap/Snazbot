@@ -63,7 +63,7 @@ def randomAdjective():
 	return adj_list.pop(index)
 
 
-async def wotw():
+async def wotw(send_award):
 	win_string = ''
 	scores = {}
 	for row in c.execute('SELECT * FROM league'):
@@ -209,8 +209,10 @@ async def wotw():
 																																									adj1=randomAdjective(),adj2=randomAdjective(),adj3=randomAdjective(),adj4=randomAdjective(),adj5=randomAdjective(),adj6=randomAdjective(),adj7=randomAdjective())
 
 
-	
-	await client.send_message(client.get_channel(config['league']['channel']), win_string)
+	if send_award:
+		await client.send_message(client.get_channel(config['league']['channel']), win_string)
+	else:
+		print("Recieved command argument. Not sending discord message.")
 	# print(client.get_channel(config['league']['channel']))
 
 
@@ -228,7 +230,10 @@ async def wotw():
 @client.event
 async def on_ready():
 	print('Ready!')
-	await wotw()
+	if len(sys.argv) > 1:
+		await wotw(False)
+	else:
+		await wotw(True)
 	client.logout()
 	sys.exit()
 
