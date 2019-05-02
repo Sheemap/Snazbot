@@ -179,12 +179,14 @@ client.on('guildMemberAdd', member => {
 });
 
 client.on('voiceStateUpdate', (oldMember, newMember) => {
-    if(newMember.voiceChannelID == "359575807297060875"){
-        newMember.addRole('360186010728005652')
-        logger.log('debug',`Entered ${newMember.user.username} into the spankbank`)
-    }else{
-        newMember.removeRole('360186010728005652')
-        logger.log('debug',`Removed ${newMember.user.username} from the spankbank`)
+    if(newMember.guild.id == "104981147770990592"){
+        if(newMember.voiceChannelID == "359575807297060875"){
+            newMember.addRole('360186010728005652')
+            logger.log('debug',`Entered ${newMember.user.username} into the spankbank`)
+        }else{
+            newMember.removeRole('360186010728005652')
+            logger.log('debug',`Removed ${newMember.user.username} from the spankbank`)
+        }
     }
 });
 
