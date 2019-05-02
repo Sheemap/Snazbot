@@ -2,8 +2,13 @@
 const sqlite3 = require('sqlite3').verbose();
 const logger = require('./logger.js');
 const fs = require('fs');
+const comm = require('./commandHandle.js')
 
+const db_schemes = comm.db_schemes;
+const db_inits = comm.db_inits;
 var db;
+
+console.log(db_schemes)
 
 exports.createNew = function(name,callback){
     name += '.db'
@@ -14,15 +19,17 @@ exports.createNew = function(name,callback){
 
     db = new sqlite3.Database('./data/'+name);
     db.serialize(function() {
-        db.run("CREATE TABLE johntime (disNAM TEXT, disID TEXT, timestamp NUMERIC, claim NUMERIC, actual NUMERIC)");
-        db.run("CREATE TABLE memes (disNAM TEXT, disID NUMERIC, timestamp NUMERIC, url TEXT, votes NUMERIC, hash TEXT)");
         db.run("CREATE TABLE data (disNAM TEXT, disID TEXT, data TEXT)");
-        db.run("CREATE TABLE chungus (disNAM TEXT, disID TEXT, lastclaim TEXT, points NUMERIC, lastchungus TEXT)");
-        db.run("CREATE TABLE league (disNAM TEXT, disID TEXT, timestamp NUMERIC, summoner TEXT, data TEXT)")
-        db.run("CREATE TABLE league_matches (gameID TEXT, timestamp NUMERIC, season NUMERIC, data TEXT)")
 
-        var seconds = new Date() / 1000;
-        db.run(`INSERT INTO chungus VALUES ("chungus","000","${seconds}","0","0")`);
+        // Run each commands table creation
+        for(let x in db_schemes){
+            db.run(`CREATE TABLE ${db_schemes[x]}`)
+        }
+
+        // Run each commands initial commands
+        for(let x in db_inits){
+            db.run(db_inits[x])
+        }
 
 
         // IMPORT PLAINTEXT MEMERS

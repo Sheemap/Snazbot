@@ -15,6 +15,8 @@ exports.description = 'League of Legends winners of the week';
 
 exports.usage = `Use "${app.prefix}league register <summoner name>" to add yourself to the tracked users.\nAUse "${app.prefix}league join" to be added to awards chat, without account being registered.`;
 
+exports.db_scheme = [`league (disNAM TEXT, disID TEXT, timestamp NUMERIC, summoner TEXT, data TEXT)`,`league_matches (gameID TEXT, timestamp NUMERIC, season NUMERIC, data TEXT)`]
+
 exports.main = function(msg,args){
 
 	switch(args[0].toLowerCase()){

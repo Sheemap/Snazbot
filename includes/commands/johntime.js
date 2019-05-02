@@ -10,6 +10,8 @@ exports.description = 'When will John REALLY be back?';
 
 exports.usage = `Use "${app.prefix}johntime <duration of leave>" to find how long he will actually be gone.\n\nUse "${app.prefix}johntime report <time he claimed> <actual time late>" to report how long he was gone past his stated time.\n\nUse "${app.prefix}johntime confirm" to confirm a late time.`;
 
+exports.db_scheme = `johntime (disNAM TEXT, disID TEXT, timestamp NUMERIC, claim NUMERIC, actual NUMERIC)`
+
 const REQUIRED = 1,
 	  CONFIRMTIME = 15;
 

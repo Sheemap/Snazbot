@@ -12,6 +12,8 @@ const common = require('./common.js');
 
 var comms = {};
 var msg_functions = [];
+var db_schemes = [];
+var db_inits = [];
 
 //Load blacklist
 const blacklist = ini.parse(fs.readFileSync('./config/blacklist.ini', 'utf-8'))
@@ -32,10 +34,38 @@ glob.sync('./includes/commands/**/*.js').forEach(function(file) {
 });
 
 for(let c in comms){
+	// Check each command for special functions
+
+	// Message function
 	if(typeof(comms[c].msg) !== 'undefined'){
 		msg_functions.push(comms[c].msg);
-	} 
+	}
+
+	// Database scheme, for creating tables
+	if(typeof(comms[c].db_scheme) !== 'undefined'){
+		if(typeof(comms[c].db_scheme) === 'string'){
+			db_schemes.push(comms[c].db_scheme)
+		}else{
+			for(let x in comms[c].db_scheme){
+				db_schemes.push(comms[c].db_scheme[x])
+			}
+		}
+	}
+
+	// Database initialization, for inserting initial data after table creation
+	if(typeof(comms[c].db_init) !== 'undefined'){
+		if(typeof(comms[c].db_init) === 'string'){
+			db_inits.push(comms[c].db_init)
+		}else{
+			for(let x in comms[c].db_init){
+				db_inits.push(comms[c].db_init[x])
+			}
+		}
+	}
 }
+
+exports.db_inits = db_inits;
+exports.db_schemes = db_schemes;
 
 logger.log('info',`Loaded ${commcount} commands.`);
 

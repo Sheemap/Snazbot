@@ -10,6 +10,11 @@ exports.description = 'Claim yourself as chungus';
 
 exports.usage = `Use "${app.prefix}chungus" to claim your chungus points.\n\nUse "${app.prefix}chungus top" to check leaderboard.\n\nUse "${app.prefix}chungus cd <user>" to check someones current cooldown. If you dont specify a person, it defaults to you.\n\nIf you're the chungus, use "${app.prefix}chungus color <#hex code>" to change your color, and "${app.prefix}chungus name <name>" to change your role title (Must include the word chungus).`;
 
+exports.db_scheme = `chungus (disNAM TEXT, disID TEXT, lastclaim TEXT, points NUMERIC, lastchungus TEXT)`
+
+var seconds = new Date() / 1000;
+exports.db_init = `INSERT INTO chungus VALUES ("chungus","000","${seconds}","0","0")`
+
 // const app.chungusrole = app.chungusrole;
 // const app.chunguschan.split(',') = app.chunguschan.split(',');
 // var app.chunguscd = app.chunguscd; //43200seconds is 12hours

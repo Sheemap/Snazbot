@@ -13,6 +13,8 @@ exports.usage = `Use "${app.prefix}meme" to fetch a meme. \n\nYou can roll multi
 
 exports.reactions = `%F0%9F%91%8D,%F0%9F%91%8E`;
 
+exports.db_scheme = `memes (disNAM TEXT, disID NUMERIC, timestamp NUMERIC, url TEXT, votes NUMERIC, hash TEXT)`
+
 //%F0%9F%91%8D = thumbsup
 
 //%F0%9F%91%8E = thumbsdown
