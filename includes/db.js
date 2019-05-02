@@ -8,8 +8,6 @@ const db_schemes = comm.db_schemes;
 const db_inits = comm.db_inits;
 var db;
 
-console.log(db_schemes)
-
 exports.createNew = function(name,callback){
     name += '.db'
 
