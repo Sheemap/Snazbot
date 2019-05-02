@@ -62,34 +62,141 @@ exports.init = function(name,callback){
     callback();
 }
 
-exports.run = function(query,callback){
-    db.run(query,callback2)
-    function callback2(err,row){
-        if(err){
-            logger.log('error',err);
-        }
-        if(typeof callback != 'undefined'){
-            callback(err,row)
+
+function rebuildTable (error_message,query,values,callback){
+    let table_name = error_message.message.split(': ')[2]
+    logger.log('warn',`Table "${table_name}" does not exist. Attempting to create and try again...`)
+    
+
+    let init_command = [];
+    for(let x in db_schemes){
+        if(db_schemes[x].replace(/\s+/g, '').startsWith(table_name+'(')){
+            db.run(`CREATE TABLE ${db_schemes[x]}`,function(err,row){
+
+                if(err){
+                    logger.log('error',`Something went wrong with executing "CREATE TABLE ${db_schemes[x]}"`)
+                }else{
+                    logger.log('info','Created, running original command again')
+
+                    if(typeof(values) !== 'undefined'){
+                        db.run(query,values,function (err,row){
+                            if(err){
+                                logger.log('error',err);
+                                if(typeof callback != 'undefined'){
+                                    callback(err,row)
+                                }
+                            }else{
+                                logger.log('info','Success!')
+                                if(typeof callback != 'undefined'){
+                                    callback(err,row)
+                                }
+                            }
+                        })
+                    }else{
+                        db.run(query,function (err,row){
+                            if(err){
+                                logger.log('error',err);
+                                if(typeof callback != 'undefined'){
+                                    callback(err,row)
+                                }
+                            }else{
+                                logger.log('info','Success!')
+                                if(typeof callback != 'undefined'){
+                                    callback(err,row)
+                                }
+                            }
+                        })
+                    }
+                }
+
+            })
+            
+
         }
     }
+}
+
+
+exports.run = function(query,callback){
+    db.run(query,function(err,row){
+        var rebuilding = false
+        if(err){
+            if(err.message.startsWith('SQLITE_ERROR: no such table:')){
+                rebuilding = true;
+                let values;
+                rebuildTable(err,query,values,callback)
+
+            }else{
+                logger.log('error',err);
+            }
+            
+            
+        }
+        if(!rebuilding & typeof callback != 'undefined'){
+            callback(err,row)
+        }
+    })
 }
 
 exports.runSecure = function(query,values,callback){
     db.run(query,values,callback2)
     function callback2(err,row){
+        var rebuilding = false
         if(err){
-            logger.log('error',err);
+            if(err.message.startsWith('SQLITE_ERROR: no such table:')){
+                rebuilding = true;
+                rebuildTable(err,query,values,callback)
+
+            }else{
+                logger.log('error',err);
+            }
+            
+            
         }
-        if(typeof callback != 'undefined'){
+        if(!rebuilding & typeof callback != 'undefined'){
             callback(err,row)
         }
     }
 }
 
 exports.get = function(query,callback){
-    db.get(query,callback)
+    db.get(query,function(err,row){
+        var rebuilding = false
+        if(err){
+            if(err.message.startsWith('SQLITE_ERROR: no such table:')){
+                rebuilding = true;
+                let values;
+                rebuildTable(err,query,values,callback)
+
+            }else{
+                logger.log('error',err);
+            }
+            
+            
+        }
+        if(!rebuilding & typeof callback != 'undefined'){
+            callback(err,row)
+        }
+    })
 }
 
 exports.all = function(query,callback){
-    db.all(query,callback)
+    db.all(query,function(err,row){
+        var rebuilding = false
+        if(err){
+            if(err.message.startsWith('SQLITE_ERROR: no such table:')){
+                rebuilding = true;
+                let values;
+                rebuildTable(err,query,values,callback)
+
+            }else{
+                logger.log('error',err);
+            }
+            
+            
+        }
+        if(!rebuilding & typeof callback != 'undefined'){
+            callback(err,row)
+        }
+    })
 }
