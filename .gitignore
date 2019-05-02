@@ -67,3 +67,5 @@ config/
 
 # data dir
 data/
+
+*.db
