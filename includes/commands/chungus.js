@@ -153,7 +153,9 @@ function top(msg,args){
 
 			user_display_name = rows[i].disNAM;
 			common.findUser(rows[i].disID,function(user){
-				user_display_name = user.displayName.replace(" [Wanking]","");
+				if(user != ''){
+					user_display_name = user.displayName.replace(" [Wanking]","");
+				}
 			})
 			content += `${i+1}. ${user_display_name}: **${rows[i].points}**\n`;
 		}
