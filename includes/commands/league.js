@@ -9,7 +9,7 @@ const logger = require('../logger.js');
 const db = require('../db.js');
 
 const APIKEY = app.config.league.key;
-const leaguejs = new LeagueJS(APIKEY, {useV4: 'true'});
+
 
 exports.description = 'League of Legends winners of the week';
 
@@ -17,7 +17,18 @@ exports.usage = `Use "${app.prefix}league register <summoner name>" to add yours
 
 exports.db_scheme = [`league (disNAM TEXT, disID TEXT, timestamp NUMERIC, summoner TEXT, data TEXT)`,`league_matches (gameID TEXT, timestamp NUMERIC, season NUMERIC, data TEXT)`]
 
+var enabled = true
+if(APIKEY == ""){
+	logger.log('error','No league API key set. The league module will be disabled.')
+	enabled = false
+}else{
+	const leaguejs = new LeagueJS(APIKEY, {useV4: 'true'});
+}
+
 exports.main = function(msg,args){
+
+	if(!enabled)
+		return
 
 	switch(args[0].toLowerCase()){
 		case 'register':
