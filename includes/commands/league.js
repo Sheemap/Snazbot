@@ -9,7 +9,7 @@ const logger = require('../logger.js');
 const db = require('../db.js');
 
 const APIKEY = app.config.league.key;
-
+var leaguejs;
 
 exports.description = 'League of Legends winners of the week';
 
@@ -22,7 +22,7 @@ if(APIKEY == ""){
 	logger.log('error','No league API key set. The league module will be disabled.')
 	enabled = false
 }else{
-	const leaguejs = new LeagueJS(APIKEY, {useV4: 'true'});
+	leaguejs = new LeagueJS(APIKEY, {useV4: 'true'});
 }
 
 exports.main = function(msg,args){
