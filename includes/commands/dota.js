@@ -67,7 +67,7 @@ function register(msg,args){
 			}
 
 			let data = JSON.parse(r)
-			if(data["tracked_until"] == null || data["error"] == "Internal Server Error"){
+			if(data["profile"] == undefined || data["error"] == "Internal Server Error"){
 				common.sendMsg(msg,'Im having trouble loading your data. Please go to <https://steamid.xyz> and provide your "Steam32 ID"')
 				return
 			}
