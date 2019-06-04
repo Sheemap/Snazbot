@@ -85,6 +85,7 @@ function register(msg,args){
 					4: args[1],
 					5: '{}'
 				},function(err,rows){
+					msg.member.addRole(app.config.dota.role)
 					common.sendMsg(msg,'You are now registered!')
 				})
 			})
