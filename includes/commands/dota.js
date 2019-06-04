@@ -27,8 +27,8 @@ exports.main = function(msg,args){
 			break;
 
 		default:
-			// tmp()
-			common.sendMsg(msg,`\`\`\`${exports.usage}\`\`\``)
+			tmp(msg)
+			// common.sendMsg(msg,`\`\`\`${exports.usage}\`\`\``)
 			break;
 
 	}
@@ -165,6 +165,7 @@ class openDota {
 
 
 		function execute(self,url){
+			console.log(`Making call: `+self.base_url+url)
 			request(self.base_url+url,function(error, r, body){
 
 				self.setRateLimit(r.headers)
@@ -183,25 +184,123 @@ class openDota {
 }
 
 // var weekly = schedule.scheduleJob('0 18 * * 1', function(fireDate){
-function tmp(){
+function tmp(msg){
+	var testEmbed = {
+  "color": 16766720,
+  "author": {
+    "name": "Midas (GPM)",
+    "icon_url": "https://yt3.ggpht.com/a/AGF-l79pzJmc_wgB0_tDO0_M1EsGb0g9D5ru1zwEJA=s900-mo-c-c0xffffffff-rj-k-no"
+  },
+  "fields": [
+    {
+      "name": "Smelted by **<User>**",
+      "value": "**<User>** had an amazing **<gpm>** over **<match_count>** with a top score of **<max_gpm>**! ***WOW***"
+    }
+  ]
+};
+	var testEmbed2 = {
+  "color": 16098851,
+  "author": {
+    "name": "Big Brain (XPM)",
+    "icon_url": "https://liquipedia.net/commons/images/thumb/9/95/Tome_of_knowledge_hi_res.png/100px-Tome_of_knowledge_hi_res.png"
+  },
+  "fields": [
+    {
+      "name": "Thought by **<User>**",
+      "value": "**<User>** had an incredible **<xpm>** over **<match_count>** with a top score of **<max_xpm>**! ***NEAT***"
+    }
+  ]
+};
+
+	common.sendMsg(msg,"**This weeks winners are in!**",false,false,function(msg){
+		common.sendMsg(msg,{embed: testEmbed})
+		common.sendMsg(msg,{embed: testEmbed2})
+	})
+	
+	return
 	let start_time = (new Date()).getTime();
-	let data = 0
+	let results = {}
 	logger.log('info','Starting weekly dota job at ' + new Date());
 
 	db.all('SELECT * FROM dota',function(err,rows){
+		console.log(rows)
 
 		function parseUser(i,rows){
-			if(i-1 < rows.length){
-				api.call(`players/${rows[i]}/matches?date=7`,function(body,error){
+			if(i < rows.length){
+				let user = rows[i].disID
+				api.call(`players/${rows[i].steamID}/matches?date=7`,function(body,error){
 
-					//
+					let data = JSON.parse(body);
+					results[user] = {
+						'gold':[],
+						'xp':[],
+						'damage':[],
+						'cs':[],
+						'kills':[],
+						'deaths':[],
+						'assists':[],
+						'structure_damage':[],
+						'healing':[],
+						'obs_wards':[],
+						'sent_wards':[]
 
-					parseUser(i+1,rows)
-					data += 1
+					}
+					function parseMatch(w,data){
+						if(w < data.length){
+
+							api.call(`matches/${data[w]['match_id']}`,function(body,error){
+
+								let match_data = JSON.parse(body)
+								let slot = data[w]['player_slot']
+								let player;
+
+								for(let x in match_data['players']){
+									if(slot == match_data['players'][x]['player_slot']){
+										player = match_data['players'][x]
+										console.log('yeet')
+									}
+								}
+								let obs_placed,sen_placed
+								if(player['obs_placed']  == null){
+									obs_placed = 0
+								}else{
+									obs_placed = player['obs_placed']
+								}
+								if(player['sen_placed'] == null){
+									sen_placed = 0
+								}else{
+									sen_placed = player['sen_placed']
+								}
+
+								results[user]['gold'].push(player['gold_per_min'])
+								results[user]['xp'].push(player['xp_per_min'])
+								results[user]['damage'].push(player['hero_damage'])
+								results[user]['cs'].push(player['last_hits'])
+								results[user]['kills'].push(player['kills'])
+								results[user]['deaths'].push(player['deaths'])
+								results[user]['assists'].push(player['assists'])
+								results[user]['structure_damage'].push(player['tower_damage'])
+								results[user]['healing'].push(player['hero_healing'])
+								results[user]['obs_wards'].push(obs_placed)
+								results[user]['sent_wards'].push(sen_placed)
+
+								parseMatch(w+1,data)
+							})
+							
+							
+							
+							
+						}else{
+							parseUser(i+1,rows)
+						}
+					}
+
+					parseMatch(0,data)
 
 				})
 			}else{
-				console.log('Parsed all users, heres results and shit',data)
+				console.log(results)
+				console.log('Parsed all users, heres results and shit')
 			}
 			
 		}
