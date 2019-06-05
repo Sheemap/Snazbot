@@ -14,6 +14,13 @@ exports.usage = `Use "${app.prefix}dota register <Steam 32 ID>" to add yourself 
 
 exports.db_scheme = `dota (disNAM TEXT, disID TEXT, timestamp NUMERIC, steamID TEXT, data TEXT)`
 
+const base_adjectives = ['an awesome','a fantastic','a delicious','a delightful','a scrumptious','a boolin','a sick','a rad','a tubular','a cool','a nice','a super','a neato','an okayish','an alright','a fine','a decent','a mediocre','a chill','an amazing']
+const base_exclamations = ['Wow!','***WOW!***','Waow.','Nice.','Neat.','Neato.','Cool.','Cool!','***RAD!***','Dope.','Dope!','Slick.','Chill.','Not bad.','Eh.','Super.']
+
+var adjectives;
+var exclamations;
+
+
 exports.main = function(msg,args){
 
 	switch(args[0].toLowerCase()){
@@ -183,41 +190,56 @@ class openDota {
 
 }
 
+class award {
+
+	constructor(name,color,icon_url,user,flavor_claim,avg,max,count){
+		this.name = name;
+		this.color = color;
+		this.icon_url = icon_url;
+		this.user_id = user.id;
+		this.user_name = user.displayName;
+		this.flavor_claim = flavor_claim;
+		this.avg = avg;
+		this.max = max;
+		this.count = count;
+	}
+
+	adjective(){
+		let random_index = Math.floor(Math.random() * Math.floor(adjectives.length))
+		let item = adjectives[random_index];
+		adjectives.splice(random_index);
+		return item
+	}
+
+	exclamation(){
+		let random_index = Math.floor(Math.random() * Math.floor(exclamations.length))
+		let item = exclamations[random_index];
+		exclamations.splice(random_index);
+		return item
+	}
+
+	embed(){
+		return {
+				"color": this.color,
+				"author": {
+					"name": this.name,
+					"icon_url": this.icon_url
+				},
+				"fields": [
+				    {
+				    	"name": `${this.flavor_claim} **${this.user_name}**`,
+				    	"value": `<@${this.user_id}> had ${this.adjective()} **${this.avg}** average with a max of **${this.max}** over **${this.count}** games! ${this.exclamation()}`
+				    }
+				]
+			};
+	}
+}
+
 // var weekly = schedule.scheduleJob('0 18 * * 1', function(fireDate){
 function tmp(msg){
-	var testEmbed = {
-  "color": 16766720,
-  "author": {
-    "name": "Midas (GPM)",
-    "icon_url": "https://yt3.ggpht.com/a/AGF-l79pzJmc_wgB0_tDO0_M1EsGb0g9D5ru1zwEJA=s900-mo-c-c0xffffffff-rj-k-no"
-  },
-  "fields": [
-    {
-      "name": "Smelted by **<User>**",
-      "value": "**<User>** had an amazing **<gpm>** over **<match_count>** with a top score of **<max_gpm>**! ***WOW***"
-    }
-  ]
-};
-	var testEmbed2 = {
-  "color": 16098851,
-  "author": {
-    "name": "Big Brain (XPM)",
-    "icon_url": "https://liquipedia.net/commons/images/thumb/9/95/Tome_of_knowledge_hi_res.png/100px-Tome_of_knowledge_hi_res.png"
-  },
-  "fields": [
-    {
-      "name": "Thought by **<User>**",
-      "value": "**<User>** had an incredible **<xpm>** over **<match_count>** with a top score of **<max_xpm>**! ***NEAT***"
-    }
-  ]
-};
-
-	common.sendMsg(msg,"**This weeks winners are in!**",false,false,function(msg){
-		common.sendMsg(msg,{embed: testEmbed})
-		common.sendMsg(msg,{embed: testEmbed2})
-	})
+	adjectives = base_adjectives;
+	exclamations = base_exclamations;
 	
-	return
 	let start_time = (new Date()).getTime();
 	let results = {}
 	logger.log('info','Starting weekly dota job at ' + new Date());
