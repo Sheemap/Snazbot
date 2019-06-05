@@ -15,9 +15,12 @@ exports.db_scheme = `chungus (disNAM TEXT, disID TEXT, lastclaim TEXT, points NU
 var seconds = new Date() / 1000;
 exports.db_init = `INSERT INTO chungus VALUES ("chungus","000","${seconds}","0","0")`
 
+var max_chungus_cd = app.config.chungus.maxcd;
+var max_cd_factor = app.config.chungus.maxcdfactor;
+
 // const app.chungusrole = app.chungusrole;
 // const app.chunguschan.split(',') = app.chunguschan.split(',');
-// var app.chunguscd = app.chunguscd; //43200seconds is 12hours
+// var max_chungus_cd = max_chungus_cd; //43200seconds is 12hours
 
 if(app.chunguschan.split(',') == ""){
 	logger.log('error','Chungus channel is not configured! Chungus will not work without this setting.');
@@ -26,8 +29,8 @@ if(app.chungusrole == ""){
 	logger.log('error','Chungus role is not configured! Chungus will not work without this setting.');
 }
 
-if(app.chunguscd == ""){
-	app.chunguscd = 0;
+if(max_chungus_cd == ""){
+	max_chungus_cd = 0;
 	logger.log('info','No max chungus cooldown set.');
 }
 
@@ -180,7 +183,16 @@ function claim(msg,args){
 
 	var seconds = new Date() / 1000;
 	db.get("SELECT lastclaim FROM chungus WHERE disNAM='chungus'",function(err,row){
-		var chungustime = Math.round((seconds - row.lastclaim)/60);
+		var chungustime;
+		if(typeof(row) === 'undefined'){
+			logger.log('warn','Chungus was not initialized correctly. Attempting to fix now...')
+			db.run(`INSERT INTO chungus VALUES ("chungus","000","${seconds}","0","0")`)
+			common.sendMsg(msg,'Chungus timer started!')
+			chungustime = 0
+		}else{
+			chungustime = Math.round((seconds - row.lastclaim)/60);
+		}
+		
 		
 
 		// Logarithm
@@ -188,19 +200,12 @@ function claim(msg,args){
 
 		// Power of 2
 		var chunguspoints = Math.round(Math.pow(chungustime,1.85)/70);
-			db.get(`SELECT * FROM chungus WHERE disID="${msg.author.id}"`,function(err,row){
+		db.get(`SELECT * FROM chungus WHERE disID="${msg.author.id}"`,function(err,row){
 
-				var chungussecs = seconds;
-				var cooldown = 0;
-				if(typeof(row) !== 'undefined' && row.points != "0"){
-					chungussecs = seconds-row.lastclaim;
-					cooldown = row.points*15;
-					if(cooldown > app.chunguscd && app.chunguscd !== 0){
-						cooldown = app.chunguscd;
-					}
-				}
+			calculateCD(row, function(current_cd_sec){
+
 				//>
-				if(chungussecs > cooldown){
+				if(current_cd_sec == 0){
 					db.run(`UPDATE chungus SET lastclaim="${seconds}" WHERE disNAM="chungus"`,function(err,not_needed){
 					if(typeof(row) === 'undefined'){
 						db.runSecure(`INSERT INTO chungus VALUES (?,?,?,?,?)`,{
@@ -242,11 +247,13 @@ function claim(msg,args){
 					// common.sendMsg(msg,`Congrats! Its been **${chungustime}** minutes since the last chungus call. You have successfully claimed **${chunguspoints}** chungus, your new total is **${newpoints}** chungus.`,true)
 				});
 				}else{
-					let timeleft = moment.duration((cooldown -  chungussecs),'seconds').humanize()
-					common.sendMsg(msg,`Sorry my dude! You're still on cooldown. You must wait **${timeleft}** to chungus again.`)
+					let min_left = Math.round(current_cd_sec/60);
+					let timeleft = moment.duration((current_cd_sec - (seconds - row.lastclaim)),'seconds').humanize()
+					common.sendMsg(msg,`Sorry my dude! You're still on cooldown. You must wait **${timeleft}** (${min_left} minutes) to chungus again.`)
 				}
-				
 			});
+			
+		});
 	});
 }
 
@@ -294,6 +301,55 @@ function checkLeader(msg){
 	// msg.member.addRole(app.chungusrole)
 }
 
+// Takes database row of user and returns remaining cooldown in seconds
+function calculateCD(row,callback){
+	if(typeof(row) === 'undefined')
+		return 0;
+
+	let points = row.points;
+	let last_claim = row.lastclaim;
+	let now_seconds = new Date() / 1000;
+	let total_cd,
+		elapsed_seconds,
+		current_cd,
+		top_points,
+		max_cd_threshold;
+
+	elapsed_seconds = now_seconds - row.lastclaim;
+
+	if(max_chungus_cd !== 0){
+		db.get("SELECT * FROM chungus ORDER BY points DESC, lastclaim ASC",function(err,row){
+			top_points = row.points;
+			max_cd_threshold = top_points * max_cd_factor;
+
+			// Total cooldown is a factor of how many points you have relative to the top chungus player.
+			total_cd = max_chungus_cd * ( points / max_cd_threshold );
+
+			if(total_cd > max_chungus_cd)
+				total_cd = max_chungus_cd;
+
+			if(total_cd <= elapsed_seconds){
+				current_cd = 0;
+			}else{
+				current_cd = total_cd - elapsed_seconds;
+			}
+
+			callback(current_cd);
+		})
+	}else{
+		total_cd = points*15;
+
+		if(total_cd <= elapsed_seconds){
+			current_cd = 0;
+		}else{
+			current_cd = total_cd - elapsed_seconds;
+		}
+
+		callback(current_cd);
+	}
+	
+}
+
 function checkCD(msg,args){
 	let chungus_user = msg.author;
 	if(typeof(args[1]) !== 'undefined'){
@@ -305,37 +361,28 @@ function checkCD(msg,args){
 	}
 	db.get(`SELECT * FROM chungus WHERE disID = "${chungus_user.id}"`,function(err,row){
 
-		if(typeof(row) == 'undefined'){
-			common.sendMsg(msg,`${chungus_user.displayName} has no cooldown!`)
-			return
-		}
-
-		let seconds = new Date() / 1000;
-		// let total_cooldown = (Math.log(row.points)*0.75)*60*60;
-		let total_cooldown = row.points*15;
-		if(total_cooldown > app.chunguscd && app.chunguscd !== 0){
-			total_cooldown = app.chunguscd;
-		}
-		let time_since = seconds - row.lastclaim;
+		calculateCD(row,function(current_cd_sec){
 		
-		if(total_cooldown > time_since){
-			let cooldown = (total_cooldown - time_since)/60;
-			let niceformat = ((cooldown*60) + seconds)*1000;
+			if(current_cd_sec > 0){
+				let current_cd_min = current_cd_sec/60;
+				let niceformat = (current_cd_sec*1000) + new Date()*1;
 
-			if(chungus_user.id == msg.author.id){
-				common.sendMsg(msg,`You will be able to chungus again **${moment(niceformat).fromNow()}** (${Math.round(cooldown)} minutes).`)
+				if(chungus_user.id == msg.author.id){
+					common.sendMsg(msg,`You will be able to chungus again **${moment(niceformat).fromNow()}** (${Math.round(current_cd_min)} minutes).`)
+				}else{
+					common.sendMsg(msg,`${chungus_user.displayName} will be able to chungus again **${moment(niceformat).fromNow()}** (${Math.round(current_cd_min)} minutes).`)
+				}
+				// common.sendMsg(msg,`You have **${cooldown.toFixed(2)}** minutes left on your cooldown.`);
 			}else{
-				common.sendMsg(msg,`${chungus_user.displayName} will be able to chungus again **${moment(niceformat).fromNow()}** (${Math.round(cooldown)} minutes).`)
+				if(chungus_user.id == msg.author.id){
+					common.sendMsg(msg,`You have no cooldown! Happy chungusing!`);
+				}else{
+					common.sendMsg(msg,`${chungus_user.displayName} has no cooldown!`);
+				}
+				
 			}
-			// common.sendMsg(msg,`You have **${cooldown.toFixed(2)}** minutes left on your cooldown.`);
-		}else{
-			if(chungus_user.id == msg.author.id){
-				common.sendMsg(msg,`You have no cooldown! Happy chungusing!`);
-			}else{
-				common.sendMsg(msg,`${chungus_user.displayName} has no cooldown!`);
-			}
-			
-		}
+
+		});
 
 	})
 }
