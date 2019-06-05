@@ -180,7 +180,16 @@ function claim(msg,args){
 
 	var seconds = new Date() / 1000;
 	db.get("SELECT lastclaim FROM chungus WHERE disNAM='chungus'",function(err,row){
-		var chungustime = Math.round((seconds - row.lastclaim)/60);
+		var chungustime;
+		if(typeof(row) === 'undefined'){
+			logger.log('warn','Chungus was not initialized correctly. Attempting to fix now...')
+			db.run(`INSERT INTO chungus VALUES ("chungus","000","${seconds}","0","0")`)
+			common.sendMsg(msg,'Chungus timer started!')
+			chungustime = 0
+		}else{
+			chungustime = Math.round((seconds - row.lastclaim)/60);
+		}
+		
 		
 
 		// Logarithm
