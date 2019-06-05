@@ -14,6 +14,8 @@ exports.usage = `Use "${app.prefix}dota register <Steam 32 ID>" to add yourself 
 
 exports.db_scheme = `dota (disNAM TEXT, disID TEXT, timestamp NUMERIC, steamID TEXT, data TEXT)`
 
+var dota_chan = app.config.dota.channel;
+
 const base_adjectives = ['an awesome','a fantastic','a delicious','a delightful','a scrumptious','a boolin','a sick','a rad','a tubular','a cool','a nice','a super','a neato','an okayish','an alright','a fine','a decent','a mediocre','a chill','an amazing']
 const base_exclamations = ['Wow!','***WOW!***','Waow.','Nice.','Neat.','Neato.','Cool.','Cool!','***RAD!***','Dope.','Dope!','Slick.','Chill.','Not bad.','Eh.','Super.']
 
@@ -120,8 +122,6 @@ class openDota {
 				this.enabled = false
 			}
 
-			logger.log('info','Initialized right')
-
 		});
 
 	}
@@ -162,9 +162,7 @@ class openDota {
 			if(within_rate_limit[1] == 'MONTHREACH'){
 				callback(false,'Monthly limit reached')
 			}
-			console.log('within our sleeps',within_rate_limit[1]*1000)
 			sleep(within_rate_limit[1]*1000).then(() => this).then(function(self){
-				console.log('sleeped')
 				execute(self,url)
 			})
 		}else{
@@ -202,22 +200,23 @@ class award {
 		this.user_id = user.id;
 		this.user_name = user.displayName;
 		this.flavor_claim = flavor_claim;
-		this.avg = avg;
+		this.avg = avg.toFixed(2);
 		this.max = max;
 		this.count = count;
 	}
 
 	adjective(){
 		let random_index = Math.floor(Math.random() * Math.floor(adjectives.length))
+		console.log(adjectives.length)
 		let item = adjectives[random_index];
-		adjectives.splice(random_index);
+		adjectives.splice(random_index,random_index);
 		return item
 	}
 
 	exclamation(){
 		let random_index = Math.floor(Math.random() * Math.floor(exclamations.length))
 		let item = exclamations[random_index];
-		exclamations.splice(random_index);
+		exclamations.splice(random_index,random_index);
 		return item
 	}
 
@@ -239,6 +238,7 @@ class award {
 }
 
 // var weekly = schedule.scheduleJob('0 18 * * 1', function(fireDate){
+// var weekly = schedule.scheduleJob('* * * * *', function(fireDate){
 function tmp(msg){
 	adjectives = base_adjectives;
 	exclamations = base_exclamations;
@@ -323,8 +323,6 @@ function tmp(msg){
 
 				})
 			}else{
-				console.log(results)
-				console.log('Parsed all users, heres results and shit')
 
 				let victors = {
 					'gold':[],
@@ -399,14 +397,25 @@ function tmp(msg){
 
 						// [user,avg,max,count];
 
-						console.log(victors)
 						var awards = [];
-						awards.push(new award('Midas (GPM)', 16766720, 'https://yt3.ggpht.com/a/AGF-l79pzJmc_wgB0_tDO0_M1EsGb0g9D5ru1zwEJA=s900-mo-c-c0xffffffff-rj-k-no', victors['gold'][0], 'Smelted by', victors['gold'][1], victors['gold'][2], victors['gold'][3]).embed())
-						awards.push(new award('Big Brain (XPM)', 16766720, 'https://yt3.ggpht.com/a/AGF-l79pzJmc_wgB0_tDO0_M1EsGb0g9D5ru1zwEJA=s900-mo-c-c0xffffffff-rj-k-no', victors['xp'][0], 'Smelted by', victors['xp'][1], victors['xp'][2], victors['xp'][3]).embed())
+						awards.push(new award('Midas (GPM)', 16766720, 'https://i.imgur.com/GMMeySI.png', victors['gold'][0], 'Smelted by', victors['gold'][1], victors['gold'][2], victors['gold'][3]).embed())
+						awards.push(new award('Big Brain (XPM)', 5301186, 'https://i.imgur.com/79NQbnw.png', victors['xp'][0], 'Thought by', victors['xp'][1], victors['xp'][2], victors['xp'][3]).embed())
+						// awards.push(new award('Bruiser (Hero Damage)', 2511229, 'https://i.imgur.com/4fSheAx.png', victors['damage'][0], 'Smacked by', victors['damage'][1], victors['damage'][2], victors['damage'][3]).embed())
+						awards.push(new award('Serial Killer (Kills)', 10629925, 'https://i.imgur.com/6ZH6NxK.png', victors['kills'][0], 'Slaughtered by', victors['kills'][1], victors['kills'][2], victors['kills'][3]).embed())
+						awards.push(new award('Accomplice (Assists)', 16777215, 'https://i.imgur.com/bre8cOp.png', victors['assists'][0], 'Assisted by', victors['assists'][1], victors['assists'][2], victors['assists'][3]).embed())
+						awards.push(new award('Bulldozer (Structure Damage)', 13246225, 'https://i.imgur.com/rGg6IGA.png', victors['cs'][0], 'Destructed by', victors['structure_damage'][1], victors['structure_damage'][2], victors['structure_damage'][3]).embed())
+						awards.push(new award('Humble Farmer (CS)', 16308510, 'https://i.imgur.com/Xb2DnfN.png', victors['cs'][0], 'Reaped by', victors['cs'][1], victors['cs'][2], victors['cs'][3]).embed())
+						awards.push(new award('E-Thot (Hero Healing)', 38696, 'https://i.imgur.com/GMMeySI.png', victors['healing'][0], 'Grown by', victors['healing'][1], victors['healing'][2], victors['healing'][3]).embed())
+						awards.push(new award('Omnipotent (Observers Placed)', 14924590, 'https://i.imgur.com/ufXQ6aH.png', victors['obs_wards'][0], 'Seen by', victors['obs_wards'][1], victors['obs_wards'][2], victors['obs_wards'][3]).embed())
+						awards.push(new award('Feeder of the Week (Deaths)', 13856728, 'https://i.imgur.com/WLS7Av9.png', victors['deaths'][0], 'Achieved by', victors['deaths'][1], victors['deaths'][2], victors['deaths'][3]).embed())
+
+						common.sendChannel(dota_chan,"**Winners of the week are in!**")
 
 						for(let x in awards){
-							common.sendMsg(msg,{embed: awards[x]})
+							common.sendChannel(dota_chan,{embed: awards[x]})
 						}
+
+						logger.log('info','Finished dota job at ' + new Date() + `. Took ${((new Date() - start_time)/1000).toFixed(2)} seconds.`);
 
 					}
 					
