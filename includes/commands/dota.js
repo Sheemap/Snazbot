@@ -157,6 +157,7 @@ class openDota {
 	call(url,callback){
 
 		let within_rate_limit = this.checkRateLimit()
+		console.log(this.minute_rate_limit[0],this.month_rate_limit)
 		if(!within_rate_limit[0]){
 			if(within_rate_limit[1] == 'MONTHREACH'){
 				callback(false,'Monthly limit reached')
@@ -172,10 +173,12 @@ class openDota {
 
 
 		function execute(self,url){
-			console.log(`Making call: `+self.base_url+url)
+			
 			request(self.base_url+url,function(error, r, body){
 
 				self.setRateLimit(r.headers)
+				console.log(`Making call: `+self.base_url+url)
+				
 
 				if(error){
 					logger.log('error',error)
@@ -279,7 +282,6 @@ function tmp(msg){
 								for(let x in match_data['players']){
 									if(slot == match_data['players'][x]['player_slot']){
 										player = match_data['players'][x]
-										console.log('yeet')
 									}
 								}
 								let obs_placed,sen_placed
@@ -323,6 +325,104 @@ function tmp(msg){
 			}else{
 				console.log(results)
 				console.log('Parsed all users, heres results and shit')
+
+				let victors = {
+					'gold':[],
+					'xp':[],
+					'damage':[],
+					'cs':[],
+					'kills':[],
+					'deaths':[],
+					'assists':[],
+					'structure_damage':[],
+					'healing':[],
+					'obs_wards':[],
+					'sent_wards':[]
+				}
+				for(let user in results){
+
+					for(let stat in results[user]){
+						let avg;
+						let sum = 0;
+						let max = 0;
+						let count = 0;
+
+						for(let game in results[user][stat]){
+							sum += results[user][stat][game];
+							count++;
+
+							if(max < results[user][stat][game])
+								max = results[user][stat][game];
+						}
+
+						avg = sum/count;
+
+						if(victors[stat].length == 0 || victors[stat][1] < avg){
+							victors[stat] = [user,avg,max,count];
+						}
+
+					}
+				}
+
+				let unique_victors = [];
+				for(let stat in victors){
+					if(!unique_victors.includes(victors[stat][0])){
+						unique_victors.push(victors[stat][0])
+					}
+				}
+
+
+				function matchUsers(i,unique_users){
+					if(i < unique_users.length){
+						common.findUser(unique_users[i],function(user){
+							for(let stat in victors){
+								if(victors[stat][0] == user.id){
+									victors[stat][0] = user;
+								}
+							}
+
+							matchUsers(i+1,unique_users,victors)
+						})
+					}else{
+
+						// 'gold':[],
+						// 'xp':[],
+						// 'damage':[],
+						// 'cs':[],
+						// 'kills':[],
+						// 'deaths':[],
+						// 'assists':[],
+						// 'structure_damage':[],
+						// 'healing':[],
+						// 'obs_wards':[],
+						// 'sent_wards':[]
+
+						// [user,avg,max,count];
+
+						console.log(victors)
+						var awards = [];
+						awards.push(new award('Midas (GPM)', 16766720, 'https://yt3.ggpht.com/a/AGF-l79pzJmc_wgB0_tDO0_M1EsGb0g9D5ru1zwEJA=s900-mo-c-c0xffffffff-rj-k-no', victors['gold'][0], 'Smelted by', victors['gold'][1], victors['gold'][2], victors['gold'][3]).embed())
+						awards.push(new award('Big Brain (XPM)', 16766720, 'https://yt3.ggpht.com/a/AGF-l79pzJmc_wgB0_tDO0_M1EsGb0g9D5ru1zwEJA=s900-mo-c-c0xffffffff-rj-k-no', victors['xp'][0], 'Smelted by', victors['xp'][1], victors['xp'][2], victors['xp'][3]).embed())
+
+						for(let x in awards){
+							common.sendMsg(msg,{embed: awards[x]})
+						}
+
+					}
+					
+				}
+
+				matchUsers(0,unique_victors,victors)
+
+
+				// common.findUser('104848260954357760',function(user){
+				// 	var testEmbed = new award('Midas (GPM)', 16766720, 'https://yt3.ggpht.com/a/AGF-l79pzJmc_wgB0_tDO0_M1EsGb0g9D5ru1zwEJA=s900-mo-c-c0xffffffff-rj-k-no', user, 'Smelted by', 500, 1000, 13).embed()
+				// 	common.sendMsg(msg,"**This weeks winners are in!**",false,false,function(msg){
+				// 		common.sendMsg(msg,{embed: testEmbed})
+				// 		// common.sendMsg(msg,{embed: testEmbed2})
+				// 	})
+				// })
+
 			}
 			
 		}
