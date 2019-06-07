@@ -44,6 +44,11 @@ var lastcall,
 
 exports.main = function(msg,args){
 
+	if(msg.webhookID == 586396045328777226){
+		webClaim(msg,args[0]);
+		return
+	}
+
 	logger.log('debug',`${args[0].toLowerCase()}`)
 	switch(args[0].toLowerCase()){
 
@@ -168,43 +173,22 @@ function top(msg,args){
 	})
 }
 
-function claim(msg,args){
-
-	if(!app.chunguschan.split(',').includes(msg.channel.id)){
-		common.sendMsg(msg,`You may only chungus in the #botspam channel`);
-		return;
-	}
-
-	// Cant claim chungus twice in a row
-	// if(msg.author.id == lastcall){
-	// 	common.sendMsg(msg,`You cant claim chungus twice in a row!`);
-	// 	return;
-	// }
-
+function claimLogic(msg,chungee_id,callback){
 	var seconds = new Date() / 1000;
 	db.get("SELECT lastclaim FROM chungus WHERE disNAM='chungus'",function(err,row){
 		var chungustime;
 		if(typeof(row) === 'undefined'){
 			logger.log('warn','Chungus was not initialized correctly. Attempting to fix now...')
 			db.run(`INSERT INTO chungus VALUES ("chungus","000","${seconds}","0","0")`)
-			common.sendMsg(msg,'Chungus timer started!')
 			chungustime = 0
 		}else{
 			chungustime = Math.round((seconds - row.lastclaim)/60);
 		}
 		
-		
-
-		// Logarithm
-		// var chunguspoints = Math.round(Math.log(chungustime)*10);
-
-		// Power of 2
 		var chunguspoints = Math.round(Math.pow(chungustime,1.85)/70);
-		db.get(`SELECT * FROM chungus WHERE disID="${msg.author.id}"`,function(err,row){
+		db.get(`SELECT * FROM chungus WHERE disID="${chungee_id}"`,function(err,row){
 
 			calculateCD(row, function(current_cd_sec){
-
-				//>
 				if(current_cd_sec == 0){
 					db.run(`UPDATE chungus SET lastclaim="${seconds}" WHERE disNAM="chungus"`,function(err,not_needed){
 					if(typeof(row) === 'undefined'){
@@ -223,39 +207,86 @@ function claim(msg,args){
 
 						var newpoints = Math.round(row.points + chunguspoints);
 								
-						db.run(`UPDATE chungus SET points="${newpoints}", lastclaim="${seconds}" WHERE disID="${msg.author.id}"`,function(err,row){
+						db.run(`UPDATE chungus SET points="${newpoints}", lastclaim="${seconds}" WHERE disID="${chungee_id}"`,function(err,row){
 							checkLeader(msg);
 						});
 
 					}
 
-					lastcall = msg.author.id;
+					lastcall = chungee_id;
+					callback({"no_cooldown":true,"chungus_mins":chungustime,"gained_points":chunguspoints,"total_points":newpoints})
 
-					chungusmins = chungustime
-					chungustime = moment.duration(chungustime,"minutes").humanize()
-
-					const CALLTEXT = [
-						`Congrats! Its been **${chungustime}** (${chungusmins} minutes) since the last chungus call. You have successfully claimed **${chunguspoints}** chungus, your new total is **${newpoints}** chungus.`,
-						`Woo wee! Its been **${chungustime}** (${chungusmins} minutes) since the last chungus call. You've just adopted **${chunguspoints}** chungus, that makes you the proud owner of **${newpoints}** chungus.`,
-						`Hallelujah! Its been **${chungustime}** (${chungusmins} minutes) since the last chungus call. The lord has blessed you with **${chunguspoints}** additional chungus. Thank thine lord as you now hold **${newpoints}** chungus.`,
-						`Youve been waiting for **${chungustime}** (${chungusmins} minutes). I hope it was worth it, as you just gained **${chunguspoints}** chungus. Thats just the right amount to put you at **${newpoints}** chungus.`,
-						`You my friend, are going to the top! Its been **${chungustime}** (${chungusmins} minutes). You racked up **${chunguspoints}** chungus. This brings you to the perfect chungus count of **${newpoints}**.`
-					]
-
-
-					common.sendMsg(msg,`${CALLTEXT[Math.floor(Math.random()*CALLTEXT.length)]}`)
-					// common.sendMsg(msg,`Congrats! Its been **${chungustime}** minutes since the last chungus call. You have successfully claimed **${chunguspoints}** chungus, your new total is **${newpoints}** chungus.`,true)
 				});
 				}else{
-					let min_left = Math.round(current_cd_sec/60);
-					let timeleft = moment.duration((current_cd_sec - (seconds - row.lastclaim)),'seconds').humanize()
-					common.sendMsg(msg,`Sorry my dude! You're still on cooldown. You must wait **${timeleft}** (${min_left} minutes) to chungus again.`)
+					callback({"no_cooldown":false,"current_cd_sec":current_cd_sec,"seconds_now":seconds,"last_claim":row.lastclaim})
 				}
 			});
 			
 		});
 	});
 }
+
+function claim(msg,args){
+
+	if(!app.chunguschan.split(',').includes(msg.channel.id)){
+		common.sendMsg(msg,`You may only chungus in the #botspam channel`);
+		return;
+	}
+
+	// Cant claim chungus twice in a row
+	// if(msg.author.id == lastcall){
+	// 	common.sendMsg(msg,`You cant claim chungus twice in a row!`);
+	// 	return;
+	// }
+
+	claimLogic(msg,msg.author.id,function(return_data){
+		if(return_data['no_cooldown']){
+			let chungus_mins = return_data['chungus_mins']
+			let gained_points = return_data['gained_points']
+			let total_points = return_data['total_points']
+			let human_chungus_mins = moment.duration(chungus_mins,"minutes").humanize()
+
+			var CALLTEXT = [
+				`Congrats! Its been **${human_chungus_mins}** (${chungus_mins} minutes) since the last chungus call. You have successfully claimed **${gained_points}** chungus, your new total is **${total_points}** chungus.`,
+				`Woo wee! Its been **${human_chungus_mins}** (${chungus_mins} minutes) since the last chungus call. You've just adopted **${gained_points}** chungus, that makes you the proud owner of **${total_points}** chungus.`,
+				`Hallelujah! Its been **${human_chungus_mins}** (${chungus_mins} minutes) since the last chungus call. The lord has blessed you with **${gained_points}** additional chungus. Thank thine lord as you now hold **${total_points}** chungus.`,
+				`Youve been waiting for **${human_chungus_mins}** (${chungus_mins} minutes). I hope it was worth it, as you just gained **${gained_points}** chungus. Thats just the right amount to put you at **${total_points}** chungus.`,
+				`You my friend, are going to the top! Its been **${human_chungus_mins}** (${chungus_mins} minutes). You racked up **${gained_points}** chungus. This brings you to the perfect chungus count of **${total_points}**.`
+			]
+
+
+			common.sendMsg(msg,`${CALLTEXT[Math.floor(Math.random()*CALLTEXT.length)]}`)
+		}else{
+			let min_left = Math.round(return_data['current_cd_sec']/60);
+			let timeleft = moment.duration((return_data['current_cd_sec'] - (return_data['seconds_now'] - return_data['last_claim'])),'seconds').humanize()
+			common.sendMsg(msg,`Sorry my dude! You're still on cooldown. You must wait **${timeleft}** (${min_left} minutes) to chungus again.`)
+		}
+	});
+}
+
+function webClaim(msg,chungee_id){
+	claimLogic(msg,chungee_id,function(return_data){
+		if(return_data['no_cooldown']){
+			let chungus_mins = return_data['chungus_mins']
+			let gained_points = return_data['gained_points']
+			let total_points = return_data['total_points']
+			let human_chungus_mins = moment.duration(chungus_mins,"minutes").humanize()
+
+			var CALLTEXT = [
+				`<@${chungee_id}> has called chungus with their Chungus Button! Congrats! Its been **${human_chungus_mins}** (${chungus_mins} minutes) since the last chungus call. They have successfully claimed **${gained_points}** chungus, their new total is **${total_points}** chungus.`,
+				`<@${chungee_id}> has called chungus with their Chungus Button! Woo wee! Its been **${human_chungus_mins}** (${chungus_mins} minutes) since the last chungus call. They've just adopted **${gained_points}** chungus, that makes them the proud owner of **${total_points}** chungus.`,
+				`<@${chungee_id}> has called chungus with their Chungus Button! Hallelujah! Its been **${human_chungus_mins}** (${chungus_mins} minutes) since the last chungus call. The lord has blessed them with **${gained_points}** additional chungus. Thank thine lord as they now hold **${total_points}** chungus.`,
+				`<@${chungee_id}> has called chungus with their Chungus Button! Youve been waiting for **${human_chungus_mins}** (${chungus_mins} minutes). I hope it was worth it, as they just gained **${gained_points}** chungus. Thats just the right amount to put them at **${total_points}** chungus.`,
+				`<@${chungee_id}> has called chungus with their Chungus Button! You my friend, are going to the top! Its been **${human_chungus_mins}** (${chungus_mins} minutes). They racked up **${gained_points}** chungus. This brings them to the perfect chungus count of **${total_points}**.`
+			]
+
+
+			common.sendChannel(app.chunguschan.split(',')[0],`${CALLTEXT[Math.floor(Math.random()*CALLTEXT.length)]}`)
+			// common.sendMsg(msg,`Congrats! Its been **${chungustime}** minutes since the last chungus call. You have successfully claimed **${chunguspoints}** chungus, your new total is **${newpoints}** chungus.`,true)
+		}
+	});
+}
+
 
 function checkLeader(msg){
 	let seconds = new Date() / 1000;
