@@ -44,6 +44,11 @@ var lastcall,
 
 exports.main = function(msg,args){
 
+	if(msg.webhookID == 586396045328777226){
+		webClaim(msg,args[0]);
+		return
+	}
+
 	logger.log('debug',`${args[0].toLowerCase()}`)
 	switch(args[0].toLowerCase()){
 
@@ -241,7 +246,7 @@ function claim(msg,args){
 			let total_points = return_data['total_points']
 			let human_chungus_mins = moment.duration(chungus_mins,"minutes").humanize()
 
-			const CALLTEXT = [
+			var CALLTEXT = [
 				`Congrats! Its been **${human_chungus_mins}** (${chungus_mins} minutes) since the last chungus call. You have successfully claimed **${gained_points}** chungus, your new total is **${total_points}** chungus.`,
 				`Woo wee! Its been **${human_chungus_mins}** (${chungus_mins} minutes) since the last chungus call. You've just adopted **${gained_points}** chungus, that makes you the proud owner of **${total_points}** chungus.`,
 				`Hallelujah! Its been **${human_chungus_mins}** (${chungus_mins} minutes) since the last chungus call. The lord has blessed you with **${gained_points}** additional chungus. Thank thine lord as you now hold **${total_points}** chungus.`,
@@ -255,6 +260,29 @@ function claim(msg,args){
 			let min_left = Math.round(return_data['current_cd_sec']/60);
 			let timeleft = moment.duration((return_data['current_cd_sec'] - (return_data['seconds_now'] - return_data['last_claim'])),'seconds').humanize()
 			common.sendMsg(msg,`Sorry my dude! You're still on cooldown. You must wait **${timeleft}** (${min_left} minutes) to chungus again.`)
+		}
+	});
+}
+
+function webClaim(msg,chungee_id){
+	claimLogic(msg,chungee_id,function(return_data){
+		if(return_data['no_cooldown']){
+			let chungus_mins = return_data['chungus_mins']
+			let gained_points = return_data['gained_points']
+			let total_points = return_data['total_points']
+			let human_chungus_mins = moment.duration(chungus_mins,"minutes").humanize()
+
+			var CALLTEXT = [
+				`<@${chungee_id}> has called chungus with their Chungus Button! Congrats! Its been **${human_chungus_mins}** (${chungus_mins} minutes) since the last chungus call. They have successfully claimed **${gained_points}** chungus, their new total is **${total_points}** chungus.`,
+				`<@${chungee_id}> has called chungus with their Chungus Button! Woo wee! Its been **${human_chungus_mins}** (${chungus_mins} minutes) since the last chungus call. They've just adopted **${gained_points}** chungus, that makes them the proud owner of **${total_points}** chungus.`,
+				`<@${chungee_id}> has called chungus with their Chungus Button! Hallelujah! Its been **${human_chungus_mins}** (${chungus_mins} minutes) since the last chungus call. The lord has blessed them with **${gained_points}** additional chungus. Thank thine lord as they now hold **${total_points}** chungus.`,
+				`<@${chungee_id}> has called chungus with their Chungus Button! Youve been waiting for **${human_chungus_mins}** (${chungus_mins} minutes). I hope it was worth it, as they just gained **${gained_points}** chungus. Thats just the right amount to put them at **${total_points}** chungus.`,
+				`<@${chungee_id}> has called chungus with their Chungus Button! You my friend, are going to the top! Its been **${human_chungus_mins}** (${chungus_mins} minutes). They racked up **${gained_points}** chungus. This brings them to the perfect chungus count of **${total_points}**.`
+			]
+
+
+			common.sendChannel(app.chunguschan.split(',')[0],`${CALLTEXT[Math.floor(Math.random()*CALLTEXT.length)]}`)
+			// common.sendMsg(msg,`Congrats! Its been **${chungustime}** minutes since the last chungus call. You have successfully claimed **${chunguspoints}** chungus, your new total is **${newpoints}** chungus.`,true)
 		}
 	});
 }
