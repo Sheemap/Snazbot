@@ -258,7 +258,7 @@ function claim(msg,args){
 			common.sendMsg(msg,`${CALLTEXT[Math.floor(Math.random()*CALLTEXT.length)]}`)
 		}else{
 			let min_left = Math.round(return_data['current_cd_sec']/60);
-			let timeleft = moment.duration((return_data['current_cd_sec'] - (return_data['seconds_now'] - return_data['last_claim'])),'seconds').humanize()
+			let timeleft = moment.duration((return_data['current_cd_sec']),'seconds').humanize()
 			common.sendMsg(msg,`Sorry my dude! You're still on cooldown. You must wait **${timeleft}** (${min_left} minutes) to chungus again.`)
 		}
 	});
@@ -334,8 +334,10 @@ function checkLeader(msg){
 
 // Takes database row of user and returns remaining cooldown in seconds
 function calculateCD(row,callback){
-	if(typeof(row) === 'undefined')
-		return 0;
+	if(typeof(row) === 'undefined'){
+		callback(0);
+		return;
+	}
 
 	let points = row.points;
 	let last_claim = row.lastclaim;
