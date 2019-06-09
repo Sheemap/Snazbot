@@ -36,8 +36,8 @@ exports.main = function(msg,args){
 			break;
 
 		default:
-			tmp(msg)
-			// common.sendMsg(msg,`\`\`\`${exports.usage}\`\`\``)
+			// tmp(msg)
+			common.sendMsg(msg,`\`\`\`${exports.usage}\`\`\``)
 			break;
 
 	}
@@ -237,9 +237,9 @@ class award {
 	}
 }
 
-// var weekly = schedule.scheduleJob('0 18 * * 1', function(fireDate){
+var weekly = schedule.scheduleJob('0 18 * * 1', function(fireDate){
 // var weekly = schedule.scheduleJob('* * * * *', function(fireDate){
-function tmp(msg){
+// function tmp(msg){
 	adjectives = base_adjectives;
 	exclamations = base_exclamations;
 	
@@ -400,12 +400,12 @@ function tmp(msg){
 						var awards = [];
 						awards.push(new award('Midas (GPM)', 16766720, 'https://i.imgur.com/GMMeySI.png', victors['gold'][0], 'Smelted by', victors['gold'][1], victors['gold'][2], victors['gold'][3]).embed())
 						awards.push(new award('Big Brain (XPM)', 5301186, 'https://i.imgur.com/79NQbnw.png', victors['xp'][0], 'Thought by', victors['xp'][1], victors['xp'][2], victors['xp'][3]).embed())
-						// awards.push(new award('Bruiser (Hero Damage)', 2511229, 'https://i.imgur.com/4fSheAx.png', victors['damage'][0], 'Smacked by', victors['damage'][1], victors['damage'][2], victors['damage'][3]).embed())
+						awards.push(new award('Bruiser (Hero Damage)', 2511229, 'https://i.imgur.com/4fSheAx.png', victors['damage'][0], 'Smacked by', victors['damage'][1], victors['damage'][2], victors['damage'][3]).embed())
 						awards.push(new award('Serial Killer (Kills)', 10629925, 'https://i.imgur.com/6ZH6NxK.png', victors['kills'][0], 'Slaughtered by', victors['kills'][1], victors['kills'][2], victors['kills'][3]).embed())
 						awards.push(new award('Accomplice (Assists)', 16777215, 'https://i.imgur.com/bre8cOp.png', victors['assists'][0], 'Assisted by', victors['assists'][1], victors['assists'][2], victors['assists'][3]).embed())
 						awards.push(new award('Bulldozer (Structure Damage)', 13246225, 'https://i.imgur.com/rGg6IGA.png', victors['cs'][0], 'Destructed by', victors['structure_damage'][1], victors['structure_damage'][2], victors['structure_damage'][3]).embed())
 						awards.push(new award('Humble Farmer (CS)', 16308510, 'https://i.imgur.com/Xb2DnfN.png', victors['cs'][0], 'Reaped by', victors['cs'][1], victors['cs'][2], victors['cs'][3]).embed())
-						awards.push(new award('E-Thot (Hero Healing)', 38696, 'https://i.imgur.com/GMMeySI.png', victors['healing'][0], 'Grown by', victors['healing'][1], victors['healing'][2], victors['healing'][3]).embed())
+						awards.push(new award('E-Thot (Hero Healing)', 38696, 'https://i.imgur.com/YPi6w8w.png', victors['healing'][0], 'Grown by', victors['healing'][1], victors['healing'][2], victors['healing'][3]).embed())
 						awards.push(new award('Omnipotent (Observers Placed)', 14924590, 'https://i.imgur.com/ufXQ6aH.png', victors['obs_wards'][0], 'Seen by', victors['obs_wards'][1], victors['obs_wards'][2], victors['obs_wards'][3]).embed())
 						awards.push(new award('Feeder of the Week (Deaths)', 13856728, 'https://i.imgur.com/WLS7Av9.png', victors['deaths'][0], 'Achieved by', victors['deaths'][1], victors['deaths'][2], victors['deaths'][3]).embed())
 
@@ -440,7 +440,7 @@ function tmp(msg){
 
 
 
-}
-// });
+// }
+});
 
 const api = new openDota();
