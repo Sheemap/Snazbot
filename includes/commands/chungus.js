@@ -258,7 +258,7 @@ function claim(msg,args){
 			common.sendMsg(msg,`${CALLTEXT[Math.floor(Math.random()*CALLTEXT.length)]}`)
 		}else{
 			let min_left = Math.round(return_data['current_cd_sec']/60);
-			let timeleft = moment.duration((return_data['current_cd_sec'] - (return_data['seconds_now'] - return_data['last_claim'])),'seconds').humanize()
+			let timeleft = moment.duration((return_data['current_cd_sec']),'seconds').humanize()
 			common.sendMsg(msg,`Sorry my dude! You're still on cooldown. You must wait **${timeleft}** (${min_left} minutes) to chungus again.`)
 		}
 	});
@@ -276,8 +276,8 @@ function webClaim(msg,chungee_id){
 				`<@${chungee_id}> has called chungus with their Chungus Button! Congrats! Its been **${human_chungus_mins}** (${chungus_mins} minutes) since the last chungus call. They have successfully claimed **${gained_points}** chungus, their new total is **${total_points}** chungus.`,
 				`<@${chungee_id}> has called chungus with their Chungus Button! Woo wee! Its been **${human_chungus_mins}** (${chungus_mins} minutes) since the last chungus call. They've just adopted **${gained_points}** chungus, that makes them the proud owner of **${total_points}** chungus.`,
 				`<@${chungee_id}> has called chungus with their Chungus Button! Hallelujah! Its been **${human_chungus_mins}** (${chungus_mins} minutes) since the last chungus call. The lord has blessed them with **${gained_points}** additional chungus. Thank thine lord as they now hold **${total_points}** chungus.`,
-				`<@${chungee_id}> has called chungus with their Chungus Button! Youve been waiting for **${human_chungus_mins}** (${chungus_mins} minutes). I hope it was worth it, as they just gained **${gained_points}** chungus. Thats just the right amount to put them at **${total_points}** chungus.`,
-				`<@${chungee_id}> has called chungus with their Chungus Button! You my friend, are going to the top! Its been **${human_chungus_mins}** (${chungus_mins} minutes). They racked up **${gained_points}** chungus. This brings them to the perfect chungus count of **${total_points}**.`
+				`<@${chungee_id}> has called chungus with their Chungus Button! They've been waiting for **${human_chungus_mins}** (${chungus_mins} minutes). I hope it was worth it, as they just gained **${gained_points}** chungus. Thats just the right amount to put them at **${total_points}** chungus.`,
+				`<@${chungee_id}> has called chungus with their Chungus Button! Looks like they are going to the top! Its been **${human_chungus_mins}** (${chungus_mins} minutes). They racked up **${gained_points}** chungus. This brings them to the perfect chungus count of **${total_points}**.`
 			]
 
 
@@ -334,8 +334,10 @@ function checkLeader(msg){
 
 // Takes database row of user and returns remaining cooldown in seconds
 function calculateCD(row,callback){
-	if(typeof(row) === 'undefined')
-		return 0;
+	if(typeof(row) === 'undefined'){
+		callback(0);
+		return;
+	}
 
 	let points = row.points;
 	let last_claim = row.lastclaim;
