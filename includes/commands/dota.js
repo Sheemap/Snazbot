@@ -193,13 +193,13 @@ class openDota {
 
 class award {
 
-	constructor(name,color,icon_url,user,flavor_claim,avg,max,count){
+	constructor(name,color,icon_url,user,description,avg,max,count){
 		this.name = name;
 		this.color = color;
 		this.icon_url = icon_url;
 		this.user_id = user.id;
 		this.user_name = user.displayName;
-		this.flavor_claim = flavor_claim;
+		this.description = description;
 		this.avg = avg.toFixed(2);
 		this.max = max;
 		this.count = count;
@@ -229,7 +229,7 @@ class award {
 				},
 				"fields": [
 				    {
-				    	"name": `${this.flavor_claim} **${this.user_name}**`,
+				    	"name": `${this.description}`,
 				    	"value": `<@${this.user_id}> had ${this.adjective()} **${this.avg}** average with a max of **${this.max}** over **${this.count}** games! ${this.exclamation()}`
 				    }
 				]
@@ -398,16 +398,16 @@ var weekly = schedule.scheduleJob('0 18 * * 1', function(fireDate){
 						// [user,avg,max,count];
 
 						var awards = [];
-						awards.push(new award('Midas (GPM)', 16766720, 'https://i.imgur.com/GMMeySI.png', victors['gold'][0], 'Smelted by', victors['gold'][1], victors['gold'][2], victors['gold'][3]).embed())
-						awards.push(new award('Big Brain (XPM)', 5301186, 'https://i.imgur.com/79NQbnw.png', victors['xp'][0], 'Thought by', victors['xp'][1], victors['xp'][2], victors['xp'][3]).embed())
-						awards.push(new award('Bruiser (Hero Damage)', 2511229, 'https://i.imgur.com/4fSheAx.png', victors['damage'][0], 'Smacked by', victors['damage'][1], victors['damage'][2], victors['damage'][3]).embed())
-						awards.push(new award('Serial Killer (Kills)', 10629925, 'https://i.imgur.com/6ZH6NxK.png', victors['kills'][0], 'Slaughtered by', victors['kills'][1], victors['kills'][2], victors['kills'][3]).embed())
-						awards.push(new award('Accomplice (Assists)', 16777215, 'https://i.imgur.com/bre8cOp.png', victors['assists'][0], 'Assisted by', victors['assists'][1], victors['assists'][2], victors['assists'][3]).embed())
-						awards.push(new award('Bulldozer (Structure Damage)', 13246225, 'https://i.imgur.com/rGg6IGA.png', victors['cs'][0], 'Destructed by', victors['structure_damage'][1], victors['structure_damage'][2], victors['structure_damage'][3]).embed())
-						awards.push(new award('Humble Farmer (CS)', 16308510, 'https://i.imgur.com/Xb2DnfN.png', victors['cs'][0], 'Reaped by', victors['cs'][1], victors['cs'][2], victors['cs'][3]).embed())
-						awards.push(new award('E-Thot (Hero Healing)', 38696, 'https://i.imgur.com/YPi6w8w.png', victors['healing'][0], 'Grown by', victors['healing'][1], victors['healing'][2], victors['healing'][3]).embed())
-						awards.push(new award('Omnipotent (Observers Placed)', 14924590, 'https://i.imgur.com/ufXQ6aH.png', victors['obs_wards'][0], 'Seen by', victors['obs_wards'][1], victors['obs_wards'][2], victors['obs_wards'][3]).embed())
-						awards.push(new award('Feeder of the Week (Deaths)', 13856728, 'https://i.imgur.com/WLS7Av9.png', victors['deaths'][0], 'Achieved by', victors['deaths'][1], victors['deaths'][2], victors['deaths'][3]).embed())
+						awards.push(new award('Midas', 16766720, 'https://i.imgur.com/GMMeySI.png', victors['gold'][0], '(GPM)', victors['gold'][1], victors['gold'][2], victors['gold'][3]).embed())
+						awards.push(new award('Big Brain', 5301186, 'https://i.imgur.com/79NQbnw.png', victors['xp'][0], '(XPM)', victors['xp'][1], victors['xp'][2], victors['xp'][3]).embed())
+						awards.push(new award('Bruiser', 2511229, 'https://i.imgur.com/4fSheAx.png', victors['damage'][0], '(Hero Damage)', victors['damage'][1], victors['damage'][2], victors['damage'][3]).embed())
+						awards.push(new award('Serial Killer', 10629925, 'https://i.imgur.com/6ZH6NxK.png', victors['kills'][0], '(Kills)', victors['kills'][1], victors['kills'][2], victors['kills'][3]).embed())
+						awards.push(new award('Accomplice', 16777215, 'https://i.imgur.com/bre8cOp.png', victors['assists'][0], '(Assists)', victors['assists'][1], victors['assists'][2], victors['assists'][3]).embed())
+						awards.push(new award('Bulldozer', 13246225, 'https://i.imgur.com/rGg6IGA.png', victors['cs'][0], '(Structure Damage)', victors['structure_damage'][1], victors['structure_damage'][2], victors['structure_damage'][3]).embed())
+						awards.push(new award('Humble Farmer', 16308510, 'https://i.imgur.com/Xb2DnfN.png', victors['cs'][0], '(CS)', victors['cs'][1], victors['cs'][2], victors['cs'][3]).embed())
+						awards.push(new award('E-Thot', 38696, 'https://i.imgur.com/YPi6w8w.png', victors['healing'][0], '(Hero Healing)', victors['healing'][1], victors['healing'][2], victors['healing'][3]).embed())
+						awards.push(new award('Omnipotent', 14924590, 'https://i.imgur.com/ufXQ6aH.png', victors['obs_wards'][0], '(Observers Placed)', victors['obs_wards'][1], victors['obs_wards'][2], victors['obs_wards'][3]).embed())
+						awards.push(new award('Feeder of the Week', 13856728, 'https://i.imgur.com/WLS7Av9.png', victors['deaths'][0], '(Deaths)', victors['deaths'][1], victors['deaths'][2], victors['deaths'][3]).embed())
 
 						common.sendChannel(dota_chan,"**Winners of the week are in!**")
 
