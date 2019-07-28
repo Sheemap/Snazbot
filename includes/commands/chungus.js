@@ -75,6 +75,10 @@ exports.main = function(msg,args){
 			checkCD(msg,args);
 			break;
 
+		case 'value':
+			checkValue(msg,args);
+			break;
+
 		case '!chungus':
 			claim(msg,args);
 			break;
@@ -156,7 +160,7 @@ function top(msg,args){
 
 		for(let i=0;i<rows.length;i++){
 
-			if(i>=10)
+			if(i>=5)
 				break;
 
 			user_display_name = rows[i].disNAM;
@@ -173,19 +177,30 @@ function top(msg,args){
 	})
 }
 
+function getRewardAmount(row){
+	if(typeof(row) === 'undefined'){
+		return 0
+	}
+	let seconds = (new Date() / 1000) - row.lastclaim;
+	let minutes = Math.round(seconds/60);
+	return (Math.round(Math.pow(minutes,1.85)/70));
+}
+
 function claimLogic(msg,chungee_id,callback){
 	var seconds = new Date() / 1000;
 	db.get("SELECT lastclaim FROM chungus WHERE disNAM='chungus'",function(err,row){
-		var chungustime;
+		var minutes;
 		if(typeof(row) === 'undefined'){
 			logger.log('warn','Chungus was not initialized correctly. Attempting to fix now...')
 			db.run(`INSERT INTO chungus VALUES ("chungus","000","${seconds}","0","0")`)
-			chungustime = 0
+			minutes = 0;
 		}else{
-			chungustime = Math.round((seconds - row.lastclaim)/60);
+			minutes = (seconds - row.lastclaim)/60;
 		}
 		
-		var chunguspoints = Math.round(Math.pow(chungustime,1.85)/70);
+		var chunguspoints = getRewardAmount(row)
+
+		// Math.round(Math.pow(chungustime,1.85)/70);
 		db.get(`SELECT * FROM chungus WHERE disID="${chungee_id}"`,function(err,row){
 
 			calculateCD(row, function(current_cd_sec){
@@ -214,7 +229,7 @@ function claimLogic(msg,chungee_id,callback){
 					}
 
 					lastcall = chungee_id;
-					callback({"no_cooldown":true,"chungus_mins":chungustime,"gained_points":chunguspoints,"total_points":newpoints})
+					callback({"no_cooldown":true,"chungus_mins":minutes,"gained_points":chunguspoints,"total_points":newpoints})
 
 				});
 				}else{
@@ -224,6 +239,15 @@ function claimLogic(msg,chungee_id,callback){
 			
 		});
 	});
+}
+
+function checkValue(msg,args){
+	db.get(`SELECT * FROM chungus WHERE disID="${msg.author.id}"`,function(err,row){
+		let seconds = (new Date() / 1000) - row.lastclaim;
+		let minutes = Math.round(seconds/60);
+		let points = getRewardAmount(row);
+		common.sendMsg(msg,`Chungus has been brewing for **${minutes} minutes**, and is currently worth **${points} points**.`);
+	})
 }
 
 function claim(msg,args){
@@ -241,7 +265,7 @@ function claim(msg,args){
 
 	claimLogic(msg,msg.author.id,function(return_data){
 		if(return_data['no_cooldown']){
-			let chungus_mins = return_data['chungus_mins']
+			let chungus_mins = Math.round(return_data['chungus_mins'])
 			let gained_points = return_data['gained_points']
 			let total_points = return_data['total_points']
 			let human_chungus_mins = moment.duration(chungus_mins,"minutes").humanize()
@@ -334,7 +358,7 @@ function checkLeader(msg){
 
 // Takes database row of user and returns remaining cooldown in seconds
 function calculateCD(row,callback){
-	if(typeof(row) === 'undefined'){
+	if(typeof(row) === 'undefined' || row.points == '0' || isNaN(row.points) || isNaN(row.lastclaim)){
 		callback(0);
 		return;
 	}
