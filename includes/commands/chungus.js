@@ -75,6 +75,10 @@ exports.main = function(msg,args){
 			checkCD(msg,args);
 			break;
 
+		case 'value':
+			checkValue(msg,args);
+			break;
+
 		case '!chungus':
 			claim(msg,args);
 			break;
@@ -235,6 +239,15 @@ function claimLogic(msg,chungee_id,callback){
 			
 		});
 	});
+}
+
+function checkValue(msg,args){
+	db.get(`SELECT * FROM chungus WHERE disID="${msg.author.id}"`,function(err,row){
+		let seconds = (new Date() / 1000) - row.lastclaim;
+		let minutes = Math.round(seconds/60);
+		let points = getRewardAmount(row);
+		common.sendMsg(msg,`Chungus has been brewing for **${minutes} minutes**, and is currently worth **${points} points**.`);
+	})
 }
 
 function claim(msg,args){
