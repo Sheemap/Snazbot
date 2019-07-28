@@ -242,7 +242,7 @@ function claimLogic(msg,chungee_id,callback){
 }
 
 function checkValue(msg,args){
-	db.get(`SELECT * FROM chungus WHERE disID="${msg.author.id}"`,function(err,row){
+	db.get(`SELECT * FROM chungus WHERE disNAM="chungus"`,function(err,row){
 		let seconds = (new Date() / 1000) - row.lastclaim;
 		let minutes = Math.round(seconds/60);
 		let points = getRewardAmount(row);
