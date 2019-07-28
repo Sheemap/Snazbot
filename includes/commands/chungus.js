@@ -345,7 +345,7 @@ function checkLeader(msg){
 
 // Takes database row of user and returns remaining cooldown in seconds
 function calculateCD(row,callback){
-	if(typeof(row) === 'undefined'){
+	if(typeof(row) === 'undefined' || row.points == '0' || isNaN(row.points) || isNaN(row.lastclaim)){
 		callback(0);
 		return;
 	}
