@@ -156,7 +156,7 @@ function top(msg,args){
 
 		for(let i=0;i<rows.length;i++){
 
-			if(i>=10)
+			if(i>=5)
 				break;
 
 			user_display_name = rows[i].disNAM;
