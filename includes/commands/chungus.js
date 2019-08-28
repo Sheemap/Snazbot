@@ -113,12 +113,12 @@ function changeName(msg,args){
 			return;
 		}
 
-		if(typeof(name) !== 'undefined' && name !== '' && name.includes('chungus')){
+		if(typeof(name) !== 'undefined' && name !== ''){
 			role.setName(name)
 				.then(updated => common.sendMsg(msg,`Changed name to ${name}`))
 				// .catch(common.sendMsg(msg,`Failed to change chungus color. Make sure you have a valid color!`))
 		}else{
-			common.sendMsg(msg,`Please enter a valid name. The name must contain "chungus" somewhere in it.`)
+			common.sendMsg(msg,`Please enter a valid name.`)
 		}
 	}else{
 		common.sendMsg(msg,`You arent the chungus! You dont decide the name!`);
