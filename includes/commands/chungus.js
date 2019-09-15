@@ -318,6 +318,7 @@ function checkLeader(msg){
 	var roles;
 	var topmember;
 	var roleset = false;
+	var old_chungus;
 	var members = msg.guild.members.array();
 	db.get("SELECT * FROM chungus ORDER BY points DESC, lastclaim ASC", function(err,row){
 
@@ -334,6 +335,7 @@ function checkLeader(msg){
 					if(members[i].id == row.disID){
 						roleset = true;
 					}else{
+						old_chungus = members[i];
 						members[i].removeRole(app.chungusrole);
 					}
 				}
@@ -345,6 +347,7 @@ function checkLeader(msg){
 		if(!roleset){
 			if(typeof(topmember) !== 'undefined'){
 				topmember.addRole(app.chungusrole);
+				common.sendMsg(msg,`Congrats <@${topmember.id}>! You are the new chungus.\n<@${old_chungus.id}> has lost it.`)
 
 				db.run(`UPDATE chungus SET lastchungus = "${seconds}" WHERE disID = "${topmember.id}"`);
 			}
