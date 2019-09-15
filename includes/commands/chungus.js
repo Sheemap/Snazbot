@@ -117,6 +117,15 @@ function changeName(msg,args){
 			role.setName(name)
 				.then(updated => common.sendMsg(msg,`Changed name to ${name}`))
 				// .catch(common.sendMsg(msg,`Failed to change chungus color. Make sure you have a valid color!`))
+			db.get(`SELECT * FROM data WHERE disID="${msg.author.id}"`,function(err,row){
+				let data = JSON.parse(row.data);
+				data['chungus_name'] = name;
+				db.runSecure(`UPDATE data SET data=? WHERE disID=?`,
+				{
+					1: JSON.stringify(data),
+					2: msg.author.id
+				})
+			})
 		}else{
 			common.sendMsg(msg,`Please enter a valid name.`)
 		}
@@ -144,6 +153,15 @@ function changeColor(msg,args){
 			role.setColor(args[1].toUpperCase())
 				.then(updated => common.sendMsg(msg,`Changed chungus color to ${args[1]}`))
 				// .catch(common.sendMsg(msg,`Failed to change chungus color. Make sure you have a valid color!`))
+			db.get(`SELECT * FROM data WHERE disID="${msg.author.id}"`,function(err,row){
+				let data = JSON.parse(row.data);
+				data['chungus_color'] = args[1].toUpperCase();
+				db.runSecure(`UPDATE data SET data=? WHERE disID=?`,
+				{
+					1: JSON.stringify(data),
+					2: msg.author.id
+				})
+			})
 		}else{
 			common.sendMsg(msg,`Please enter a valid hex code as the final argument.`)
 		}
@@ -346,11 +364,14 @@ function checkLeader(msg){
 
 		if(!roleset){
 			if(typeof(topmember) !== 'undefined'){
-				topmember.addRole(app.chungusrole);
-				common.sendMsg(msg,`Congrats <@${topmember.id}>! You are the new chungus.\n<@${old_chungus.id}> has lost it.`)
+				topmember.addRole(app.chungusrole)
+					.then(updated => {
+						common.sendMsg(msg,`Congrats <@${topmember.id}>! You are the new chungus.\n<@${old_chungus.id}> has lost it.`)
 
-				db.run(`UPDATE chungus SET lastchungus = "${seconds}" WHERE disID = "${topmember.id}"`);
-				startChungusHeldTime(topmember,old_chungus);
+						db.run(`UPDATE chungus SET lastchungus = "${seconds}" WHERE disID = "${topmember.id}"`);
+						initChungus(topmember,old_chungus);
+					})
+				
 			}
 			
 		}
@@ -360,7 +381,38 @@ function checkLeader(msg){
 	// msg.member.addRole(app.chungusrole)
 }
 
-function startChungusHeldTime(dis_user,old_user){
+function initChungus(new_chungus,old_chungus){
+	startChungusHeldTime(new_chungus,old_chungus,function(){
+			let role;
+			let roles = new_chungus.roles.array();
+
+			for(let i=0;i<roles.length;i++){
+
+				if(roles[i].id == app.chungusrole){
+					role = roles[i];
+				}
+
+			}
+
+			db.get(`SELECT * FROM data WHERE disID=${new_chungus.id}`,function(err,row){
+					let data = JSON.parse(row.data)
+
+					if(typeof(data['chungus_color']) !== 'undefined'){
+						role.setColor(data['chungus_color'])
+							.then(updated => {
+								if(typeof(data['chungus_name']) !== 'undefined'){
+									role.setName(data['chungus_name'])
+								}
+					})
+					}else if(typeof(data['chungus_name']) !== 'undefined'){
+						role.setName(data['chungus_name'])
+					}
+			})
+			
+	});
+}
+
+function startChungusHeldTime(dis_user,old_user,callback){
 	let current_timestamp = new Date() / 1000;
 	let new_parsed = false;
 	db.all(`SELECT * FROM data WHERE disID="${dis_user.id}" OR disID="${old_user.id}"`,function(err,rows){
@@ -384,7 +436,9 @@ function startChungusHeldTime(dis_user,old_user){
 				1: dis_user.displayName,
 				2: dis_user.id,
 				3: JSON.stringify( {'chungus_since':current_timestamp,'seconds_as_chungus':[]} )
-			})
+			},callback())
+		}else{
+			callback()
 		}
 	})
 }
