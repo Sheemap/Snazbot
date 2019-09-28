@@ -1,4 +1,5 @@
 'use strict'
+const Discord = require("discord.js");
 const logger = require('../logger.js');
 const common = require('../common.js');
 const app = require('../../app.js');
@@ -52,6 +53,9 @@ exports.main = function(msg,args){
 	logger.log('debug',`${args[0].toLowerCase()}`)
 	switch(args[0].toLowerCase()){
 
+		case 'stats':
+			stats(msg,args);
+			break;
 
 
 		case 'total':
@@ -622,4 +626,80 @@ function checkHeldTime(msg,args){
 		
 
 	})
+}
+
+function stats(msg,args){
+	let chungus_user = msg.author;
+	if(typeof(args[1]) !== 'undefined'){
+		chungus_user = common.findUser(args[1])
+	}
+	if(chungus_user == ''){
+		common.sendMsg(msg,`Did not find a user with that name! Try again.`)
+		return;
+	}
+
+	db.get(`SELECT d.data, c.points FROM data d LEFT JOIN chungus c ON c.disID = d.disID WHERE d.disID="${chungus_user.id}"`,function(err,row){
+		if(typeof(row) === 'undefined'){
+			common.sendMsg(msg,`Either I have no data on ${chungus_user.displayName}, or theres been an error!`)
+			return
+		}
+		var data;
+		if(typeof(row.data) === 'undefined'){
+			data = {"color":"gold","chungus_since":"false","seconds_as_chungus":[0]}
+		}else{
+			data = JSON.parse(row.data);
+		}
+		if(typeof(row.points) === 'undefined'){
+			var points = 0;
+		}else{
+			var points = row.points;
+		}
+
+		var longestchung = 0;
+		var totalchung = 0;
+
+		if(typeof(data['chungus_since']) !== 'undefined' && data['chungus_since'] != 'false'){
+			let current_timestamp = new Date() / 1000;
+			let current_duration = current_timestamp - data['chungus_since'];
+			longestchung = current_duration;
+			totalchung = current_duration;
+		}
+
+		if(typeof(data['seconds_as_chungus']) !== 'undefined'){
+			for(let x in data['seconds_as_chungus']){
+				totalchung += data['seconds_as_chungus'][x];
+				if(data['seconds_as_chungus'][x] > longestchung){
+					longestchung = data['seconds_as_chungus'][x];
+				}
+			}
+		}
+
+		var embed = new Discord.RichEmbed({
+
+		    "thumbnail": {
+		      "url": chungus_user.avatarURL
+		    },
+		    "fields": [
+		      {
+		        "name": "**Current Points**",
+		        "value": `**${points}**`
+		      },
+		      {
+		        "name": "**Total duration**",
+		        "value": `**${moment.duration(totalchung,'seconds').humanize()}** (${Math.round(totalchung/60)} minutes)`,
+		        "inline": true		      },
+		      {
+		        "name": "**Longest streak**",
+		        "value": `**${moment.duration(longestchung,'seconds').humanize()}** (${Math.round(totalchung/60)} minutes)`,
+		        "inline": true
+		      }
+		    ]
+		  });
+		embed.setColor(data['chungus_color']);
+
+
+		common.sendMsg(msg,{embed: embed})
+	})
+
+	
 }
