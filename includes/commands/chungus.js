@@ -690,7 +690,7 @@ function stats(msg,args){
 		        "inline": true		      },
 		      {
 		        "name": "**Longest streak**",
-		        "value": `**${moment.duration(longestchung,'seconds').humanize()}** (${Math.round(totalchung/60)} minutes)`,
+		        "value": `**${moment.duration(longestchung,'seconds').humanize()}** (${Math.round(longestchung/60)} minutes)`,
 		        "inline": true
 		      }
 		    ]
