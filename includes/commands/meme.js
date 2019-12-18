@@ -13,7 +13,27 @@ exports.usage = `Use "${app.prefix}meme" to fetch a meme. \n\nYou can roll multi
 
 exports.reactions = `%F0%9F%91%8D,%F0%9F%91%8E`;
 
-exports.db_scheme = `memes (disNAM TEXT, disID NUMERIC, timestamp NUMERIC, url TEXT, votes NUMERIC, hash TEXT)`
+exports.db_scheme = [`Meme (MemeId INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+						   Url TEXT, 
+						   UserId INTEGER,
+						   DateCreated INTEGER,
+						   FOREIGN KEY(UserId) REFERENCES User(UserId))`,
+					`MemeVotes (MemeVotesId INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+								MemeId INTEGER,
+								IsUpvote INTEGER,
+								UserId INTEGER,
+								DateCreated INTEGER,
+								MemeRollId INTEGER,
+								FOREIGN KEY(MemeId) REFERENCES Meme(MemeId),
+								FOREIGN KEY(UserId) REFERENCES User(UserId),
+								FOREIGN KEY(MemeRollId) REFERENCES MemeRoll(MemeRollId))`,
+					`MemeRoll (MemeRollId INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+							   MessageId INTEGER,
+							   MemeId INTEGER,
+							   UserId INTEGER,
+							   DateCreated INTEGER,
+							   FOREIGN KEY(MemeId) REFERENCES Meme(MemeId),
+							   FOREIGN KEY(UserId) REFERENCES User(UserId))`]
 
 //%F0%9F%91%8D = thumbsup
 
@@ -172,79 +192,62 @@ exports.react = function(reaction,user,added){
 
 }
 
+function saveMeme(meme, authorId){
+	var seconds = new Date() / 1000;
+	db.userIdByDiscordId(authorId, function(err, userId){
+		console.log(userId)
+		db.runSecure(`INSERT INTO Meme VALUES (?,?,?,?)`,{ 
+			1: null,
+			2: meme,
+			3: userId,
+			4: seconds,
+		});
+	});
+}
+
 exports.msg = function(msg) {
 	if(msg.author.id != app.BOTID){
 
-		if(msg.channel.id == app.memechan || msg.channel.id == app.rollchan){
+		if(msg.channel.id == app.memechan){
+			let unique = true;
+			var seconds = new Date() / 1000;
 
+			if(msg.content.includes('http')){
+				logger.log('info',`Saving meme sent by ${msg.author.username}`);
+				saveMeme(msg.content, msg.author.id);
+			}
 
-			db.all('SELECT url,votes FROM memes', function(err, rows){
-				let memes = [];
-				let unique = true;
-				var seconds = new Date() / 1000;
+			if(msg.attachments.array().length >= 1){
 
-				for(let u in rows){
-					memes.push(rows[u].url)
-				}
+				// let memeimage = msg.attachments.first().url.split('/')[6];
 
-		  		if(msg.content.includes('http')){
+				// for(let q in memes){
+				// 	if(memes[q].includes(memeimage)){
+				// 		unique = false;
+				// 	}
+				// }
 
-		  			if(!memes.includes(msg.content)){
-			  			logger.log('info',`Saving meme sent by ${msg.author.username}`);
+				let attachments = msg.attachments.array()
+				let newurl = '';
+				for(let i=0;i<attachments.length;i++){
 
-						db.runSecure(`INSERT INTO memes VALUES (?,?,?,?,?,?)`,{ 
-							1: msg.author.username,
-							2: msg.author.id,
-							3: seconds,
-							4: msg.content,
-							5: app.startscore,
-							6: "placeholder"
+					logger.log('info',`Saving meme sent by ${msg.author.username}`);
+
+					imgur.uploadUrl(attachments[i].url,app.albumhash)
+						.then(function (json) {
+							console.log(json.data)
+							newurl = json.data.link;
+							saveMeme(newurl, msg.author.id);
+						})
+						.catch(function (err) {
+							logger.log('error',err.message);
 						});
-					}else{
-						logger.log('info','Not saving duplicate meme');
-					}
-		  		}
 
-		  		if(msg.attachments.array().length >= 1){
+					
 
-		  			// let memeimage = msg.attachments.first().url.split('/')[6];
-
-		  			// for(let q in memes){
-		  			// 	if(memes[q].includes(memeimage)){
-		  			// 		unique = false;
-		  			// 	}
-		  			// }
-
-		  			let attachments = msg.attachments.array()
-		  			let newurl = '';
-		  			for(let i=0;i<attachments.length;i++){
-
-		  				logger.log('info',`Saving meme sent by ${msg.author.username}`);
-
-		  				imgur.uploadUrl(attachments[i].url,app.albumhash)
-							.then(function (json) {
-						        newurl = json.data.link;
-
-						        db.runSecure(`INSERT INTO memes VALUES (?,?,?,?,?,?)`, {
-						        	1: msg.author.username,
-						        	2: msg.author.id,
-						        	3: seconds,
-						        	4: newurl,
-						        	5: app.startscore,
-						        	6: "placeholder"
-						        });
-						    })
-						    .catch(function (err) {
-						        logger.log('error',err.message);
-						    });
-
-				  		
-
-		  			}
-		  			
-		  		}
-			})
-
+				}
+				
+			}
 		}
   		
   	}

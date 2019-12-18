@@ -139,18 +139,19 @@ client.on('ready', () => {
 
 
 client.on('message', msg => {
-    comm.msg(msg);
-    if(msg.content.startsWith(prefix)){
-        comm.parse(msg);
-    }
-    
-    if(msg.guild !== null){
-        if(!msg.content.toLowerCase().includes('jim') && msg.guild.id == '384946871103258626' && msg.author.id != BOTID){
-            msg.delete();
-            logger.log('info','Offending Jim message from '+msg.author.username);
+    db.storeUserData(msg.member, function(err, row){
+        comm.msg(msg);
+        if(msg.content.startsWith(prefix)){
+            comm.parse(msg);
         }
-    }
-    
+        
+        if(msg.guild !== null){
+            if(!msg.content.toLowerCase().includes('jim') && msg.guild.id == '384946871103258626' && msg.author.id != BOTID){
+                msg.delete();
+                logger.log('info','Offending Jim message from '+msg.author.username);
+            }
+        }
+    });
 });
 
 client.on('messageReactionAdd', (reaction,user) => {
