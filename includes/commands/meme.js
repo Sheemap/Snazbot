@@ -18,7 +18,7 @@ exports.db_scheme = [`Meme (MemeId INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 						   UserId INTEGER,
 						   DateCreated INTEGER,
 						   FOREIGN KEY(UserId) REFERENCES User(UserId))`,
-					`MemeVotes (MemeVotesId INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+					`MemeVote (MemeVoteId INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 								MemeId INTEGER,
 								IsUpvote INTEGER,
 								UserId INTEGER,
@@ -81,113 +81,41 @@ exports.react = function(reaction,user,added){
 		return;
 	}
 
-	if(user.id != reaction.message.author.id){
-		if(reaction.message.channel.id == app.rollchan){
-			if(reaction.message.content.includes('http')){
-				meme = true;
-				urlmeme = reaction.message.content;
-				attach = false;
-
-				if(reaction.emoji.identifier == '%F0%9F%91%8D'){
-					if(added){
-						val = 1;
-					}else{
-						val = -1;
-					}
-				}else if(reaction.emoji.identifier == '%F0%9F%91%8E'){
-					if(added){
-						val = -1;
-					}else{
-						val = 1;
-					}
-				}
-
-			}else if(reaction.message.attachments.array().length >= 1){
-				meme = true;
-				urlmeme = reaction.message.attachments.first().url;
-				attach = true;
-
-
-
-				if(reaction.emoji.identifier == '%F0%9F%91%8D'){
-					if(added){
-						val = 1;
-					}else{
-						val = -1;
-					}
-				}else if(reaction.emoji.identifier == '%F0%9F%91%8E'){
-					if(added){
-						val = -1;
-					}else{
-						val = 1;
-					}
-				}
-
-			}
-
-			if(meme){
-				db.all(`SELECT url,votes FROM memes`,function(err,row){
-					let trurow = false;
-					if(err){
-						logger.log('error',err)
-					}else{
-						if(attach){
-							//split for old discord format
-							for(let l in row){
-								let image = row[l].url.split('/')[6];
-
-								if(urlmeme.includes(image) && image != "" && image != " "){
-									trurow = row[l];
-									currentvotes = parseInt(row[l].votes)
-								}
-							}
-
-							//split for imgur
-							for(let l in row){
-								if(row[l].url.includes('i.imgur')){
-									let image = row[l].url.split('/')[3];
-
-									if(urlmeme.includes(image) && image != "" && image != " "){
-										trurow = row[l];
-										currentvotes = parseInt(row[l].votes)
-									}
-								}
-								
-							}
+	if(reaction.message.channel.id == app.rollchan){
+		let isUpvote = 0;
+		db.all(`SELECT MemeId, MessageId, MemeRollId
+				FROM MemeRoll mr`, 
+			function(err,rows){
+				let msgIds = rows.map(function(item){return item.MessageId})
+				let index = msgIds.indexOf(parseInt(reaction.message.id));
+				if(index != -1){
+					if(reaction.emoji.identifier == '%F0%9F%91%8D'){
+						if(added){
+							isUpvote = 1;
 						}else{
-							for(let l in row){
-
-								if(urlmeme == row[l].url){
-									trurow = row[l];
-									currentvotes = parseInt(row[l].votes)
-								}
-
-							}
+							isUpvote = 0;
 						}
-
-						if(trurow != false){
-							newvotes = currentvotes + val;
-
-							if(newvotes >= app.maxvote){
-								newvotes = app.maxvote;
-							}
-
-							if(newvotes < 0){
-								newvotes = 0;
-							}
-
-							db.run(`UPDATE memes SET votes="${newvotes}" WHERE url="${trurow.url}"`);
-							logger.log('debug',`Counted a meme vote. ${val} to ${trurow.url}. New votes is ${newvotes}`);
+					}else if(reaction.emoji.identifier == '%F0%9F%91%8E'){
+						if(added){
+							isUpvote = 0;
 						}else{
-							logger.log('debug','Failed to count vote, no meme found')
+							isUpvote = 1;
 						}
 					}
-					
-				})
-			}
-		}
-	}else{
-		logger.log('debug',`${user.username} tried to vote on their own meme`)
+
+					let row = rows.filter(x => x.MessageId == msgIds[index])[0];
+					db.userIdByDiscordId(user.id, function(err,userId){
+						db.runSecure(`INSERT INTO MemeVote VALUES (null, ?, ?, ?, ?, ?)`, {
+							1: row.MemeId, 
+							2: isUpvote, 
+							3: userId, 
+							4: Math.floor(new Date() / 1000), 
+							5: row.MemeRollId
+						});
+					})
+				}
+			});
+		
 	}
 
 }
@@ -207,30 +135,16 @@ function saveMeme(meme, authorId){
 
 exports.msg = function(msg) {
 	if(msg.author.id != app.BOTID){
-
 		if(msg.channel.id == app.memechan){
-			let unique = true;
-			var seconds = new Date() / 1000;
-
 			if(msg.content.includes('http')){
 				logger.log('info',`Saving meme sent by ${msg.author.username}`);
 				saveMeme(msg.content, msg.author.id);
 			}
 
 			if(msg.attachments.array().length >= 1){
-
-				// let memeimage = msg.attachments.first().url.split('/')[6];
-
-				// for(let q in memes){
-				// 	if(memes[q].includes(memeimage)){
-				// 		unique = false;
-				// 	}
-				// }
-
 				let attachments = msg.attachments.array()
 				let newurl = '';
 				for(let i=0;i<attachments.length;i++){
-
 					logger.log('info',`Saving meme sent by ${msg.author.username}`);
 
 					imgur.uploadUrl(attachments[i].url,app.albumhash)
@@ -242,16 +156,10 @@ exports.msg = function(msg) {
 						.catch(function (err) {
 							logger.log('error',err.message);
 						});
-
-					
-
 				}
-				
 			}
 		}
-  		
   	}
-
 }
 
 
@@ -364,163 +272,47 @@ function roll(msg,args){
 
 		}
 
+		db.get(`SELECT COUNT(MemeId) AS MemeCount 
+				FROM Meme m
+				INNER JOIN User u ON m.UserId = u.UserId
+				INNER JOIN Server s ON u.ServerId = s.ServerId
+				WHERE s.DiscordId = ${msg.guild.id}
+				`, function(err, row){
+			let bufferNumber = Math.floor(row.MemeCount * app.buffer);
+			
 
-		db.all('SELECT url,votes FROM memes', function(err, rows){
+			db.all(`SELECT m.MemeId, m.Url
+					FROM Meme m
+					LEFT JOIN (
+						SELECT innermr.MemeRollId, innermr.MemeId
+						FROM MemeRoll innermr
+						INNER JOIN User u ON innermr.UserId = u.UserId
+						INNER JOIN Server s ON u.ServerId = s.ServerId
+						WHERE s.DiscordId = ${msg.guild.id}
+						ORDER BY MemeRollId DESC
+						LIMIT ${bufferNumber}
+					) mr ON mr.MemeId = m.MemeId
+					INNER JOIN User u ON m.UserId = u.UserId
+					INNER JOIN Server s ON u.ServerId = s.ServerId
+					WHERE s.DiscordId = ${msg.guild.id}
+					AND mr.MemeRollId IS NULL;
+					`,function(err,rows){
+				let meme = rows[Math.floor(Math.random()*(rows.length-1))];
 
-			db.get(`SELECT data FROM data WHERE disID=${msg.guild.id}`,function(err,row){
-
-				var data = JSON.parse(row.data);
-				buffer = data.memebuffer;
-				if( typeof(buffer) === 'undefined'){
-					buffer = [];
+				if(meme.Url.includes('cdn.discordapp.com') || meme.Url.includes('i.imgur')){
+					common.sendMsg(msg,{file:meme.Url},false,15,callback);
+				}else{
+					common.sendMsg(msg,meme.Url,false,15,callback);
 				}
 
-	    		var memelist = [];
-	    		var memecount = 0;
-	    		var meme,
-	    			found = false;
-
-	    		for(let w in rows){
-
-	    			for(let x=0;x<=rows[w].votes;x++){
-						memelist.push(rows[w].url);
-	    			}
-
-	    			if(rows[w].votes > 0)
-	    				memecount++;
-
-	    		}
-
-	    		buffersize = Math.floor(memecount * app.buffer);
-
-	    		logger.log('debug',`Buffer size is ${buffersize}, meme count is ${memecount}.`)
-
-	    		for(let i=0;i<=50000;i++){
-					meme = memelist[Math.floor(Math.random()*(memelist.length-1))];
-
-					if(!buffer.includes(meme)){
-						buffer.push(meme);
-
-
-						while(buffer.length > buffersize){
-							buffer.shift();
-							if( buffer.length <= 0 && buffersize <= 0){
-								break;
-							}
-						}
-
-						if(meme.includes('cdn.discordapp.com') || meme.includes('i.imgur')){
-							common.sendMsg(msg,{file:meme},false,15,callback);
-						}else{
-							common.sendMsg(msg,meme,false,15,callback);
-						}
-						found = true;
-
-						async function callback(message){
-							await message.react('👍');
-							await message.react('👎');
-						}
-
-						break;
-					}
+				async function callback(message){
+					db.userIdByDiscordId(msg.author.id,function(err,userId){
+						db.runSecure(`INSERT INTO MemeRoll VALUES (null, ?, ?, ?, ?)`, [message.id, meme.MemeId, userId, Math.floor(new Date() / 1000)]);
+					});
+					await message.react('👍');
+					await message.react('👎');
 				}
-				if(!found){
-					logger.log('warn','Failed to randomize a meme not in the buffer!');
-				}
-				data['memebuffer'] = buffer;
-
-				db.runSecure(`UPDATE data SET data=? WHERE disID=?`,
-				{
-					1: JSON.stringify(data),
-					2: msg.guild.id
-				})
-				
 			});
-
 		});
 	}
 }
-
-// function changeYoutube(msg,args){
-// 	if(args[1].toLowerCase() == 'on'){
-
-// 		db.get(`SELECT * FROM users WHERE disID="${msg.author.id}"`,function(err,row){
-// 			if(typeof(row) === 'undefined'){
-// 				db.runSecure(`INSERT INTO users VALUES(?,?,?,?)`,{
-// 					1: msg.author.username,
-// 					2: msg.author.id,
-// 					3: 1,
-// 					4: 1
-// 				})
-// 			}else{
-// 				db.run(`UPDATE users SET ytmemes="1" WHERE disID="${msg.author.id}"`);
-// 			}
-
-// 			common.sendMsg(msg,'YouTube memes have been enabled');
-// 		})
-
-// 	}else if(args[1].toLowerCase() == 'off'){
-
-// 		db.get(`SELECT * FROM users WHERE disID="${msg.author.id}"`,function(err,row){
-// 			if(typeof(row) === 'undefined'){
-// 				db.runSecure(`INSERT INTO users VALUES(?,?,?,?)`,{
-// 					1: msg.author.username,
-// 					2: msg.author.id,
-// 					3: 0,
-// 					4: 1
-// 				})
-// 			}else{
-// 				db.run(`UPDATE users SET ytmemes="0" WHERE disID="${msg.author.id}"`);
-// 			}
-
-// 			common.sendMsg(msg,'YouTube memes have been disabled');
-// 		})
-
-// 	}else{
-
-// 		common.sendMsg(msg,`I dont understand what you mean by that! Please either use 'on' or 'off' to enable or disable YouTube memes.`);
-
-// 	}
-// }
-
-// function changeScrape(msg,args){
-// 	if(args[1].toLowerCase() == 'on'){
-
-// 		db.get(`SELECT * FROM users WHERE disID="${msg.author.id}"`,function(err,row){
-// 			if(typeof(row) === 'undefined'){
-// 				db.runSecure(`INSERT INTO users VALUES(?,?,?,?)`,{
-// 					1: msg.author.username,
-// 					2: msg.author.id,
-// 					3: 1,
-// 					4: 1
-// 				})
-// 			}else{
-// 				db.run(`UPDATE users SET memeroll="1" WHERE disID="${msg.author.id}"`);
-// 			}
-
-// 			common.sendMsg(msg,'Your memes will be saved');
-// 		})
-
-// 	}else if(args[1].toLowerCase() == 'off'){
-
-// 		db.get(`SELECT * FROM users WHERE disID="${msg.author.id}"`,function(err,row){
-// 			if(typeof(row) === 'undefined'){
-// 				db.runSecure(`INSERT INTO users VALUES(?,?,?,?)`,{
-// 				1: msg.author.username,
-// 					2: msg.author.id,
-// 					3: 1,
-// 					4: 0
-// 				})
-// 			}else{
-// 				db.run(`UPDATE users SET memeroll="0" WHERE disID="${msg.author.id}"`);
-// 			}
-
-// 			common.sendMsg(msg,'Your memes will no longer be saved');
-// 		})
-
-// 	}else{
-
-// 		common.sendMsg(msg,`I dont understand what you mean by that! Please either use 'on' or 'off' to enable or disable adding your memes to memepool.`);
-
-// 	}
-// }	
