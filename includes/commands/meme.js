@@ -164,15 +164,14 @@ exports.msg = function(msg) {
 
 
 function checkStats(msg,args){
-	db.all('SELECT * FROM memes', function(err, rows){
-		let memelist = [];
-		for(let w in rows){
-			if(rows[w].votes > 0)
-				memelist.push(rows[w].url);
-		}
-		var count = memelist.length;
+	db.get(`SELECT COUNT(MemeId) AS MemeCount 
+			FROM Meme m
+			INNER JOIN User u ON m.UserId = u.UserId
+			INNER JOIN Server s ON u.ServerId = s.ServerId
+			WHERE s.DiscordId = '208298947997990912';`
+		, function(err, row){
 
-		common.sendMsg(msg,`There are currently **${count}** memes in stock. The buffersize is set to **${app.buffer*100}%**.`,false,15);
+		common.sendMsg(msg,`There are currently **${row.MemeCount}** memes in stock. The buffersize is set to **${app.buffer*100}%**.`,false,15);
 
 	});
 }
@@ -182,12 +181,14 @@ function points(msg,args){
 		let members = msg.channel.guild.members.array();
 		let count = 0;
 		let disID;
+		let serverId;
 		let name;
 		for(let mem in members){
 			if(members[mem].user.username.toLowerCase().includes(args[1].toLowerCase())){
 				count++;
 				disID = members[mem].user.id;
 				name = members[mem].user.username;
+				serverId = members[mem].guild.id
 			}
 		}
 
@@ -199,7 +200,7 @@ function points(msg,args){
 
 		}else if(count == 1){
 
-			checkPoints(disID,function(score,avg,memecount){
+			checkPoints(disID, serverId, function(score){
 				common.sendMsg(msg,`${name} currently has **${score}** meme points.`,false,15);
 			})
 
@@ -207,27 +208,31 @@ function points(msg,args){
 		}
 	}else{
 
-		checkPoints(msg.author.id,function(score,avg,memecount){
+		checkPoints(msg.author.id, msg.channel.guild.id, function(score){
 			common.sendMsg(msg,`You currently have **${score}** meme points.`,true,15);
 		})
 	}
 }
 
-function checkPoints(disID,callback){
+function checkPoints(userId, serverId, callback){
 	let score = 0;
 	let memecount = 0;
 	let avg = 0;
-	db.all(`SELECT * FROM memes WHERE disID="${disID}"`, function(err, rows){
+	db.all(`SELECT mv.IsUpvote
+			FROM MemeVote mv
+			INNER JOIN Meme m ON mv.MemeId = m.MemeId
+			INNER JOIN User u ON m.UserId = u.UserId
+			INNER JOIN Server s ON u.ServerId = s.ServerId
+			WHERE s.DiscordId = ${serverId}
+			AND u.DiscordId = ${userId}`
+		, function(err, rows){
 		
-		for(let y in rows){
-			score += parseInt(rows[y].votes) - app.startscore;
-			memecount++;
-		}
-		if(!memecount == 0){
-			avg = (score/memecount).toFixed(2);
+		for(let y of rows){
+			console.log(y)
+			score += y.IsUpvote || -1
 		}
 
-		callback(score,avg,memecount)
+		callback(score)
 	})
 	
 }
@@ -269,7 +274,6 @@ function roll(msg,args){
 				logger.log('info',`Rolling ${memequeue} memes, will finish in ${memedelay*memequeue} seconds`)
 				timeRoll(msg,memequeue,memedelay);
 			}
-
 		}
 
 		db.get(`SELECT COUNT(MemeId) AS MemeCount 
@@ -278,8 +282,7 @@ function roll(msg,args){
 				INNER JOIN Server s ON u.ServerId = s.ServerId
 				WHERE s.DiscordId = ${msg.guild.id}
 				`, function(err, row){
-			let bufferNumber = Math.floor(row.MemeCount * app.buffer);
-			
+			let bufferNumber = Math.floor(row.MemeCount * app.buffer);			
 
 			db.all(`SELECT m.MemeId, m.Url
 					FROM Meme m
@@ -297,7 +300,7 @@ function roll(msg,args){
 					WHERE s.DiscordId = ${msg.guild.id}
 					AND mr.MemeRollId IS NULL;
 					`,function(err,rows){
-				let meme = rows[Math.floor(Math.random()*(rows.length-1))];
+				let meme = rows[Math.floor(Math.random()*(rows.length))];
 
 				if(meme.Url.includes('cdn.discordapp.com') || meme.Url.includes('i.imgur')){
 					common.sendMsg(msg,{file:meme.Url},false,15,callback);
