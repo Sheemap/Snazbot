@@ -210,7 +210,11 @@ exports.userIdByDiscordId = function(discordId, callback){
 };
 
 exports.storeUserData = function (member, callback){
-    db.get(`SELECT UserId, DisplayName, UserName FROM User WHERE DiscordId = ${member.id}`, function(err, row){
+    db.get(`SELECT u.UserId, u.DisplayName, u.UserName 
+            FROM User u
+            INNER JOIN Server s ON s.ServerId = u.ServerId
+            WHERE u.DiscordId = ${member.id} 
+            AND s.DiscordId = ${member.guild.id}`, function(err, row){
         if(typeof(row) !== 'undefined'){
             if(member.displayName != row.DisplayName || member.user.username != row.UserName){
                 logger.log('info','Updating user info');
