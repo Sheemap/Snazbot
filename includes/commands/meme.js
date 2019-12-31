@@ -105,7 +105,7 @@ exports.react = function(reaction,user,added){
 					}
 
 					let row = rows.filter(x => x.MessageId == msgIds[index])[0];
-					db.userIdByDiscordId(user.id, function(err,userId){
+					db.userIdByMessage(reaction.message, function(err,userId){
 						db.runSecure(`INSERT INTO MemeVote VALUES (null, ?, ?, ?, ?, ?)`, {
 							1: row.MemeId, 
 							2: isUpvote, 
@@ -121,10 +121,9 @@ exports.react = function(reaction,user,added){
 
 }
 
-function saveMeme(meme, authorId){
+function saveMeme(meme, msg){
 	var seconds = new Date() / 1000;
-	db.userIdByDiscordId(authorId, function(err, userId){
-		console.log(userId)
+	db.userIdByMessage(msg, function(err, userId){
 		db.runSecure(`INSERT INTO Meme VALUES (?,?,?,?)`,{ 
 			1: null,
 			2: meme,
@@ -139,7 +138,7 @@ exports.msg = function(msg) {
 		if(msg.channel.id == app.memechan){
 			if(msg.content.includes('http')){
 				logger.log('info',`Saving meme sent by ${msg.author.username}`);
-				saveMeme(msg.content, msg.author.id);
+				saveMeme(msg.content, msg);
 			}
 
 			if(msg.attachments.array().length >= 1){
@@ -152,7 +151,7 @@ exports.msg = function(msg) {
 						.then(function (json) {
 							console.log(json.data)
 							newurl = json.data.link;
-							saveMeme(newurl, msg.author.id);
+							saveMeme(newurl, msg);
 						})
 						.catch(function (err) {
 							logger.log('error',err.message);
@@ -341,7 +340,7 @@ function roll(msg,args){
 				}
 
 				async function callback(message){
-					db.userIdByDiscordId(msg.author.id,function(err,userId){
+					db.userIdByMessage(msg,function(err,userId){
 						db.runSecure(`INSERT INTO MemeRoll VALUES (null, ?, ?, ?, ?)`, [message.id, meme.MemeId, userId, Math.floor(new Date() / 1000)]);
 					});
 					await message.react('👍');

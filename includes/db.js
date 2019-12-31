@@ -200,8 +200,16 @@ exports.all = function(query,callback){
     })
 }
 
-exports.userIdByDiscordId = function(discordId, callback){
-    db.get(`SELECT UserId FROM User WHERE DiscordId = ?`, [discordId], function(err, row){
+exports.userIdByMessage = function(msg, callback){
+    this.userIdByDiscordId(msg.guild.id, msg.author.id, callback);
+}
+
+exports.userIdByDiscordId = function(serverDisId, userDisId, callback){
+    db.get(`SELECT u.UserId
+            FROM User u
+            INNER JOIN Server s ON s.ServerId = u.ServerId
+            WHERE u.DiscordId = ?
+            AND s.DiscordId = ?`, [userDisId, serverDisId], function(err, row){
         if(err){
             logger.log('error',err);
         }
