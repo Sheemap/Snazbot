@@ -139,6 +139,9 @@ client.on('ready', () => {
 
 
 client.on('message', msg => {
+    if(msg.member.id == this.BOTID){
+        return;
+    }
     db.storeUserData(msg.member, function(err, row){
         comm.msg(msg);
         if(msg.content.startsWith(prefix)){
