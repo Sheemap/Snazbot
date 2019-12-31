@@ -42,7 +42,7 @@ exports.db_scheme = [`Meme (MemeId INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 // const app.bufferSIZE = 150;
 // const app.buffer = app.buffer; //percentage
 // const app.maxvote = app.maxvote;
-// const app.startscore = app.startscore;
+const startScore = parseInt(app.startscore);
 // const app.albumhash = app.albumhash;
 
 var buffer = [];
@@ -50,6 +50,7 @@ var buffersize = 0;
 
 const defaultdelay = 3;
 const maxrolltime = 300;
+const minimumVoteCount = -5;
 
 exports.main = function(msg,args){
 	switch(args[0].toLowerCase()){
@@ -276,15 +277,20 @@ function roll(msg,args){
 			}
 		}
 
+		// Grabs the total count of memes for current server, and finds the buffer number
 		db.get(`SELECT COUNT(MemeId) AS MemeCount 
 				FROM Meme m
 				INNER JOIN User u ON m.UserId = u.UserId
 				INNER JOIN Server s ON u.ServerId = s.ServerId
 				WHERE s.DiscordId = ${msg.guild.id}
 				`, function(err, row){
-			let bufferNumber = Math.floor(row.MemeCount * app.buffer);			
+			let bufferNumber = Math.floor(row.MemeCount * app.buffer);	
 
-			db.all(`SELECT m.MemeId, m.Url
+			// Selects $bufferNumber of the most recent MemeRolls, and selects memes that do not have a MemeRollId. Effectively only retrieving memes not in buffer
+			db.all(`SELECT
+					m.MemeId, 
+					m.Url,
+					SUM(IFNULL(mvUp.Upvotes, 0) - IFNULL(mvDown.Downvotes, 0)) AS Votes
 					FROM Meme m
 					LEFT JOIN (
 						SELECT innermr.MemeRollId, innermr.MemeId
@@ -295,12 +301,38 @@ function roll(msg,args){
 						ORDER BY MemeRollId DESC
 						LIMIT ${bufferNumber}
 					) mr ON mr.MemeId = m.MemeId
+					LEFT JOIN (
+						SELECT mv.MemeId, 
+							COUNT(*) AS UpVotes
+						FROM MemeVote mv
+						GROUP BY MemeId
+						HAVING IsUpvote = 1
+					) mvUp ON mvUp.MemeId = m.MemeId
+					LEFT JOIN (
+						SELECT mv.MemeId, 
+							COUNT(*) AS DownVotes
+						FROM MemeVote mv
+						GROUP BY MemeId
+						HAVING IsUpvote = 0
+					) mvDown ON mvDown.MemeId = m.MemeId
 					INNER JOIN User u ON m.UserId = u.UserId
 					INNER JOIN Server s ON u.ServerId = s.ServerId
 					WHERE s.DiscordId = ${msg.guild.id}
-					AND mr.MemeRollId IS NULL;
+					AND mr.MemeRollId IS NULL
+					GROUP BY m.MemeId
+					HAVING Votes > ${minimumVoteCount};
 					`,function(err,rows){
-				let meme = rows[Math.floor(Math.random()*(rows.length))];
+
+				// Adds a meme to the selection pool per vote it has
+				let memePool = [];
+				for(let item of rows){
+					let tickets = startScore + item.Votes;
+					for(let i=0; i < tickets; i++){
+						memePool.push(item);
+					}
+				}
+
+				let meme = memePool[Math.floor(Math.random()*(memePool.length))];
 
 				if(meme.Url.includes('cdn.discordapp.com') || meme.Url.includes('i.imgur')){
 					common.sendMsg(msg,{file:meme.Url},false,15,callback);
