@@ -20,12 +20,13 @@ exports.db_scheme = [`Chungus (ChungusId INTEGER NOT NULL PRIMARY KEY AUTOINCREM
 					`ChungusPoints (ChungusPointsId INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 									Points INTEGER,
 									DurationSeconds INTEGER,
+									BecameChungus INTEGER,
 									UserId INTEGER,
 									DateCreated INTEGER,
 									FOREIGN KEY(UserId) REFERENCES User(UserId))`]
 
 var seconds = new Date() / 1000;
-exports.db_init = `INSERT INTO chungus VALUES ("chungus","000","${seconds}","0","0")`
+exports.db_init = `INSERT INTO ChungusPoints VALUES (null, 0, 0, 0, 0, ${seconds})`
 
 var max_chungus_cd = app.config.chungus.maxcd;
 var max_cd_factor = app.config.chungus.maxcdfactor;
@@ -46,14 +47,6 @@ if(max_chungus_cd == ""){
 	logger.log('info','No max chungus cooldown set.');
 }
 
-
-
-
-
-var lastcall,
-	chungusmins;
-
-
 exports.main = function(msg,args){
 
 	if(msg.webhookID == 586396045328777226){
@@ -67,7 +60,6 @@ exports.main = function(msg,args){
 		case 'stats':
 			stats(msg,args);
 			break;
-
 
 		case 'total':
 			checkHeldTime(msg,args);
@@ -105,22 +97,33 @@ exports.main = function(msg,args){
 	}
 }
 
+function setChungusSettings(userId, name, color){
+	db.get(`SELECT ChungusId, Name, Color
+			FROM Chungus
+			WHERE UserId = ${userId}`, function(err,row){
+		if(typeof(row) !== 'undefined'){
+			db.runSecure('UPDATE Chungus SET Name = ?, Color = ? WHERE ChungusId = ?', [name || row.Name, 
+																						color || row.Color, 
+																						row.ChungusId])
+		}else{
+			db.runSecure('INSERT INTO Chungus VALUES (null, ?, ?, ?, ?)', [userId, new Date() / 1000, color, name])
+		}
+	})
+}
+
 function changeName(msg,args){
 	let role;
 	let roles = msg.member.roles.array();
 	let chungus = false;
-
 	for(let i=0;i<roles.length;i++){
 
 		if(roles[i].id == app.chungusrole){
 			role = roles[i];
 			chungus = true;
 		}
-
 	}
 
 	if(chungus){
-
 		let name = msg.content.toLowerCase().replace(`${app.prefix}chungus name `,'')
 
 		if(name == app.prefix+"chungus name"){
@@ -132,14 +135,8 @@ function changeName(msg,args){
 			role.setName(name)
 				.then(updated => common.sendMsg(msg,`Changed name to ${name}`))
 				// .catch(common.sendMsg(msg,`Failed to change chungus color. Make sure you have a valid color!`))
-			db.get(`SELECT * FROM data WHERE disID="${msg.author.id}"`,function(err,row){
-				let data = JSON.parse(row.data);
-				data['chungus_name'] = name;
-				db.runSecure(`UPDATE data SET data=? WHERE disID=?`,
-				{
-					1: JSON.stringify(data),
-					2: msg.author.id
-				})
+			db.userIdByMessage(msg, function(err, userId){
+				setChungusSettings(userId, name, null);
 			})
 		}else{
 			common.sendMsg(msg,`Please enter a valid name.`)
@@ -168,15 +165,9 @@ function changeColor(msg,args){
 			role.setColor(args[1].toUpperCase())
 				.then(updated => common.sendMsg(msg,`Changed chungus color to ${args[1]}`))
 				// .catch(common.sendMsg(msg,`Failed to change chungus color. Make sure you have a valid color!`))
-			db.get(`SELECT * FROM data WHERE disID="${msg.author.id}"`,function(err,row){
-				let data = JSON.parse(row.data);
-				data['chungus_color'] = args[1].toUpperCase();
-				db.runSecure(`UPDATE data SET data=? WHERE disID=?`,
-				{
-					1: JSON.stringify(data),
-					2: msg.author.id
+				db.userIdByMessage(msg, function(err, userId){
+					setChungusSettings(userId, null, args[1].toUpperCase());
 				})
-			})
 		}else{
 			common.sendMsg(msg,`Please enter a valid hex code as the final argument.`)
 		}
@@ -186,27 +177,22 @@ function changeColor(msg,args){
 }
 
 function top(msg,args){
-	db.all("SELECT * FROM chungus WHERE disNAM != 'chungus' ORDER BY points DESC",function(err,rows){
+	db.all(`SELECT u.DisplayName, SUM(c.Points) AS Points
+			FROM ChungusPoints c
+			INNER JOIN User u ON u.UserId = c.UserId
+			INNER JOIN Server s ON s.ServerId = u.ServerId
+			WHERE u.UserId > 0
+			AND s.ServerId = '${msg.guild.id}'
+			GROUP BY u.UserId
+			ORDER BY Points DESC
+			LIMIT 5`,function(err,rows){
 
 		var content = 'Top chungus:\n';
-		var user_display_name = '';
-
 		for(let i=0;i<rows.length;i++){
-
-			if(i>=5)
-				break;
-
-			user_display_name = rows[i].disNAM;
-			common.findUser(rows[i].disID,function(user){
-				if(user != ''){
-					user_display_name = user.displayName.replace(" [Wanking]","");
-				}
-			})
-			content += `${i+1}. ${user_display_name}: **${rows[i].points}**\n`;
+			content += `${i+1}. ${row.DisplayName}: **${row.Points}**\n`;
 		}
 
 		common.sendMsg(msg,content);
-
 	})
 }
 
@@ -214,69 +200,67 @@ function getRewardAmount(row){
 	if(typeof(row) === 'undefined'){
 		return 0
 	}
-	let seconds = (new Date() / 1000) - row.lastclaim;
+	let seconds = (new Date() / 1000) - row.DateCreated;
 	let minutes = Math.round(seconds/60);
 	return (Math.round(Math.pow(minutes,1.85)/70));
 }
 
 function claimLogic(msg,chungee_id,callback){
 	var seconds = new Date() / 1000;
-	db.get("SELECT lastclaim FROM chungus WHERE disNAM='chungus'",function(err,row){
+	db.get(`SELECT c.DateCreated
+			FROM ChungusPoints c
+			INNER JOIN User u ON u.UserId = c.UserId
+			INNER JOIN Server s ON s.ServerId = u.ServerId
+			WHERE s.DiscordId = ${msg.guild.id}
+			ORDER BY c.DateCreated DESC
+			LIMIT 1`,function(err,row){
 		var minutes;
 		if(typeof(row) === 'undefined'){
 			logger.log('warn','Chungus was not initialized correctly. Attempting to fix now...')
-			db.run(`INSERT INTO chungus VALUES ("chungus","000","${seconds}","0","0")`)
+			db.run(`INSERT INTO ChungusPoints VALUES (null, 0, 0, 0, 0, ${seconds})`)
 			minutes = 0;
 		}else{
-			minutes = (seconds - row.lastclaim)/60;
+			minutes = (seconds - row.DateCreated)/60;
 		}
 		
 		var chunguspoints = getRewardAmount(row)
 
-		// Math.round(Math.pow(chungustime,1.85)/70);
-		db.get(`SELECT * FROM chungus WHERE disID="${chungee_id}"`,function(err,row){
+		db.userIdByMessage(msg, function(err, userId){
+			// Math.round(Math.pow(chungustime,1.85)/70);
+			db.get(`SELECT Points, DateCreated
+					FROM ChungusPoints
+					WHERE UserId = ${userId}
+					ORDER BY DateCreated DESC`,function(err,row){
 
-			calculateCD(row, function(current_cd_sec){
-				if(current_cd_sec == 0){
-					db.run(`UPDATE chungus SET lastclaim="${seconds}" WHERE disNAM="chungus"`,function(err,not_needed){
-					if(typeof(row) === 'undefined'){
-						db.runSecure(`INSERT INTO chungus VALUES (?,?,?,?,?)`,{
-							1: msg.author.username,
-							2: msg.author.id,
-							3: seconds,
-							4: chunguspoints,
-							5: 0
+				calculateCD(row, function(current_cd_sec){
+					if(current_cd_sec == 0){
+
+						db.runSecure(`INSERT INTO ChungusPoints VALUES (?,?,?,?,?,?)`,{
+							1: null,
+							2: chunguspoints,
+							3: minutes * 60,
+							4: 0,
+							5: userId,
+							6: new Date() / 1000
 						},function(err,row){
-							checkLeader(msg);
+							getTotalPoints(userId, function(newpoints){
+								callback({"no_cooldown":true,"chungus_mins":minutes,"gained_points":chunguspoints,"total_points":newpoints})
+								checkLeader(msg);
+							})
 						})
-
-						var newpoints = chunguspoints;
 					}else{
-
-						var newpoints = Math.round(row.points + chunguspoints);
-								
-						db.run(`UPDATE chungus SET points="${newpoints}", lastclaim="${seconds}" WHERE disID="${chungee_id}"`,function(err,row){
-							checkLeader(msg);
-						});
-
+						callback({"no_cooldown":false,"current_cd_sec":current_cd_sec,"seconds_now":seconds,"last_claim":row.DateCreated})
 					}
-
-					lastcall = chungee_id;
-					callback({"no_cooldown":true,"chungus_mins":minutes,"gained_points":chunguspoints,"total_points":newpoints})
-
 				});
-				}else{
-					callback({"no_cooldown":false,"current_cd_sec":current_cd_sec,"seconds_now":seconds,"last_claim":row.lastclaim})
-				}
+				
 			});
-			
-		});
+		})
 	});
 }
 
 function checkValue(msg,args){
-	db.get(`SELECT * FROM chungus WHERE disNAM="chungus"`,function(err,row){
-		let seconds = (new Date() / 1000) - row.lastclaim;
+	db.get(`SELECT DateCreated FROM ChungusPoints ORDER BY DateCreated DESC LIMIT 1`,function(err,row){
+		let seconds = (new Date() / 1000) - row.DateCreated;
 		let minutes = Math.round(seconds/60);
 		let points = getRewardAmount(row);
 		common.sendMsg(msg,`Chungus has been brewing for **${minutes} minutes**, and is currently worth **${points} points**.`);
@@ -353,11 +337,17 @@ function checkLeader(msg){
 	var roleset = false;
 	var old_chungus;
 	var members = msg.guild.members.array();
-	db.get("SELECT * FROM chungus ORDER BY points DESC, lastclaim ASC", function(err,row){
+	db.get(`SELECT u.DiscordId, SUM(c.Points) AS TotalPoints
+			FROM ChungusPoints c
+			INNER JOIN User u ON u.UserId = c.UserId
+			INNER JOIN Server s ON s.ServerId = u.ServerId
+			WHERE s.DiscordId = ${msg.guild.id}
+			GROUP BY u.UserId
+			ORDER BY TotalPoints DESC, DateCreated ASC`, function(err,row){
 
 		for(let i=0;i<members.length;i++){
 		
-			if(members[i].id == row.disID){
+			if(members[i].id == row.DiscordId){
 				topmember = members[i];
 			}
 
@@ -365,7 +355,7 @@ function checkLeader(msg){
 			for(let x=0;x<roles.length;x++){
  
 				if(roles[x].id == app.chungusrole){
-					if(members[i].id == row.disID){
+					if(members[i].id == row.DiscordId){
 						roleset = true;
 					}else{
 						old_chungus = members[i];
@@ -383,8 +373,19 @@ function checkLeader(msg){
 					.then(updated => {
 						common.sendMsg(msg,`Congrats <@${topmember.id}>! You are the new chungus.\n<@${old_chungus.id}> has lost it.`)
 
-						db.run(`UPDATE chungus SET lastchungus = "${seconds}" WHERE disID = "${topmember.id}"`);
-						initChungus(topmember,old_chungus);
+						db.userIdByMessage(msg,function(err,userId){
+							db.run(`UPDATE ChungusPoints
+							SET BecameChungus = 1
+							WHERE ChungusPointsId IN (
+								SELECT ChungusPointsId
+								FROM ChungusPoints
+								WHERE UserId = ${userId}
+								ORDER BY ChungusPointsId DESC
+								LIMIT 1
+							)`);
+							console.log('asdf')
+							initChungus(topmember,old_chungus);
+						})
 					})
 				
 			}
@@ -397,143 +398,42 @@ function checkLeader(msg){
 }
 
 function initChungus(new_chungus,old_chungus){
-	startChungusHeldTime(new_chungus,old_chungus,function(){
-			let role;
-			let roles = new_chungus.roles.array();
+	let role;
+	let roles = new_chungus.roles.array();
 
-			for(let i=0;i<roles.length;i++){
+	for(let i=0;i<roles.length;i++){
 
-				if(roles[i].id == app.chungusrole){
-					role = roles[i];
-				}
-
-			}
-
-			db.get(`SELECT * FROM data WHERE disID=${new_chungus.id}`,function(err,row){
-					let data = JSON.parse(row.data)
-
-					if(typeof(data['chungus_color']) !== 'undefined'){
-						role.setColor(data['chungus_color'])
-							.then(updated => {
-								if(typeof(data['chungus_name']) !== 'undefined'){
-									role.setName(data['chungus_name'])
-								}
-					})
-					}else if(typeof(data['chungus_name']) !== 'undefined'){
-						role.setName(data['chungus_name'])
-					}
-			})
-			
-	});
-}
-
-function startChungusHeldTime(dis_user,old_user,callback){
-	let current_timestamp = new Date() / 1000;
-	let new_parsed = false;
-	db.all(`SELECT * FROM data WHERE disID="${dis_user.id}" OR disID="${old_user.id}"`,function(err,rows){
-		for(let row in rows){
-			if(rows[row].disID == dis_user.id){
-				let data = JSON.parse(rows[row].data);
-				data['chungus_since'] = current_timestamp;
-				db.runSecure(`UPDATE data SET data=? WHERE disID=?`,{
-						1: JSON.stringify(data),
-						2: dis_user.id
-					})
-				new_parsed = true;
-			}else{
-				updateChungusHeldTime(old_user,true)
-			}
+		if(roles[i].id == app.chungusrole){
+			role = roles[i];
 		}
 
-		if(!new_parsed){
-			db.runSecure(`INSERT INTO data VALUES(?,?,?)`,
-			{
-				1: dis_user.displayName,
-				2: dis_user.id,
-				3: JSON.stringify( {'chungus_since':current_timestamp,'seconds_as_chungus':[]} )
-			},callback())
-		}else{
-			callback()
-		}
-	})
-}
-
-function updateChungusHeldTime(dis_user,end_time,callback){
-	if(typeof(callback) === 'undefined'){
-		callback = function(){return undefined}
 	}
-	let current_timestamp = new Date() / 1000;
-	db.get(`SELECT * FROM data WHERE disID="${dis_user.id}"`,function(err,row){
-		if(typeof(row) === 'undefined'){
-			logger.log('error',`Something went wrong. Trying to update ${dis_user.displayName}'s chungus held time, but they have no user data! Setting to 0.`)
-			let data = JSON.stringify({'seconds_as_chungus':[]})
-			db.runSecure(`INSERT INTO data VALUES(?,?,?)`,
-			{
-				1: dis_user.displayName,
-				2: dis_user.id,
-				3: data
-			},callback(0))
-		}else{
-			let total_secs = 0;
-			let data = JSON.parse(row.data);
-			if(data['chungus_since'] != "false"){
-				if(typeof(data['seconds_as_chungus']) === 'undefined'){
-					data['seconds_as_chungus'] = []
-				}
-				let current_length = current_timestamp - data['chungus_since'];
-				total_secs;
-				try{
-					if(end_time){
-						data['chungus_since'] = 'false';
-						data['seconds_as_chungus'].push(current_length);
-					}else{
-						total_secs = current_length;
-					}
 
-					
-					let sec_entries = data['seconds_as_chungus'];
-					for(let d in data['seconds_as_chungus']){
-						total_secs += sec_entries[d];
-					}
-
-					db.runSecure(`UPDATE data SET data=? WHERE disID=?`,
-					{
-						1: JSON.stringify(data),
-						2: dis_user.id
-					},callback(total_secs))
-					
-				}catch(err){
-					logger.log('error',`Trying to update ${dis_user.displayName}'s chungus held time resulted in ${err}`)
-					callback(err)
-				}
-			}else{
-				try{
-					if(typeof(data['seconds_as_chungus']) === 'undefined'){
-						data['seconds_as_chungus'] = []
-					}
-					let sec_entries = data['seconds_as_chungus'];
-					for(let d in data['seconds_as_chungus']){
-						total_secs += sec_entries[d];
-					}
-					callback(total_secs)
-				}catch(err){
-					callback(0)
-				}
-				
+	db.userIdByDiscordId(new_chungus.guild.id, new_chungus.id, function(err, userId){
+		db.get(`SELECT Name, Color FROM Chungus WHERE UserId = ${userId}`,function(err,row){
+			if(typeof(row) !== 'undefined' && typeof(row.Color) !== 'undefined'){
+				role.setColor(row.Color)
+					.then(updated => {
+						if(typeof(row.Name) !== 'undefined'){
+							role.setName(row.Name)
+						}
+			})
+			}else if(typeof(row) !== 'undefined' && typeof(row.Name) !== 'undefined'){
+				role.setName(row.Name)
 			}
-		}
+		})
 	})
 }
 
 // Takes database row of user and returns remaining cooldown in seconds
 function calculateCD(row,callback){
-	if(typeof(row) === 'undefined' || row.points == '0' || isNaN(row.points) || isNaN(row.lastclaim)){
+	if(typeof(row) === 'undefined' || row.Points == '0' || isNaN(row.Points) || isNaN(row.DateCreated)){
 		callback(0);
 		return;
 	}
 
-	let points = row.points;
-	let last_claim = row.lastclaim;
+	let points = row.Points;
+	let last_claim = row.DateCreated;
 	let now_seconds = new Date() / 1000;
 	let total_cd,
 		elapsed_seconds,
@@ -541,11 +441,16 @@ function calculateCD(row,callback){
 		top_points,
 		max_cd_threshold;
 
-	elapsed_seconds = now_seconds - row.lastclaim;
+	elapsed_seconds = now_seconds - row.DateCreated;
 
 	if(max_chungus_cd !== 0){
-		db.get("SELECT * FROM chungus ORDER BY points DESC, lastclaim ASC",function(err,row){
-			top_points = row.points;
+		db.get(`SELECT SUM(Points) AS TotalPoints
+				FROM ChungusPoints
+				ORDER BY TotalPoints DESC, DateCreated ASC
+				GROUP BY UserId
+				LIMIT 1`
+				,function(err,row){
+			top_points = row.TotalPoints;
 			max_cd_threshold = top_points * max_cd_factor;
 
 			// Total cooldown is a factor of how many points you have relative to the top chungus player.
@@ -585,31 +490,72 @@ function checkCD(msg,args){
 		common.sendMsg(msg,`Did not find a user with that name! Try again.`)
 		return;
 	}
-	db.get(`SELECT * FROM chungus WHERE disID = "${chungus_user.id}"`,function(err,row){
-
-		calculateCD(row,function(current_cd_sec){
-		
-			if(current_cd_sec > 0){
-				let current_cd_min = current_cd_sec/60;
-				let niceformat = (current_cd_sec*1000) + new Date()*1;
-
-				if(chungus_user.id == msg.author.id){
-					common.sendMsg(msg,`You will be able to chungus again **${moment(niceformat).fromNow()}** (${Math.round(current_cd_min)} minutes).`)
+	db.userIdByMessage(msg, function(err, userId){
+		db.get(`SELECT Points, DateCreated
+				FROM ChungusPoints
+				WHERE UserId = "${userId}"
+				ORDER BY DateCreated DESC
+				LIMIT 1`,function(err,row){
+			calculateCD(row,function(current_cd_sec){
+			
+				if(current_cd_sec > 0){
+					let current_cd_min = current_cd_sec/60;
+					let niceformat = (current_cd_sec*1000) + new Date()*1;
+	
+					if(chungus_user.id == msg.author.id){
+						common.sendMsg(msg,`You will be able to chungus again **${moment(niceformat).fromNow()}** (${Math.round(current_cd_min)} minutes).`)
+					}else{
+						common.sendMsg(msg,`${chungus_user.displayName} will be able to chungus again **${moment(niceformat).fromNow()}** (${Math.round(current_cd_min)} minutes).`)
+					}
+					// common.sendMsg(msg,`You have **${cooldown.toFixed(2)}** minutes left on your cooldown.`);
 				}else{
-					common.sendMsg(msg,`${chungus_user.displayName} will be able to chungus again **${moment(niceformat).fromNow()}** (${Math.round(current_cd_min)} minutes).`)
+					if(chungus_user.id == msg.author.id){
+						common.sendMsg(msg,`You have no cooldown! Happy chungusing!`);
+					}else{
+						common.sendMsg(msg,`${chungus_user.displayName} has no cooldown!`);
+					}
+					
 				}
-				// common.sendMsg(msg,`You have **${cooldown.toFixed(2)}** minutes left on your cooldown.`);
-			}else{
-				if(chungus_user.id == msg.author.id){
-					common.sendMsg(msg,`You have no cooldown! Happy chungusing!`);
-				}else{
-					common.sendMsg(msg,`${chungus_user.displayName} has no cooldown!`);
-				}
-				
+	
+			});
+	
+		})
+	})
+	
+}
+
+function secondsAsChungus(userId, callback){
+	db.all(`SELECT u.UserId, c.DateCreated
+	FROM ChungusPoints c
+	INNER JOIN User u ON u.UserId = c.UserId
+	WHERE u.ServerId = (SELECT ServerId FROM User WHERE UserId = ${userId})
+	ORDER BY DateCreated ASC`,function(err,rows){
+
+		let seconds_as_chungus = 0;
+		let periodStart = 0;
+		for(let row of rows){
+			if(row.UserId == userId && periodStart == 0){
+				periodStart = row.DateCreated;
 			}
+			else if(row.UserId != userId && periodStart > 0){
+				seconds_as_chungus += row.DateCreated - periodStart;
+				periodStart = 0;
+			}
+		}
+		if(periodStart > 0){
+			seconds_as_chungus += (new Date() / 1000) - periodStart;
+		}
 
-		});
+		callback(seconds_as_chungus);
+	})
+}
 
+function getTotalPoints(userId, callback){
+	db.get(`SELECT SUM(Points) AS TotalPoints
+			FROM ChungusPoints
+			WHERE UserId = ${userId}`,function(err,row){
+
+		callback(row.TotalPoints);
 	})
 }
 
@@ -622,20 +568,50 @@ function checkHeldTime(msg,args){
 		common.sendMsg(msg,`Did not find a user with that name! Try again.`)
 		return;
 	}
-	db.get(`SELECT * FROM data WHERE disID = "${chungus_user.id}"`,function(err,row){
-		updateChungusHeldTime(chungus_user,false,function(seconds_as_chungus){
-
+	
+	userIdByMessage(msg, function(err, userId){
+		secondsAsChungus(userId, function(seconds_as_chungus){
 			let moment_time = moment.duration(seconds_as_chungus,'seconds').humanize();
-
+	
 			if(chungus_user.id == msg.author.id){
 				common.sendMsg(msg,`You have held chungus for a total of **${moment_time}**! (${Math.round(seconds_as_chungus/60)} minutes)`);
 			}else{
 				common.sendMsg(msg,`${chungus_user.displayName} has held chungus for a total of **${moment_time}**! (${Math.round(seconds_as_chungus/60)} minutes)`);
 			}
 		})
+	})
+}
 
-		
+function longestChungusHeld(userId, callback){
+	db.all(`SELECT u.UserId, c.DateCreated, c.BecameChungus
+		FROM ChungusPoints c
+		INNER JOIN User u ON u.UserId = c.UserId
+		WHERE u.ServerId = (SELECT ServerId FROM User WHERE UserId = ${userId})
+		ORDER BY DateCreated ASC`,function(err,rows){
 
+		let longestChungus = 0;
+		let periodStart = 0;
+		for(let row of rows){
+			if(row.UserId == userId && periodStart == 0 && row.BecameChungus == 1){
+				periodStart = row.DateCreated;
+			}
+			else if(row.UserId != userId && periodStart > 0){
+				let periodLength = row.DateCreated - periodStart;
+				if(periodLength > longestChungus){
+					longestChungus = periodLength;
+				}
+				periodStart = 0;
+			}
+		}
+
+		if(periodStart > 0){
+			let periodLength = (new Date() / 1000) - periodStart;
+			if(periodLength > longestChungus){
+				longestChungus = periodLength;
+			}
+		}
+
+		callback(longestChungus);
 	})
 }
 
@@ -649,68 +625,37 @@ function stats(msg,args){
 		return;
 	}
 
-	db.get(`SELECT d.data, c.points FROM data d LEFT JOIN chungus c ON c.disID = d.disID WHERE d.disID="${chungus_user.id}"`,function(err,row){
-		if(typeof(row) === 'undefined'){
-			common.sendMsg(msg,`Either I have no data on ${chungus_user.displayName}, or theres been an error!`)
-			return
-		}
-		var data;
-		if(typeof(row.data) === 'undefined'){
-			data = {"color":"gold","chungus_since":"false","seconds_as_chungus":[0]}
-		}else{
-			data = JSON.parse(row.data);
-		}
-		if(typeof(row.points) === 'undefined'){
-			var points = 0;
-		}else{
-			var points = row.points;
-		}
-
-		var longestchung = 0;
-		var totalchung = 0;
-
-		if(typeof(data['chungus_since']) !== 'undefined' && data['chungus_since'] != 'false'){
-			let current_timestamp = new Date() / 1000;
-			let current_duration = current_timestamp - data['chungus_since'];
-			longestchung = current_duration;
-			totalchung = current_duration;
-		}
-
-		if(typeof(data['seconds_as_chungus']) !== 'undefined'){
-			for(let x in data['seconds_as_chungus']){
-				totalchung += data['seconds_as_chungus'][x];
-				if(data['seconds_as_chungus'][x] > longestchung){
-					longestchung = data['seconds_as_chungus'][x];
-				}
-			}
-		}
-
-		var embed = new Discord.RichEmbed({
-
-		    "thumbnail": {
-		      "url": chungus_user.avatarURL
-		    },
-		    "fields": [
-		      {
-		        "name": "**Current Points**",
-		        "value": `**${points}**`
-		      },
-		      {
-		        "name": "**Total duration**",
-		        "value": `**${moment.duration(totalchung,'seconds').humanize()}** (${Math.round(totalchung/60)} minutes)`,
-		        "inline": true		      },
-		      {
-		        "name": "**Longest streak**",
-		        "value": `**${moment.duration(longestchung,'seconds').humanize()}** (${Math.round(longestchung/60)} minutes)`,
-		        "inline": true
-		      }
-		    ]
-		  });
-		embed.setColor(data['chungus_color']);
-
-
-		common.sendMsg(msg,{embed: embed})
+	db.userIdByDiscordId(msg.guild.id, chungus_user.id, function(err,userId){
+		getTotalPoints(userId, function(points){
+			longestChungusHeld(userId, function(longestchung){
+				secondsAsChungus(userId, function(totalchung){
+					var embed = new Discord.RichEmbed({
+		
+						"thumbnail": {
+						  "url": chungus_user.avatarURL
+						},
+						"fields": [
+						  {
+							"name": "**Current Points**",
+							"value": `**${points}**`
+						  },
+						  {
+							"name": "**Total duration**",
+							"value": `**${moment.duration(totalchung,'seconds').humanize()}** (${Math.round(totalchung/60)} minutes)`,
+							"inline": true		      },
+						  {
+							"name": "**Longest streak**",
+							"value": `**${moment.duration(longestchung,'seconds').humanize()}** (${Math.round(longestchung/60)} minutes)`,
+							"inline": true
+						  }
+						]
+					  });
+					// TODO: Re-implement embed showing color
+					// embed.setColor(data['chungus_color']);
+		
+					common.sendMsg(msg,{embed: embed})
+				})
+			})
+		})
 	})
-
-	
 }
