@@ -116,25 +116,6 @@ function dbCallback(){
 client.on('ready', () => {
     exports.BOTID = BOTID = client.user.id;
     logger.log('info',`Logged in as ${client.user.tag}`);
-    //update data table with all logged in servers
-    db.all("SELECT * FROM data",function(err,rows){
-        let guilds = client.guilds.array()
-        let ids = []
-        for( l in rows ){
-            ids.push(rows[l].disID)
-        }
-        for( i in guilds ){
-            if( !ids.includes(guilds[i].id) ){
-                db.runSecure(`INSERT INTO data VALUES(?,?,?)`,{
-                 1: guilds[i].name,
-                 2: guilds[i].id,
-                 3: "{}",
-             })
-            }
-        }
-        
-        
-    })
 });
 
 
