@@ -149,7 +149,6 @@ exports.msg = function(msg) {
 
 					imgur.uploadUrl(attachments[i].url,app.albumhash)
 						.then(function (json) {
-							console.log(json.data)
 							newurl = json.data.link;
 							saveMeme(newurl, msg);
 						})
@@ -168,7 +167,7 @@ function checkStats(msg,args){
 			FROM Meme m
 			INNER JOIN User u ON m.UserId = u.UserId
 			INNER JOIN Server s ON u.ServerId = s.ServerId
-			WHERE s.DiscordId = '208298947997990912';`
+			WHERE s.DiscordId = ${msg.guild.id};`
 		, function(err, row){
 
 		common.sendMsg(msg,`There are currently **${row.MemeCount}** memes in stock. The buffersize is set to **${app.buffer*100}%**.`,false,15);
@@ -228,7 +227,6 @@ function checkPoints(userId, serverId, callback){
 		, function(err, rows){
 		
 		for(let y of rows){
-			console.log(y)
 			score += y.IsUpvote || -1
 		}
 
