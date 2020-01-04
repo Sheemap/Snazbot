@@ -120,7 +120,7 @@ client.on('ready', () => {
 
 
 client.on('message', msg => {
-    if(msg.member.id == this.BOTID){
+    if(msg.author.id == this.BOTID || typeof(msg.channel.guild) === 'undefined'){
         return;
     }
     db.storeUserData(msg.member, function(err, row){
