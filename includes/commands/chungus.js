@@ -237,7 +237,7 @@ function claimLogic(msg,chungee_id,callback){
 					WHERE UserId = ${userId}
 					ORDER BY DateCreated DESC`,function(err,row){
 
-				calculateCD(row, function(current_cd_sec){
+				calculateCD(row, msg.guild.id, function(current_cd_sec){
 					if(current_cd_sec == 0){
 
 						db.runSecure(`INSERT INTO ChungusPoints VALUES (?,?,?,?,?,?)`,{
@@ -430,7 +430,7 @@ function initChungus(new_chungus,old_chungus){
 }
 
 // Takes database row of user and returns remaining cooldown in seconds
-function calculateCD(row,callback){
+function calculateCD(row, serverDisId, callback){
 	if(typeof(row) === 'undefined' || row.Points == '0' || isNaN(row.Points) || isNaN(row.DateCreated)){
 		callback(0);
 		return;
@@ -448,10 +448,13 @@ function calculateCD(row,callback){
 	elapsed_seconds = now_seconds - row.DateCreated;
 
 	if(max_chungus_cd !== 0){
-		db.get(`SELECT SUM(Points) AS TotalPoints
-				FROM ChungusPoints
-				ORDER BY TotalPoints DESC, DateCreated ASC
-				GROUP BY UserId
+		db.get(`SELECT SUM(c.Points) AS TotalPoints
+				FROM ChungusPoints c
+				INNER JOIN User u ON u.UserId = c.UserId
+				INNER JOIN Server s ON s.ServerId = u.ServerId
+				WHERE s.DiscordId = ${serverDisId}
+				GROUP BY u.UserId
+				ORDER BY TotalPoints DESC
 				LIMIT 1`
 				,function(err,row){
 			top_points = row.TotalPoints;
@@ -500,7 +503,7 @@ function checkCD(msg,args){
 				WHERE UserId = "${userId}"
 				ORDER BY DateCreated DESC
 				LIMIT 1`,function(err,row){
-			calculateCD(row,function(current_cd_sec){
+			calculateCD(row, msg.guild.id, function(current_cd_sec){
 			
 				if(current_cd_sec > 0){
 					let current_cd_min = current_cd_sec/60;
@@ -559,7 +562,11 @@ function getTotalPoints(userId, callback){
 			FROM ChungusPoints
 			WHERE UserId = ${userId}`,function(err,row){
 
-		callback(row.TotalPoints);
+		if(typeof(row) === 'undefined'){
+			callback(0)
+		}else{
+			callback(row.TotalPoints);
+		}
 	})
 }
 
