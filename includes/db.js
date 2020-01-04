@@ -17,7 +17,8 @@ exports.createNew = function(name,callback){
 
     db = new sqlite3.Database('./data/'+name);
     db.serialize(function() {
-        db.run("CREATE TABLE data (disNAM TEXT, disID TEXT, data TEXT)");
+        db.run("CREATE TABLE Server (ServerId INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, DiscordId INTEGER, Name TEXT)");
+        db.run("CREATE TABLE User (UserId INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, DiscordId INTEGER, DisplayName TEXT, UserName TEXT, ServerId INTEGER, FOREIGN KEY(ServerId) REFERENCES Server(ServerId))");
 
         // Run each commands table creation
         for(let x in db_schemes){
@@ -195,6 +196,59 @@ exports.all = function(query,callback){
         }
         if(!rebuilding & typeof callback != 'undefined'){
             callback(err,row)
+        }
+    })
+}
+
+exports.userIdByMessage = function(msg, callback){
+    this.userIdByDiscordId(msg.guild.id, msg.author.id, callback);
+}
+
+exports.userIdByDiscordId = function(serverDisId, userDisId, callback){
+    db.get(`SELECT u.UserId
+            FROM User u
+            INNER JOIN Server s ON s.ServerId = u.ServerId
+            WHERE u.DiscordId = ?
+            AND s.DiscordId = ?`, [userDisId, serverDisId], function(err, row){
+        if(err){
+            logger.log('error',err);
+        }
+        callback(err, row.UserId);
+    })
+};
+
+exports.storeUserData = function (member, callback){
+    db.get(`SELECT u.UserId, u.DisplayName, u.UserName 
+            FROM User u
+            INNER JOIN Server s ON s.ServerId = u.ServerId
+            WHERE u.DiscordId = ${member.id} 
+            AND s.DiscordId = ${member.guild.id}`, function(err, row){
+        if(typeof(row) !== 'undefined'){
+            if(member.displayName != row.DisplayName || member.user.username != row.UserName){
+                logger.log('info','Updating user info');
+                db.run(`UPDATE User SET DisplayName = ?, UserName = ? WHERE UserId = ?`, [member.displayName, member.user.username, row.UserId], callback);
+            }else{
+                callback();
+            }
+        }else{
+            db.get(`SELECT ServerId, Name FROM Server WHERE DiscordId = ${member.guild.id}`, function(err, row){
+                if(typeof(row) !== 'undefined'){
+                    if(member.guild.name != row.name){
+                        logger.log('info','Updating server info');
+                        db.run(`UPDATE Server SET Name = ? WHERE ServerId = ?`, [member.guild.name, row.ServerId]);
+                    }
+                    logger.log('info','Inserting new user');
+                    db.run(`INSERT INTO User VALUES (null, ?, ?, ?, ?)`, [member.id, member.displayName, member.user.username, row.ServerId], callback);
+                }else{
+                    logger.log('info','Inserting new server');
+                    db.run(`INSERT INTO Server VALUES (null, ?, ?)`, [member.guild.id, member.guild.name], function(err){
+                        db.get(`SELECT ServerId FROM Server WHERE DiscordId = ?`, [member.guild.id], function(err,row){
+                            logger.log('info','Inserting new user');
+                            db.run(`INSERT INTO User VALUES (null, ?, ?, ?, ?)`, [member.id, member.displayName, member.user.username, row.ServerId], callback);
+                        });
+                    })
+                }
+            })
         }
     })
 }

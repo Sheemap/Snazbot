@@ -116,41 +116,26 @@ function dbCallback(){
 client.on('ready', () => {
     exports.BOTID = BOTID = client.user.id;
     logger.log('info',`Logged in as ${client.user.tag}`);
-    //update data table with all logged in servers
-    db.all("SELECT * FROM data",function(err,rows){
-        let guilds = client.guilds.array()
-        let ids = []
-        for( l in rows ){
-            ids.push(rows[l].disID)
-        }
-        for( i in guilds ){
-            if( !ids.includes(guilds[i].id) ){
-                db.runSecure(`INSERT INTO data VALUES(?,?,?)`,{
-                 1: guilds[i].name,
-                 2: guilds[i].id,
-                 3: "{}",
-             })
-            }
-        }
-        
-        
-    })
 });
 
 
 client.on('message', msg => {
-    comm.msg(msg);
-    if(msg.content.startsWith(prefix)){
-        comm.parse(msg);
+    if(msg.member.id == this.BOTID){
+        return;
     }
-    
-    if(msg.guild !== null){
-        if(!msg.content.toLowerCase().includes('jim') && msg.guild.id == '384946871103258626' && msg.author.id != BOTID){
-            msg.delete();
-            logger.log('info','Offending Jim message from '+msg.author.username);
+    db.storeUserData(msg.member, function(err, row){
+        comm.msg(msg);
+        if(msg.content.startsWith(prefix)){
+            comm.parse(msg);
         }
-    }
-    
+        
+        if(msg.guild !== null){
+            if(!msg.content.toLowerCase().includes('jim') && msg.guild.id == '384946871103258626' && msg.author.id != BOTID){
+                msg.delete();
+                logger.log('info','Offending Jim message from '+msg.author.username);
+            }
+        }
+    });
 });
 
 client.on('messageReactionAdd', (reaction,user) => {
