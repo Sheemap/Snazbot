@@ -5,6 +5,7 @@ const common = require('../common.js');
 const app = require('../../app.js');
 const db = require('../db.js');
 
+const schedule = require('node-schedule');
 const moment = require('moment');
 
 exports.description = 'Claim yourself as chungus';
@@ -30,6 +31,8 @@ exports.db_init = `INSERT INTO ChungusPoints VALUES (null, 0, 0, 0, 0, ${seconds
 
 var max_chungus_cd = app.config.chungus.maxcd;
 var max_cd_factor = app.config.chungus.maxcdfactor;
+
+const DECAYPERCENT = 0.025
 
 // const app.chungusrole = app.chungusrole;
 // const app.chunguschan.split(',') = app.chunguschan.split(',');
@@ -383,7 +386,6 @@ function checkLeader(msg){
 								ORDER BY ChungusPointsId DESC
 								LIMIT 1
 							)`);
-							console.log('asdf')
 							initChungus(topmember,old_chungus);
 						})
 					})
@@ -569,7 +571,7 @@ function checkHeldTime(msg,args){
 		return;
 	}
 	
-	userIdByMessage(msg, function(err, userId){
+	db.userIdByDiscordId(msg.guild.id, chungus_user.id, function(err, userId){
 		secondsAsChungus(userId, function(seconds_as_chungus){
 			let moment_time = moment.duration(seconds_as_chungus,'seconds').humanize();
 	
@@ -659,3 +661,25 @@ function stats(msg,args){
 		})
 	})
 }
+
+// Decay
+schedule.scheduleJob('0 */6 * * *', function(fireDate){
+	logger.log("debug",`Processing chungus decay...`);
+	db.all(`SELECT UserId, SUM(Points) AS TotalPoints
+			FROM ChungusPoints
+			WHERE UserId > 0
+			GROUP BY UserId
+			HAVING TotalPoints > 0`,
+		function(err, rows){
+			for(let row of rows){
+				db.runSecure(`INSERT INTO ChungusPoints VALUES (null, ?, ?, ?, ?, ?)`,
+				{
+					1: Math.ceil(row.TotalPoints * DECAYPERCENT) * -1,
+					2: 0,
+					3: 0,
+					4: row.UserId,
+					5: new Date() / 1000
+				});
+			}
+	});
+});
