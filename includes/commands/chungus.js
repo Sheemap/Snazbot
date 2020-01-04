@@ -185,14 +185,16 @@ function top(msg,args){
 			INNER JOIN User u ON u.UserId = c.UserId
 			INNER JOIN Server s ON s.ServerId = u.ServerId
 			WHERE u.UserId > 0
-			AND s.ServerId = '${msg.guild.id}'
+			AND s.DiscordId = ${msg.guild.id}
 			GROUP BY u.UserId
 			ORDER BY Points DESC
 			LIMIT 5`,function(err,rows){
 
 		var content = 'Top chungus:\n';
-		for(let i=0;i<rows.length;i++){
-			content += `${i+1}. ${row.DisplayName}: **${row.Points}**\n`;
+		let i = 1;
+		for(let row of rows){
+			content += `${i}. ${row.DisplayName}: **${row.Points}**\n`;
+			i++;
 		}
 
 		common.sendMsg(msg,content);
