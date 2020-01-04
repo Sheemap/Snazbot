@@ -105,7 +105,7 @@ exports.react = function(reaction,user,added){
 					}
 
 					let row = rows.filter(x => x.MessageId == msgIds[index])[0];
-					db.userIdByMessage(reaction.message, function(err,userId){
+					db.userIdByDiscordId(reaction.message.guild.id, user.id, function(err,userId){
 						db.runSecure(`INSERT INTO MemeVote VALUES (null, ?, ?, ?, ?, ?)`, {
 							1: row.MemeId, 
 							2: isUpvote, 
