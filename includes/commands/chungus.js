@@ -597,12 +597,13 @@ function longestChungusHeld(userId, callback){
 			if(row.UserId == userId && periodStart == 0 && row.BecameChungus == 1){
 				periodStart = row.DateCreated;
 			}
-			else if(row.UserId != userId && periodStart > 0){
+			else if(row.UserId != userId && periodStart > 0 && row.BecameChungus == 1){
 				let periodLength = row.DateCreated - periodStart;
 				if(periodLength > longestChungus){
 					longestChungus = periodLength;
 				}
 				periodStart = 0;
+				
 			}
 		}
 
