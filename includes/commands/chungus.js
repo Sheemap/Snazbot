@@ -264,7 +264,14 @@ function claimLogic(msg,chungee_id,callback){
 }
 
 function checkValue(msg,args){
-	db.get(`SELECT DateCreated FROM ChungusPoints ORDER BY DateCreated DESC LIMIT 1`,function(err,row){
+	db.get(`SELECT c.DateCreated
+			FROM ChungusPoints c
+			INNER JOIN User u ON u.UserId = c.UserId
+			INNER JOIN Server s ON s.ServerId = u.ServerId
+			WHERE c.Points >= 0
+			AND s.DiscordId = ${msg.guild.id}
+			ORDER BY c.DateCreated DESC
+			LIMIT 1`,function(err,row){
 		let seconds = (new Date() / 1000) - row.DateCreated;
 		let minutes = Math.round(seconds/60);
 		let points = getRewardAmount(row);
@@ -380,14 +387,14 @@ function checkLeader(msg){
 
 						db.userIdByMessage(msg,function(err,userId){
 							db.run(`UPDATE ChungusPoints
-							SET BecameChungus = 1
-							WHERE ChungusPointsId IN (
-								SELECT ChungusPointsId
-								FROM ChungusPoints
-								WHERE UserId = ${userId}
-								ORDER BY ChungusPointsId DESC
-								LIMIT 1
-							)`);
+									SET BecameChungus = 1
+									WHERE ChungusPointsId IN (
+										SELECT ChungusPointsId
+										FROM ChungusPoints
+										WHERE UserId = ${userId}
+										ORDER BY ChungusPointsId DESC
+										LIMIT 1
+									)`);
 							initChungus(topmember,old_chungus);
 						})
 					})
