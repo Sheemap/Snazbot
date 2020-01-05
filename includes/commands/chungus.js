@@ -217,6 +217,7 @@ function claimLogic(msg,chungee_id,callback){
 			INNER JOIN User u ON u.UserId = c.UserId
 			INNER JOIN Server s ON s.ServerId = u.ServerId
 			WHERE s.DiscordId = ${msg.guild.id}
+			AND c.Points >= 0
 			ORDER BY c.DateCreated DESC
 			LIMIT 1`,function(err,row){
 		var minutes;
@@ -540,10 +541,10 @@ function checkCD(msg,args){
 
 function secondsAsChungus(userId, callback){
 	db.all(`SELECT u.UserId, c.DateCreated
-	FROM ChungusPoints c
-	INNER JOIN User u ON u.UserId = c.UserId
-	WHERE u.ServerId = (SELECT ServerId FROM User WHERE UserId = ${userId})
-	ORDER BY DateCreated ASC`,function(err,rows){
+			FROM ChungusPoints c
+			INNER JOIN User u ON u.UserId = c.UserId
+			WHERE u.ServerId = (SELECT ServerId FROM User WHERE UserId = ${userId})
+			ORDER BY DateCreated ASC`,function(err,rows){
 
 		let seconds_as_chungus = 0;
 		let periodStart = 0;
@@ -602,10 +603,10 @@ function checkHeldTime(msg,args){
 
 function longestChungusHeld(userId, callback){
 	db.all(`SELECT u.UserId, c.DateCreated, c.BecameChungus
-		FROM ChungusPoints c
-		INNER JOIN User u ON u.UserId = c.UserId
-		WHERE u.ServerId = (SELECT ServerId FROM User WHERE UserId = ${userId})
-		ORDER BY DateCreated ASC`,function(err,rows){
+			FROM ChungusPoints c
+			INNER JOIN User u ON u.UserId = c.UserId
+			WHERE u.ServerId = (SELECT ServerId FROM User WHERE UserId = ${userId})
+			ORDER BY DateCreated ASC`,function(err,rows){
 
 		let longestChungus = 0;
 		let periodStart = 0;
