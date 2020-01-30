@@ -304,7 +304,7 @@ function claim(msg,args){
 				`Congrats! Its been **${human_chungus_mins}** (${chungus_mins} minutes) since the last chungus call. You have successfully claimed **${gained_points}** chungus, your new total is **${total_points}** chungus.`,
 				`Woo wee! Its been **${human_chungus_mins}** (${chungus_mins} minutes) since the last chungus call. You've just adopted **${gained_points}** chungus, that makes you the proud owner of **${total_points}** chungus.`,
 				`Hallelujah! Its been **${human_chungus_mins}** (${chungus_mins} minutes) since the last chungus call. The lord has blessed you with **${gained_points}** additional chungus. Thank thine lord as you now hold **${total_points}** chungus.`,
-				`Youve been waiting for **${human_chungus_mins}** (${chungus_mins} minutes). I hope it was worth it, as you just gained **${gained_points}** chungus. Thats just the right amount to put you at **${total_points}** chungus.`,
+				`You've been waiting for **${human_chungus_mins}** (${chungus_mins} minutes). I hope it was worth it, as you just gained **${gained_points}** chungus. Thats just the right amount to put you at **${total_points}** chungus.`,
 				`You my friend, are going to the top! Its been **${human_chungus_mins}** (${chungus_mins} minutes). You racked up **${gained_points}** chungus. This brings you to the perfect chungus count of **${total_points}**.`
 			]
 
