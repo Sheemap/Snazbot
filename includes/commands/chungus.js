@@ -269,9 +269,7 @@ function claimLogic(msg, chungee_id, callback) {
 					WHERE UserId = ${userId}
 					ORDER BY DateCreated DESC`,
 					function(err, row) {
-						calculateCD(row, msg.guild.id, function(
-							current_cd_sec
-						) {
+						calculateCD(userId, function(current_cd_sec) {
 							if (current_cd_sec == 0) {
 								db.runSecure(
 									`INSERT INTO ChungusPoints VALUES (?,?,?,?,?,?)`,
@@ -510,42 +508,70 @@ function initChungus(new_chungus, old_chungus) {
 }
 
 // Takes database row of user and returns remaining cooldown in seconds
-function calculateCD(row, serverDisId, callback) {
-	if (
-		typeof row === "undefined" ||
-		row.Points == "0" ||
-		isNaN(row.Points) ||
-		isNaN(row.DateCreated)
-	) {
-		callback(0);
-		return;
-	}
+function calculateCD(userId, callback) {
+	db.get(
+		`SELECT lastClaim.DateCreated, SUM(Points) AS Points
+			FROM ChungusPoints
+			CROSS JOIN (
+				SELECT MAX(DateCreated) AS DateCreated
+				FROM ChungusPoints
+				WHERE UserId = ${userId}
+				AND Points > 0
+				) lastClaim
+			WHERE UserId = ${userId}`,
+		function(err, row) {
+			if (
+				typeof row === "undefined" ||
+				row.Points == "0" ||
+				isNaN(row.Points) ||
+				isNaN(row.DateCreated)
+			) {
+				callback(0);
+				return;
+			}
 
-	let points = row.Points;
-	let last_claim = row.DateCreated;
-	let now_seconds = new Date() / 1000;
-	let total_cd, elapsed_seconds, current_cd, top_points, max_cd_threshold;
+			let points = row.Points;
+			let last_claim = row.DateCreated;
+			let now_seconds = new Date() / 1000;
+			let total_cd,
+				elapsed_seconds,
+				current_cd,
+				top_points,
+				max_cd_threshold;
 
-	elapsed_seconds = now_seconds - row.DateCreated;
+			elapsed_seconds = now_seconds - row.DateCreated;
 
-	if (max_chungus_cd !== 0) {
-		db.get(
-			`SELECT SUM(c.Points) AS TotalPoints
+			if (max_chungus_cd !== 0) {
+				db.get(
+					`SELECT SUM(c.Points) AS TotalPoints
 							FROM ChungusPoints c
 							INNER JOIN User u ON u.UserId = c.UserId
 							INNER JOIN Server s ON s.ServerId = u.ServerId
-							WHERE s.DiscordId = ${serverDisId}
+							WHERE s.DiscordId = (SELECT Server.DiscordId FROM Server INNER JOIN User ON User.ServerId = Server.ServerId AND User.UserId = ${userId})
 							GROUP BY u.UserId
 							ORDER BY TotalPoints DESC
 							LIMIT 1`,
-			function(err, row) {
-				top_points = row.TotalPoints;
-				max_cd_threshold = top_points * max_cd_factor;
+					function(err, row) {
+						top_points = row.TotalPoints;
+						max_cd_threshold = top_points * max_cd_factor;
 
-				// Total cooldown is a factor of how many points you have relative to the top chungus player.
-				total_cd = max_chungus_cd * (points / max_cd_threshold);
+						// Total cooldown is a factor of how many points you have relative to the top chungus player.
+						total_cd = max_chungus_cd * (points / max_cd_threshold);
 
-				if (total_cd > max_chungus_cd) total_cd = max_chungus_cd;
+						if (total_cd > max_chungus_cd)
+							total_cd = max_chungus_cd;
+
+						if (total_cd <= elapsed_seconds) {
+							current_cd = 0;
+						} else {
+							current_cd = total_cd - elapsed_seconds;
+						}
+
+						callback(current_cd);
+					}
+				);
+			} else {
+				total_cd = points * 15;
 
 				if (total_cd <= elapsed_seconds) {
 					current_cd = 0;
@@ -555,18 +581,8 @@ function calculateCD(row, serverDisId, callback) {
 
 				callback(current_cd);
 			}
-		);
-	} else {
-		total_cd = points * 15;
-
-		if (total_cd <= elapsed_seconds) {
-			current_cd = 0;
-		} else {
-			current_cd = total_cd - elapsed_seconds;
 		}
-
-		callback(current_cd);
-	}
+	);
 }
 
 function checkCD(msg, args) {
@@ -578,57 +594,44 @@ function checkCD(msg, args) {
 		common.sendMsg(msg, `Did not find a user with that name! Try again.`);
 		return;
 	}
-	db.userIdByMessage(msg, function(err, userId) {
-		db.get(
-			`SELECT Points, DateCreated
-				FROM ChungusPoints
-				WHERE UserId = "${userId}"
-				ORDER BY DateCreated DESC
-				LIMIT 1`,
-			function(err, row) {
-				calculateCD(row, msg.guild.id, function(current_cd_sec) {
-					if (current_cd_sec > 0) {
-						let current_cd_min = current_cd_sec / 60;
-						let niceformat = current_cd_sec * 1000 + new Date() * 1;
+	db.userIdByDiscordId(msg.guild.id, chungus_user.id, function(err, userId) {
+		calculateCD(userId, function(current_cd_sec) {
+			if (current_cd_sec > 0) {
+				let current_cd_min = current_cd_sec / 60;
+				let niceformat = current_cd_sec * 1000 + new Date() * 1;
 
-						if (chungus_user.id == msg.author.id) {
-							common.sendMsg(
-								msg,
-								`You will be able to chungus again **${moment(
-									niceformat
-								).fromNow()}** (${Math.round(
-									current_cd_min
-								)} minutes).`
-							);
-						} else {
-							common.sendMsg(
-								msg,
-								`${
-									chungus_user.displayName
-								} will be able to chungus again **${moment(
-									niceformat
-								).fromNow()}** (${Math.round(
-									current_cd_min
-								)} minutes).`
-							);
-						}
-						// common.sendMsg(msg,`You have **${cooldown.toFixed(2)}** minutes left on your cooldown.`);
-					} else {
-						if (chungus_user.id == msg.author.id) {
-							common.sendMsg(
-								msg,
-								`You have no cooldown! Happy chungusing!`
-							);
-						} else {
-							common.sendMsg(
-								msg,
-								`${chungus_user.displayName} has no cooldown!`
-							);
-						}
-					}
-				});
+				if (chungus_user.id == msg.author.id) {
+					common.sendMsg(
+						msg,
+						`You will be able to chungus again **${moment(
+							niceformat
+						).fromNow()}** (${Math.round(current_cd_min)} minutes).`
+					);
+				} else {
+					common.sendMsg(
+						msg,
+						`${
+							chungus_user.displayName
+						} will be able to chungus again **${moment(
+							niceformat
+						).fromNow()}** (${Math.round(current_cd_min)} minutes).`
+					);
+				}
+				// common.sendMsg(msg,`You have **${cooldown.toFixed(2)}** minutes left on your cooldown.`);
+			} else {
+				if (chungus_user.id == msg.author.id) {
+					common.sendMsg(
+						msg,
+						`You have no cooldown! Happy chungusing!`
+					);
+				} else {
+					common.sendMsg(
+						msg,
+						`${chungus_user.displayName} has no cooldown!`
+					);
+				}
 			}
-		);
+		});
 	});
 }
 
