@@ -69,3 +69,5 @@ config/
 data/
 
 *.db
+
+.vscode/
