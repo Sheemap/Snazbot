@@ -714,6 +714,27 @@ function checkHeldTime(msg, args) {
 	});
 }
 
+function currentStreak(userId, callback){
+	db.all(
+		//There has to be a better way to only get the most recent row where "BecameChungus=1" but I don't know the db well enough to craft it.
+		`SELECT u.UserId, c.DateCreated, c.BecameChungus
+			FROM ChungusPoints c
+			INNER JOIN User u ON u.UserId = c.UserId
+			WHERE u.ServerId = (SELECT ServerId FROM User WHERE UserId = ${userId})
+			ORDER BY DateCreated DESC`,
+		function(err, rows) {
+			let timeSinceBecameChungus = 0;
+			for (let row of rows){
+				if (row.BecameChungus = 1) {
+					if (row.UserId != userId) {break;} //They are not currently chungus leader
+					timeSinceBecameChungus = new Date() / 1000 - row.DateCreated;
+				}
+			}
+			callback(timeSinceBecameChungus);
+		}
+	);
+}
+
 function longestChungusHeld(userId, callback) {
 	db.all(
 		`SELECT u.UserId, c.DateCreated, c.BecameChungus
