@@ -230,7 +230,11 @@ function getRewardAmount(row) {
 	}
 	let seconds = new Date() / 1000 - row.DateCreated;
 	let minutes = Math.round(seconds / 60);
-	return Math.round(Math.pow(minutes, 1.85) / 70);
+	let bonus = 0;
+	if (minutes == 1337) {
+		bonus = 69;
+	}
+	return Math.round(Math.pow(minutes, 1.85) / 70) + bonus;
 }
 
 function claimLogic(msg, chungee_id, callback) {
@@ -361,11 +365,16 @@ function claim(msg, args) {
 				`You've been waiting for **${human_chungus_mins}** (${chungus_mins} minutes). I hope it was worth it, as you just gained **${gained_points}** chungus. Thats just the right amount to put you at **${total_points}** chungus.`,
 				`You my friend, are going to the top! Its been **${human_chungus_mins}** (${chungus_mins} minutes). You racked up **${gained_points}** chungus. This brings you to the perfect chungus count of **${total_points}**.`,
 			];
+			if (chungus_mins == 1337){
+				common.sendMsg(`Holy H*ckers buddy! It's been **1337** minutes minutes since the last person claimed chungus. Congratulations on your righteous claim! Normally, you would have gained a measly 8675 points, but for being so awesome, you get an extra 69 points--bringing up a new point gain of **8745**. This brings you to a new total of **${total_points}** chungus!`);
+			} else {
+				common.sendMsg(
+					msg,
+					`${CALLTEXT[Math.floor(Math.random() * CALLTEXT.length)]}`
+				);
 
-			common.sendMsg(
-				msg,
-				`${CALLTEXT[Math.floor(Math.random() * CALLTEXT.length)]}`
-			);
+			}
+
 		} else {
 			let min_left = Math.round(return_data["current_cd_sec"] / 60);
 			let timeleft = moment
