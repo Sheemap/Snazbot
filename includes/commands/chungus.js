@@ -366,7 +366,7 @@ function claim(msg, args) {
 				`You my friend, are going to the top! Its been **${human_chungus_mins}** (${chungus_mins} minutes). You racked up **${gained_points}** chungus. This brings you to the perfect chungus count of **${total_points}**.`,
 			];
 			if (chungus_mins == 1337){
-				common.sendMsg(`Holy H*ckers buddy! It's been **1337** minutes minutes since the last person claimed chungus. Congratulations on your righteous claim! Normally, you would have gained a measly 8675 points, but for being so awesome, you get an extra 69 points--bringing up a new point gain of **8745**. This brings you to a new total of **${total_points}** chungus!`);
+				common.sendMsg(`Holy H*ckers buddy! It's been **1337** minutes minutes since the last person claimed chungus. Congratulations on your righteous claim! Normally, you would have gained a measly **${gained_points-69}** points, but for being so awesome, you get an extra 69 points--bringing up a new point gain of **${gained_points}**. This brings you to a new total of **${total_points}** chungus!`);
 			} else {
 				common.sendMsg(
 					msg,
