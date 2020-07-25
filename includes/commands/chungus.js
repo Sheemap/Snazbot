@@ -720,16 +720,14 @@ function currentStreak(userId, callback){
 		`SELECT u.UserId, c.DateCreated, c.BecameChungus
 			FROM ChungusPoints c
 			INNER JOIN User u ON u.UserId = c.UserId
-			WHERE u.ServerId = (SELECT ServerId FROM User WHERE UserId = ${userId})
-			ORDER BY DateCreated DESC`,
-		function(err, rows) {
-			let timeSinceBecameChungus = 0;
-			for (let row of rows){
-				if (row.BecameChungus = 1) {
-					if (row.UserId != userId) {break;} //They are not currently chungus leader
-					timeSinceBecameChungus = new Date() / 1000 - row.DateCreated;
-				}
-			}
+			WHERE u.ServerId = (SELECT ServerId FROM User WHERE UserId = ${userId}) AND BecameChungus = 1
+			ORDER BY DateCreated DESC
+			LIMIT 1`,
+		function(err, row) {
+			let timeSinceBecameChungus = 0
+			if (row.UserId = userId) { //They are the current chungus leader -> timeSinceBecameChunges gets set to value != 0
+				timeSinceBecameChungus = new Date() / 1000 - row.DateCreated;
+			} 
 			callback(timeSinceBecameChungus);
 		}
 	);
@@ -791,34 +789,47 @@ function stats(msg, args) {
 		getTotalPoints(userId, function(points) {
 			longestChungusHeld(userId, function(longestchung) {
 				secondsAsChungus(userId, function(totalchung) {
-					var embed = new Discord.RichEmbed({
-						thumbnail: {
-							url: chungus_user.avatarURL,
-						},
-						fields: [
-							{
-								name: "**Current Points**",
-								value: `**${points}**`,
+					currentStreak(userId, function(streakseconds) {
+						var embed = new Discord.RichEmbed({
+							thumbnail: {
+								url: chungus_user.avatarURL,
 							},
-							{
-								name: "**Total duration**",
-								value: `**${moment
-									.duration(totalchung, "seconds")
+							fields: [
+								{
+									name: "**Current Points**",
+									value: `**${points}**`,
+								},
+								{
+									name: "**Total duration**",
+									value: `**${moment
+										.duration(totalchung, "seconds")
+										.humanize()}** (${Math.round(
+										totalchung / 60
+									)} minutes)`,
+									inline: true,
+								},
+								{
+									name: "**Longest streak**",
+									value: `**${moment
+										.duration(longestchung, "seconds")
+										.humanize()}** (${Math.round(
+										longestchung / 60
+									)} minutes)`,
+									inline: true,
+								},
+							],
+						});
+						if (streakseconds > 0) {
+							embed.addField(
+								name="**Has Been Top Chungus For**", //name
+								value=`**${moment 
+									.duration(streakseconds, "seconds") // humanized time
 									.humanize()}** (${Math.round(
-									totalchung / 60
-								)} minutes)`,
-								inline: true,
-							},
-							{
-								name: "**Longest streak**",
-								value: `**${moment
-									.duration(longestchung, "seconds")
-									.humanize()}** (${Math.round(
-									longestchung / 60
-								)} minutes)`,
-								inline: true,
-							},
-						],
+									streakseconds / 60 // total minutes
+									)} minutes)`,
+								inline=false // if it's inline
+							)
+						}
 					});
 					// TODO: Re-implement embed showing color
 					// embed.setColor(data['chungus_color']);
