@@ -129,6 +129,7 @@ function setChungusSettings(userId, name, color) {
 }
 
 function changeName(msg, args) {
+	// this can be simplified i think?
 	let role;
 	let roles = msg.member.roles.array();
 	let chungus = false;
@@ -715,17 +716,17 @@ function checkHeldTime(msg, args) {
 }
 
 function currentStreak(userId, callback){
-	db.all(
+	db.get(
 		//There has to be a better way to only get the most recent row where "BecameChungus=1" but I don't know the db well enough to craft it.
 		`SELECT u.UserId, c.DateCreated, c.BecameChungus
 			FROM ChungusPoints c
 			INNER JOIN User u ON u.UserId = c.UserId
-			WHERE u.ServerId = (SELECT ServerId FROM User WHERE UserId = ${userId}) AND BecameChungus = 1
+			WHERE u.ServerId = (SELECT ServerId FROM User WHERE UserId = ${userId}) AND c.BecameChungus = 1
 			ORDER BY DateCreated DESC
 			LIMIT 1`,
 		function(err, row) {
 			let timeSinceBecameChungus = 0
-			if (row.UserId = userId) { //They are the current chungus leader -> timeSinceBecameChunges gets set to value != 0
+			if (row.UserId == userId) { //They are the current chungus leader -> timeSinceBecameChunges gets set to value != 0
 				timeSinceBecameChungus = new Date() / 1000 - row.DateCreated;
 			} 
 			callback(timeSinceBecameChungus);
@@ -821,20 +822,20 @@ function stats(msg, args) {
 						});
 						if (streakseconds > 0) {
 							embed.addField(
-								name="**Has Been Top Chungus For**", //name
-								value=`**${moment 
+								"**Has Been Top Chungus For**", //name
+								`**${moment 
 									.duration(streakseconds, "seconds") // humanized time
 									.humanize()}** (${Math.round(
 									streakseconds / 60 // total minutes
 									)} minutes)`,
-								inline=false // if it's inline
+								false // if it's inline
 							)
 						}
-					});
-					// TODO: Re-implement embed showing color
-					// embed.setColor(data['chungus_color']);
+						// TODO: Re-implement embed showing color
+						// embed.setColor(data['chungus_color']);
 
-					common.sendMsg(msg, { embed: embed });
+						common.sendMsg(msg, { embed: embed });
+					});
 				});
 			});
 		});
