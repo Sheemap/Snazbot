@@ -373,7 +373,7 @@ function claim(msg, args) {
 			];
 			if (chungus_mins in BONUS_REWARDS){
 				let bonus = BONUS_REWARDS[chungus_mins];
-				common.sendMsg(msg, `Holy H*ckers buddy! It's been **${chungus_mins}** minutes since the last person claimed chungus. Congratulations on your righteous claim! Normally, you would have gained a measly **${gained_points-bonus}** points, but for being so awesome, you get an extra ${bonus} points--giving a new point gain of **${gained_points}**. This brings you to a new total of **${total_points}** chungus!`);
+				common.sendMsg(msg, `Holy H*ckers buddy! It's been **${chungus_mins}** minutes since the last person claimed chungus. Congratulations on your righteous claim! Normally, you would have gained a measly **${gained_points-bonus}** points, but for being so awesome, you get an extra **${bonus}** points--giving a new point gain of **${gained_points}**. This brings you to a new total of **${total_points}** chungus!`);
 			} else {
 				common.sendMsg(
 					msg,
