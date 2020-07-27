@@ -8,6 +8,12 @@ const db = require("../db.js");
 const schedule = require("node-schedule");
 const moment = require("moment");
 
+const BONUS_REWARDS = {
+	"420": 69,
+	"1337": 420,
+	"6969": 31337
+}
+
 exports.description = "Claim yourself as chungus";
 
 exports.usage = `Use "${app.prefix}chungus" to claim your chungus points.\n\nUse "${app.prefix}chungus top" to check leaderboard.\n\nUse "${app.prefix}chungus cd <user>" to check someones current cooldown. If you dont specify a person, it defaults to you.\n\nIf you're the chungus, use "${app.prefix}chungus color <#hex code>" to change your color, and "${app.prefix}chungus name <name>" to change your role title (Must include the word chungus).\n\nUse "${app.prefix}chungus total to see how long you've held the chungus over time."`;
@@ -161,7 +167,7 @@ function changeName(msg, args) {
 			common.sendMsg(msg, `Please enter a valid name.`);
 		}
 	} else {
-		common.sendMsg(msg, `You arent the chungus! You dont decide the name!`);
+		common.sendMsg(msg, `You aren't the chungus! You don't decide the name!`);
 	}
 }
 
@@ -195,7 +201,7 @@ function changeColor(msg, args) {
 	} else {
 		common.sendMsg(
 			msg,
-			`You arent the chungus! You dont decide the color!`
+			`You aren't the chungus! You don't decide the color!`
 		);
 	}
 }
@@ -230,7 +236,11 @@ function getRewardAmount(row) {
 	}
 	let seconds = new Date() / 1000 - row.DateCreated;
 	let minutes = Math.round(seconds / 60);
-	return Math.round(Math.pow(minutes, 1.85) / 70);
+	let bonus = 0;
+	if (minutes in BONUS_REWARDS) {
+		bonus = BONUS_REWARDS[minutes];
+	}
+	return Math.round(Math.pow(minutes, 1.85) / 70) + bonus;
 }
 
 function claimLogic(msg, chungee_id, callback) {
@@ -355,17 +365,23 @@ function claim(msg, args) {
 				.humanize();
 
 			var CALLTEXT = [
-				`Congrats! Its been **${human_chungus_mins}** (${chungus_mins} minutes) since the last chungus call. You have successfully claimed **${gained_points}** chungus, your new total is **${total_points}** chungus.`,
-				`Woo wee! Its been **${human_chungus_mins}** (${chungus_mins} minutes) since the last chungus call. You've just adopted **${gained_points}** chungus, that makes you the proud owner of **${total_points}** chungus.`,
-				`Hallelujah! Its been **${human_chungus_mins}** (${chungus_mins} minutes) since the last chungus call. The lord has blessed you with **${gained_points}** additional chungus. Thank thine lord as you now hold **${total_points}** chungus.`,
+				`Congrats! It's been **${human_chungus_mins}** (${chungus_mins} minutes) since the last chungus call. You have successfully claimed **${gained_points}** chungus, your new total is **${total_points}** chungus.`,
+				`Woo wee! It's been **${human_chungus_mins}** (${chungus_mins} minutes) since the last chungus call. You've just adopted **${gained_points}** chungus, that makes you the proud owner of **${total_points}** chungus.`,
+				`Hallelujah! It's been **${human_chungus_mins}** (${chungus_mins} minutes) since the last chungus call. The lord has blessed you with **${gained_points}** additional chungus. Thank thine lord as you now hold **${total_points}** chungus.`,
 				`You've been waiting for **${human_chungus_mins}** (${chungus_mins} minutes). I hope it was worth it, as you just gained **${gained_points}** chungus. Thats just the right amount to put you at **${total_points}** chungus.`,
 				`You my friend, are going to the top! Its been **${human_chungus_mins}** (${chungus_mins} minutes). You racked up **${gained_points}** chungus. This brings you to the perfect chungus count of **${total_points}**.`,
 			];
+			if (chungus_mins in BONUS_REWARDS){
+				let bonus = BONUS_REWARDS[chungus_mins];
+				common.sendMsg(msg, `Holy H*ckers buddy! It's been **${chungus_mins}** minutes since the last person claimed chungus. Congratulations on your righteous claim! Normally, you would have gained a measly **${gained_points-bonus}** points, but for being so awesome, you get an extra ${bonus} points--giving a new point gain of **${gained_points}**. This brings you to a new total of **${total_points}** chungus!`);
+			} else {
+				common.sendMsg(
+					msg,
+					`${CALLTEXT[Math.floor(Math.random() * CALLTEXT.length)]}`
+				);
 
-			common.sendMsg(
-				msg,
-				`${CALLTEXT[Math.floor(Math.random() * CALLTEXT.length)]}`
-			);
+			}
+
 		} else {
 			let min_left = Math.round(return_data["current_cd_sec"] / 60);
 			let timeleft = moment
