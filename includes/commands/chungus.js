@@ -734,10 +734,9 @@ function checkHeldTime(msg, args) {
 function currentStreak(userId, callback){
 	db.get(
 		//There has to be a better way to only get the most recent row where "BecameChungus=1" but I don't know the db well enough to craft it.
-		`SELECT u.UserId, c.DateCreated, c.BecameChungus
-			FROM ChungusPoints c
-			INNER JOIN User u ON u.UserId = c.UserId
-			WHERE u.ServerId = (SELECT ServerId FROM User WHERE UserId = ${userId}) AND c.BecameChungus = 1
+		`SELECT UserId, DateCreated
+			FROM ChungusPoints
+			WHERE BecameChungus = 1
 			ORDER BY DateCreated DESC
 			LIMIT 1`,
 		function(err, row) {
@@ -806,7 +805,7 @@ function stats(msg, args) {
 		getTotalPoints(userId, function(points) {
 			longestChungusHeld(userId, function(longestchung) {
 				secondsAsChungus(userId, function(totalchung) {
-					currentStreak(userId, function(streakseconds) {
+					currentStreak(userId, function(currentStreakSeconds) {
 						var embed = new Discord.RichEmbed({
 							thumbnail: {
 								url: chungus_user.avatarURL,
@@ -836,13 +835,13 @@ function stats(msg, args) {
 								},
 							],
 						});
-						if (streakseconds > 0) {
+						if (currentStreakSeconds > 0) {
 							embed.addField(
 								"**Has Been Top Chungus For**", //name
 								`**${moment 
-									.duration(streakseconds, "seconds") // humanized time
+									.duration(currentStreakSeconds, "seconds") // humanized time
 									.humanize()}** (${Math.round(
-									streakseconds / 60 // total minutes
+									currentStreakSeconds / 60 // total minutes
 									)} minutes)`,
 								false // if it's inline
 							)
