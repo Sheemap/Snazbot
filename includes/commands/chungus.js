@@ -135,18 +135,10 @@ function setChungusSettings(userId, name, color) {
 }
 
 function changeName(msg, args) {
-	// this can be simplified i think?
-	let role;
-	let roles = msg.member.roles.array();
-	let chungus = false;
-	for (let i = 0; i < roles.length; i++) {
-		if (roles[i].id == app.chungusrole) {
-			role = roles[i];
-			chungus = true;
-		}
-	}
+	let chungus = msg.member.roles.has(app.chungusrole);
 
 	if (chungus) {
+		let role = msg.guild.roles.get(app.chungusrole);
 		let name = msg.content
 			.toLowerCase()
 			.replace(`${app.prefix}chungus name `, "");
@@ -173,18 +165,10 @@ function changeName(msg, args) {
 }
 
 function changeColor(msg, args) {
-	let role;
-	let roles = msg.member.roles.array();
-	let chungus = false;
-
-	for (let i = 0; i < roles.length; i++) {
-		if (roles[i].id == app.chungusrole) {
-			role = roles[i];
-			chungus = true;
-		}
-	}
+	let chungus = msg.member.roles.has(app.chungusrole);
 
 	if (chungus) {
+		let role = msg.guild.roles.get(app.chungusrole);
 		if (typeof args[1] !== "undefined") {
 			role.setColor(args[1].toUpperCase()).then(updated =>
 				common.sendMsg(msg, `Changed chungus color to ${args[1]}`)
