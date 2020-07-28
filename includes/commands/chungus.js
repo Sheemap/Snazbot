@@ -717,7 +717,6 @@ function checkHeldTime(msg, args) {
 
 function currentStreak(userId, callback){
 	db.get(
-		//There has to be a better way to only get the most recent row where "BecameChungus=1" but I don't know the db well enough to craft it.
 		`SELECT UserId, DateCreated
 			FROM ChungusPoints
 			WHERE BecameChungus = 1
