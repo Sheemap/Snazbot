@@ -717,9 +717,10 @@ function checkHeldTime(msg, args) {
 
 function currentStreak(userId, callback){
 	db.get(
-		`SELECT UserId, DateCreated
-			FROM ChungusPoints
-			WHERE BecameChungus = 1
+		`SELECT u.UserId, c.DateCreated
+			FROM ChungusPoints c
+			INNER JOIN User u on u.UserId = c.UserId
+			WHERE u.ServerId = (SELECT  ServerId FROM User WHERE UserId = ${userId}) AND c.BecameChungus = 1
 			ORDER BY DateCreated DESC
 			LIMIT 1`,
 		function(err, row) {
