@@ -135,17 +135,10 @@ function setChungusSettings(userId, name, color) {
 }
 
 function changeName(msg, args) {
-	let role;
-	let roles = msg.member.roles.array();
-	let chungus = false;
-	for (let i = 0; i < roles.length; i++) {
-		if (roles[i].id == app.chungusrole) {
-			role = roles[i];
-			chungus = true;
-		}
-	}
+	let chungus = msg.member.roles.has(app.chungusrole);
 
 	if (chungus) {
+		let role = msg.guild.roles.get(app.chungusrole);
 		let name = msg.content
 			.toLowerCase()
 			.replace(`${app.prefix}chungus name `, "");
@@ -172,18 +165,10 @@ function changeName(msg, args) {
 }
 
 function changeColor(msg, args) {
-	let role;
-	let roles = msg.member.roles.array();
-	let chungus = false;
-
-	for (let i = 0; i < roles.length; i++) {
-		if (roles[i].id == app.chungusrole) {
-			role = roles[i];
-			chungus = true;
-		}
-	}
+	let chungus = msg.member.roles.has(app.chungusrole);
 
 	if (chungus) {
+		let role = msg.guild.roles.get(app.chungusrole);
 		if (typeof args[1] !== "undefined") {
 			role.setColor(args[1].toUpperCase()).then(updated =>
 				common.sendMsg(msg, `Changed chungus color to ${args[1]}`)
@@ -730,6 +715,24 @@ function checkHeldTime(msg, args) {
 	});
 }
 
+function currentStreak(userId, callback){
+	db.get(
+		`SELECT u.UserId, c.DateCreated
+			FROM ChungusPoints c
+			INNER JOIN User u on u.UserId = c.UserId
+			WHERE u.ServerId = (SELECT  ServerId FROM User WHERE UserId = ${userId}) AND c.BecameChungus = 1
+			ORDER BY DateCreated DESC
+			LIMIT 1`,
+		function(err, row) {
+			let timeSinceBecameChungus = 0
+			if (row.UserId == userId) { //They are the current chungus leader -> timeSinceBecameChunges gets set to value != 0
+				timeSinceBecameChungus = new Date() / 1000 - row.DateCreated;
+			} 
+			callback(timeSinceBecameChungus);
+		}
+	);
+}
+
 function longestChungusHeld(userId, callback) {
 	db.all(
 		`SELECT u.UserId, c.DateCreated, c.BecameChungus
@@ -786,39 +789,52 @@ function stats(msg, args) {
 		getTotalPoints(userId, function(points) {
 			longestChungusHeld(userId, function(longestchung) {
 				secondsAsChungus(userId, function(totalchung) {
-					var embed = new Discord.RichEmbed({
-						thumbnail: {
-							url: chungus_user.avatarURL,
-						},
-						fields: [
-							{
-								name: "**Current Points**",
-								value: `**${points}**`,
+					currentStreak(userId, function(currentStreakSeconds) {
+						var embed = new Discord.RichEmbed({
+							thumbnail: {
+								url: chungus_user.avatarURL,
 							},
-							{
-								name: "**Total duration**",
-								value: `**${moment
-									.duration(totalchung, "seconds")
+							fields: [
+								{
+									name: "**Current Points**",
+									value: `**${points}**`,
+								},
+								{
+									name: "**Total duration**",
+									value: `**${moment
+										.duration(totalchung, "seconds")
+										.humanize()}** (${Math.round(
+										totalchung / 60
+									)} minutes)`,
+									inline: true,
+								},
+								{
+									name: "**Longest streak**",
+									value: `**${moment
+										.duration(longestchung, "seconds")
+										.humanize()}** (${Math.round(
+										longestchung / 60
+									)} minutes)`,
+									inline: true,
+								},
+							],
+						});
+						if (currentStreakSeconds > 0) {
+							embed.addField(
+								"**Has Been Top Chungus For**", //name
+								`**${moment 
+									.duration(currentStreakSeconds, "seconds") // humanized time
 									.humanize()}** (${Math.round(
-									totalchung / 60
-								)} minutes)`,
-								inline: true,
-							},
-							{
-								name: "**Longest streak**",
-								value: `**${moment
-									.duration(longestchung, "seconds")
-									.humanize()}** (${Math.round(
-									longestchung / 60
-								)} minutes)`,
-								inline: true,
-							},
-						],
-					});
-					// TODO: Re-implement embed showing color
-					// embed.setColor(data['chungus_color']);
+									currentStreakSeconds / 60 // total minutes
+									)} minutes)`,
+								false // if it's inline
+							)
+						}
+						// TODO: Re-implement embed showing color
+						// embed.setColor(data['chungus_color']);
 
-					common.sendMsg(msg, { embed: embed });
+						common.sendMsg(msg, { embed: embed });
+					});
 				});
 			});
 		});
