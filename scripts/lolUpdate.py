@@ -210,10 +210,10 @@ async def wotw(send_award):
 
 
 	if send_award:
-		await client.send_message(client.get_channel(config['league']['channel']), win_string)
+		channel = client.get_channel(int(config['league']['channel']))
+		await channel.send(win_string)
 	else:
 		print("Recieved command argument. Not sending discord message.")
-	# print(client.get_channel(config['league']['channel']))
 
 
 
