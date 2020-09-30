@@ -10,7 +10,7 @@ exports.main = function(msg,args){
 	let seedString = `${msg.author.id}${time}`;
 	let seededRandom = seedrandom(seedString)();
 
-	let dickIndex = [
+	let dickIndexCm = [
 		3,
 		4,
 		5,
@@ -41,7 +41,7 @@ exports.main = function(msg,args){
 		30
 	];
 
-	let inchLength = dickIndex[Math.floor(seededRandom * dickIndex.length)] * 0.3937008;
+	let inchLength = ((dickIndexCm[Math.floor(seededRandom * dickIndexCm.length)] + seededRandom) * 0.3937008).toFixed(7);
 
 	msg.reply(`your dick is **${inchLength}** inches!`);
 }
