@@ -175,3 +175,4 @@ client.on('voiceStateUpdate', (oldMember, newMember) => {
     }
 });
 
+client.on('error', (err) => logger.log('error', err));
