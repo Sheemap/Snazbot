@@ -207,7 +207,6 @@ class award {
 
 	adjective(){
 		let random_index = Math.floor(Math.random() * Math.floor(adjectives.length))
-		console.log(adjectives.length)
 		let item = adjectives[random_index];
 		adjectives.splice(random_index,random_index);
 		return item
@@ -237,6 +236,7 @@ class award {
 	}
 }
 
+// TODO: Refactor this to not use these weird internally defined recursive functions. Or just finish the improved version of this
 var weekly = schedule.scheduleJob('0 18 * * 1', function(fireDate){
 // var weekly = schedule.scheduleJob('* * * * *', function(fireDate){
 // function tmp(msg){
@@ -248,7 +248,6 @@ var weekly = schedule.scheduleJob('0 18 * * 1', function(fireDate){
 	logger.log('info','Starting weekly dota job at ' + new Date());
 
 	db.all('SELECT * FROM dota',function(err,rows){
-		console.log(rows)
 
 		function parseUser(i,rows){
 			if(i < rows.length){
@@ -256,6 +255,12 @@ var weekly = schedule.scheduleJob('0 18 * * 1', function(fireDate){
 				api.call(`players/${rows[i].steamID}/matches?date=7`,function(body,error){
 
 					let data = JSON.parse(body);
+
+					if(data.length === 0){
+						parseUser(i+1, rows);
+						return;
+					}
+
 					results[user] = {
 						'gold':[],
 						'xp':[],
@@ -270,6 +275,7 @@ var weekly = schedule.scheduleJob('0 18 * * 1', function(fireDate){
 						'sent_wards':[]
 
 					}
+
 					function parseMatch(w,data){
 						if(w < data.length){
 
@@ -383,20 +389,6 @@ var weekly = schedule.scheduleJob('0 18 * * 1', function(fireDate){
 						})
 					}else{
 
-						// 'gold':[],
-						// 'xp':[],
-						// 'damage':[],
-						// 'cs':[],
-						// 'kills':[],
-						// 'deaths':[],
-						// 'assists':[],
-						// 'structure_damage':[],
-						// 'healing':[],
-						// 'obs_wards':[],
-						// 'sent_wards':[]
-
-						// [user,avg,max,count];
-
 						var awards = [];
 						awards.push(new award('Midas', 16766720, 'https://i.imgur.com/GMMeySI.png', victors['gold'][0], '(GPM)', victors['gold'][1], victors['gold'][2], victors['gold'][3]).embed())
 						awards.push(new award('Big Brain', 5301186, 'https://i.imgur.com/79NQbnw.png', victors['xp'][0], '(XPM)', victors['xp'][1], victors['xp'][2], victors['xp'][3]).embed())
@@ -422,15 +414,6 @@ var weekly = schedule.scheduleJob('0 18 * * 1', function(fireDate){
 				}
 
 				matchUsers(0,unique_victors,victors)
-
-
-				// common.findUser('104848260954357760',function(user){
-				// 	var testEmbed = new award('Midas (GPM)', 16766720, 'https://yt3.ggpht.com/a/AGF-l79pzJmc_wgB0_tDO0_M1EsGb0g9D5ru1zwEJA=s900-mo-c-c0xffffffff-rj-k-no', user, 'Smelted by', 500, 1000, 13).embed()
-				// 	common.sendMsg(msg,"**This weeks winners are in!**",false,false,function(msg){
-				// 		common.sendMsg(msg,{embed: testEmbed})
-				// 		// common.sendMsg(msg,{embed: testEmbed2})
-				// 	})
-				// })
 
 			}
 			
