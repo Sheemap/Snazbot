@@ -8,7 +8,7 @@ const db = new sqlite3.Database('./data/data.db');
 const THRESHOLD = 24;
 
 //Decay percent every 6 hours
-const DECAYPERCENT = 0.025 // 0.025 equates to 10% per day //0.0175 equates to 7% per day
+const DECAYPERCENT = 0.015
 
 var oldpoints,
 	newpoints,
