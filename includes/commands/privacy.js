@@ -57,10 +57,24 @@ exports.msg = function (msg) {
 			return;
 		}
 
-		common.sendMsg(msg, msg.content);
+		if (
+			msg.content.indexOf("@here") != -1 ||
+			msg.content.indexOf("@everyone") != -1
+		) {
+			logger.log(
+				"warn",
+				`User ${msg.author.username} pinged @here or @everyone :(`
+			);
+		}
+
+		common.sendMsg(msg, stripPings(msg.content));
 		msg.delete();
 	});
 };
+
+function stripPings(content) {
+	return content.replace("@", "");
+}
 
 // This just returns the `privacyMode` global var, unless its unset
 // Then it checks the filesystem for the current value
