@@ -11,7 +11,6 @@ const request = require("request");
 // exports.description = "Dota Utilities";
 exports.description = "DISABLED";
 
-
 exports.usage = `Use "${app.prefix}dota register <Steam 32 ID>" to add yourself to the tracked users.\nUse "${app.prefix}dota join" to be added to awards chat, without account being registered.\nGo to <https://steamid.xyz> to get your Steam 32 ID`;
 
 exports.db_scheme = `dota (disNAM TEXT, disID TEXT, timestamp NUMERIC, steamID TEXT, data TEXT)`;
@@ -63,8 +62,7 @@ var adjectives;
 var exclamations;
 
 exports.main = function (msg, args) {
-	common.sendMsg(msg, "Module disabled. Please utilize Derrick instead :) Type `/` to view his commands")
-
+	common.sendMsg(msg, "Module disabled. Please utilize Derrick instead :) Type `/` to view his commands");
 
 	// switch (args[0].toLowerCase()) {
 	// 	case "register":
@@ -259,13 +257,13 @@ class award {
 
 // TODO: Refactor this to not use these weird internally defined recursive functions. Or just finish the improved version of this
 // var weekly = schedule.scheduleJob("0 18 * * 1", function (fireDate) {
-	// var weekly = schedule.scheduleJob('* * * * *', function(fireDate){
+// var weekly = schedule.scheduleJob('* * * * *', function(fireDate){
 
 // THIS HAS BEEN DISABLED.
 // Code is left here for future viewing
 // The weekly sending of messages has been moved to Derrick
 // https://github.com/Sheemap/Derrick
-function DISABLED(msg){
+function DISABLED(msg) {
 	adjectives = base_adjectives;
 	exclamations = base_exclamations;
 
@@ -536,8 +534,7 @@ function DISABLED(msg){
 		}
 		parseUser(0, rows);
 	});
-
-	// }
-});
+}
+// });
 
 const api = new openDota();
