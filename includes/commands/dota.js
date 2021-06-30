@@ -8,7 +8,9 @@ const schedule = require("node-schedule");
 const sleep = require("sleep-promise");
 const request = require("request");
 
-exports.description = "Dota Utilities";
+// exports.description = "Dota Utilities";
+exports.description = "DISABLED";
+
 
 exports.usage = `Use "${app.prefix}dota register <Steam 32 ID>" to add yourself to the tracked users.\nUse "${app.prefix}dota join" to be added to awards chat, without account being registered.\nGo to <https://steamid.xyz> to get your Steam 32 ID`;
 
@@ -61,20 +63,23 @@ var adjectives;
 var exclamations;
 
 exports.main = function (msg, args) {
-	switch (args[0].toLowerCase()) {
-		case "register":
-			register(msg, args);
-			break;
+	common.sendMsg(msg, "Module disabled. Please utilize Derrick instead :) Type `/` to view his commands")
 
-		case "join":
-			join(msg, args);
-			break;
 
-		default:
-			// tmp(msg)
-			common.sendMsg(msg, `\`\`\`${exports.usage}\`\`\``);
-			break;
-	}
+	// switch (args[0].toLowerCase()) {
+	// 	case "register":
+	// 		register(msg, args);
+	// 		break;
+
+	// 	case "join":
+	// 		join(msg, args);
+	// 		break;
+
+	// 	default:
+	// 		// tmp(msg)
+	// 		common.sendMsg(msg, `\`\`\`${exports.usage}\`\`\``);
+	// 		break;
+	// }
 };
 
 function join(msg, args) {
