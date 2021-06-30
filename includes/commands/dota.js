@@ -253,9 +253,14 @@ class award {
 }
 
 // TODO: Refactor this to not use these weird internally defined recursive functions. Or just finish the improved version of this
-var weekly = schedule.scheduleJob("0 18 * * 1", function (fireDate) {
+// var weekly = schedule.scheduleJob("0 18 * * 1", function (fireDate) {
 	// var weekly = schedule.scheduleJob('* * * * *', function(fireDate){
-	// function tmp(msg){
+
+// THIS HAS BEEN DISABLED.
+// Code is left here for future viewing
+// The weekly sending of messages has been moved to Derrick
+// https://github.com/Sheemap/Derrick
+function DISABLED(msg){
 	adjectives = base_adjectives;
 	exclamations = base_exclamations;
 
