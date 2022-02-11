@@ -19,7 +19,7 @@
   "dependencies": {
     "async": "^2.6.0",
     "discord.js": "^11.3.2",
-    "follow-redirects": "^1.4.1",
+    "follow-redirects": "^1.14.8",
     "glob": "^7.1.2",
     "hoek": "^5.0.3",
     "imgur": "^0.3.1",
