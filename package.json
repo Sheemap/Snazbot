@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/Sheemap/Snazbot#readme",
   "dependencies": {
-    "async": "^2.6.0",
+    "async": "^2.6.4",
     "discord.js": "^11.3.2",
     "follow-redirects": "^1.4.1",
     "glob": "^7.1.2",
