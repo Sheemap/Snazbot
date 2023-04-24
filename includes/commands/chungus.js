@@ -225,6 +225,12 @@ function getRewardAmount(row) {
 	if (minutes in BONUS_REWARDS) {
 		bonus = BONUS_REWARDS[minutes];
 	}
+	
+	if (1682460000000 - new Date().getTime() > 0) {
+		// Chungus anniversary bonus
+		return (Math.round(Math.pow(minutes, 1.85) / 70) + bonus) * 5;
+	}
+	
 	return Math.round(Math.pow(minutes, 1.85) / 70) + bonus;
 }
 
